@@ -2,7 +2,6 @@
 
 Unofficial Node.js client untuk [DeepSeek Chat](https://chat.deepseek.com) — reverse-engineered dari web API-nya langsung. Mendukung login, multi-turn conversation, upload file, dan thinking mode.
 
-> ⚠️ **Disclaimer:** Library ini menggunakan internal API DeepSeek yang tidak resmi. Bisa berubah sewaktu-waktu tanpa pemberitahuan. Gunakan dengan bijak dan sesuai ToS DeepSeek.
 
 ---
 
