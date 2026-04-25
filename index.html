@@ -499,6 +499,7 @@
         let lastPrompt = "";
         let lastImageBase64 = null;
         let lastMimeType = null;
+        let deepseekSessionId = null;
         let isGenerating = false;
         let historyAddedThisSession = false; // Memastikan histori hanya dicatat sekali per sesi obrolan bersih
 
@@ -665,6 +666,7 @@
             lastPrompt = "";
             lastImageBase64 = null;
             lastMimeType = null;
+            deepseekSessionId = null;
             historyAddedThisSession = false;
             conversationHistory.length = 0;
 
@@ -722,7 +724,12 @@
             if (modelPopupContext.source === 'response' && modelPopupContext.targetBtn) {
                 regenerateResponse(modelPopupContext.targetBtn, { forceModelLabel: modelName });
             } else {
-                const backendText = modelName.toLowerCase().includes('gpt') ? 'Backend GPT aktif.' : `Model aktif: ${modelName}`;
+                const lowerName = modelName.toLowerCase();
+                const backendText = lowerName.includes('gpt')
+                    ? 'Backend GPT aktif.'
+                    : lowerName.includes('deepseek')
+                        ? 'Backend DeepSeek aktif.'
+                        : `Model aktif: ${modelName}`;
                 showToast(backendText);
             }
             closeModelPopup();
@@ -852,7 +859,7 @@
             isGenerating = true;
 
             const responseText = await fetchAIResponse(lastPrompt, lastImageBase64, lastMimeType);
-            const renderedText = options.forceModelLabel && !['Gemini 2.5 Flash', 'GPT'].includes(options.forceModelLabel)
+            const renderedText = options.forceModelLabel && !['Gemini 2.5 Flash', 'GPT', 'DeepSeek'].includes(options.forceModelLabel)
                 ? `🧪 Simulasi model ${options.forceModelLabel} (backend fallback saat ini).\n\n${responseText}`
                 : responseText;
             
@@ -1260,6 +1267,7 @@
 
         function getActiveBackend() {
             if (activeModelLabel.toLowerCase().includes('gpt')) return { endpoint: '/api/gpt', model: 'chatgpt-web' };
+            if (activeModelLabel.toLowerCase().includes('deepseek')) return { endpoint: '/api/deepseek', model: 'deepseek-web' };
             return { endpoint: '/api/chat', model: 'gemini-2.5-flash' };
         }
 
@@ -1278,6 +1286,7 @@
                         images,
                         history: conversationHistory.slice(-12),
                         model,
+                        sessionId: deepseekSessionId,
                     })
                 });
 
@@ -1303,6 +1312,9 @@
                 }
 
                 const reply = typeof data.reply === 'string' ? data.reply.trim() : '';
+                if (endpoint === '/api/deepseek' && typeof data.sessionId === 'string' && data.sessionId.trim()) {
+                    deepseekSessionId = data.sessionId.trim();
+                }
                 if (reply) return reply;
 
                 const fallback = typeof data.msg === 'string' ? data.msg.trim() : '';
