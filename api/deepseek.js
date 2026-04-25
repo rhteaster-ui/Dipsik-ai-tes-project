@@ -11,12 +11,20 @@ const runtimeState = globalThis.__deepseekRuntime || {
 };
 globalThis.__deepseekRuntime = runtimeState;
 
-async function ensureClient() {
-  const email = process.env.DEEPSEEK_EMAIL;
-  const password = process.env.DEEPSEEK_PASSWORD;
+function sanitizeCredential(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+async function ensureClient(auth = {}) {
+  const bodyEmail = sanitizeCredential(auth?.email);
+  const bodyPassword = sanitizeCredential(auth?.password);
+  const envEmail = sanitizeCredential(process.env.DEEPSEEK_EMAIL);
+  const envPassword = sanitizeCredential(process.env.DEEPSEEK_PASSWORD);
+  const email = bodyEmail || envEmail;
+  const password = bodyPassword || envPassword;
 
   if (!email || !password) {
-    throw new Error('DEEPSEEK_EMAIL dan DEEPSEEK_PASSWORD belum di-set di Environment Variables.');
+    throw new Error('Login DeepSeek belum diisi. Isi DEEPSEEK_EMAIL/DEEPSEEK_PASSWORD di server atau isi email/password di Pengaturan frontend.');
   }
 
   const nextCredsKey = `${email}::${password}`;
@@ -91,6 +99,7 @@ export default async function handler(req, res) {
       sessionId,
       thinking = true,
       search = false,
+      auth = {},
     } = req.body || {};
 
     const safePrompt = String(prompt || '').trim().slice(0, 6000);
@@ -98,7 +107,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Prompt wajib diisi.' });
     }
 
-    const client = await ensureClient();
+    const client = await ensureClient(auth);
     const conversationKey = String(sessionId || '').trim() || null;
 
     let chatSessionId = conversationKey ? runtimeState.sessions.get(conversationKey) : null;
@@ -143,13 +152,14 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     const lowerMessage = String(error?.message || '').toLowerCase();
+    const isMissingCredential = lowerMessage.includes('login deepseek belum diisi');
 
     if (lowerMessage.includes('login') || lowerMessage.includes('token') || lowerMessage.includes('auth')) {
       runtimeState.isLoggedIn = false;
     }
 
     console.error('deepseek handler error', error);
-    return res.status(500).json({
+    return res.status(isMissingCredential ? 400 : 500).json({
       error: error?.message || 'Internal Server Error',
       code: error?.code || null,
     });

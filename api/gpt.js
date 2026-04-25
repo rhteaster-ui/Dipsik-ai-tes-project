@@ -14,6 +14,9 @@ async function noteGptChat(messages = []) {
     throw new Error('Pesan pengguna kosong.');
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 25_000);
+
   const response = await fetch('https://notegpt.io/api/v2/chat/stream', {
     method: 'POST',
     headers: {
@@ -31,7 +34,8 @@ async function noteGptChat(messages = []) {
       image_urls: [],
       chat_mode: 'standard',
     }),
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timeout));
 
   if (!response.ok || !response.body) {
     const bodyText = await response.text().catch(() => '');
@@ -107,7 +111,12 @@ function enforceRateLimit(ip) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Allow', 'GET, POST, OPTIONS');
+    return res.status(204).end();
+  }
+
+  if (!['POST', 'GET'].includes(req.method)) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
@@ -118,8 +127,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt = '' } = req.body || {};
-    const safePrompt = String(prompt || '').slice(0, 4000).trim();
+    const prompt = req.method === 'GET'
+      ? req.query?.prompt
+      : (req.body || {}).prompt;
+    const safePrompt = String(prompt || '').slice(0, 2200).trim();
 
     if (!safePrompt) {
       return res.status(400).json({ error: 'Prompt wajib diisi.' });
