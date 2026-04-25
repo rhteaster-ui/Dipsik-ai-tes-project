@@ -469,6 +469,22 @@
                         </select>
                     </div>
                 </div>
+
+                <div class="space-y-3 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5">
+                    <div>
+                        <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Login DeepSeek (Opsional)</h5>
+                        <p class="text-xs text-slate-500 mt-1">Dipakai hanya saat model DeepSeek dipilih. Jika kosong, backend pakai env server.</p>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">Email DeepSeek</label>
+                        <input id="deepseekEmailInput" type="email" autocomplete="off" placeholder="email@domain.com" class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">Password DeepSeek</label>
+                        <input id="deepseekPasswordInput" type="password" autocomplete="off" placeholder="Masukkan password" class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40">
+                    </div>
+                    <button id="saveDeepseekCredsBtn" type="button" class="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">Simpan Login DeepSeek</button>
+                </div>
             </div>
 
             <!-- Footer Settings -->
@@ -571,6 +587,31 @@
         // ----------------------------------------------------
         const settingsModal = document.getElementById('settingsModal');
         const settingsContent = document.getElementById('settingsContent');
+        const deepseekEmailInput = document.getElementById('deepseekEmailInput');
+        const deepseekPasswordInput = document.getElementById('deepseekPasswordInput');
+        const saveDeepseekCredsBtn = document.getElementById('saveDeepseekCredsBtn');
+
+        function loadDeepseekCredentials() {
+            const savedEmail = localStorage.getItem('deepseek_email') || '';
+            const savedPassword = localStorage.getItem('deepseek_password') || '';
+            deepseekEmailInput.value = savedEmail;
+            deepseekPasswordInput.value = savedPassword;
+        }
+
+        function getDeepseekCredentials() {
+            return {
+                email: (localStorage.getItem('deepseek_email') || '').trim(),
+                password: localStorage.getItem('deepseek_password') || '',
+            };
+        }
+
+        saveDeepseekCredsBtn.addEventListener('click', () => {
+            localStorage.setItem('deepseek_email', deepseekEmailInput.value.trim());
+            localStorage.setItem('deepseek_password', deepseekPasswordInput.value);
+            showToast('Login DeepSeek berhasil disimpan.');
+        });
+
+        loadDeepseekCredentials();
 
         window.openSettingsPopup = function() {
             if (!sidebar.classList.contains('-translate-x-full')) {
@@ -1278,6 +1319,7 @@
                     ? [`data:${mimeType || 'image/jpeg'};base64,${imageBase64}`]
                     : [];
 
+                const deepseekAuth = endpoint === '/api/deepseek' ? getDeepseekCredentials() : {};
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1287,6 +1329,7 @@
                         history: conversationHistory.slice(-12),
                         model,
                         sessionId: deepseekSessionId,
+                        auth: deepseekAuth,
                     })
                 });
 
