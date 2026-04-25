@@ -1,0 +1,7 @@
+{
+  "name": "dipsik-ai-tes-project",
+  "private": true,
+  "dependencies": {
+    "form-data": "^4.0.5"
+  }
+}
