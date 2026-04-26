@@ -730,7 +730,7 @@
             deepseek: 'DeepSeek',
         };
         const providerVersions = {
-            gemini: ['gemini-2.5-flash', 'gemini-2.5-pro'],
+            gemini: ['gemini-2.5-flash', 'gemini-universal'],
             gpt: ['gpt-4.1-mini', 'gpt-4.1', 'gpt-4o-mini'],
             perplexity: ['sonar', 'sonar-pro'],
             deepseek: ['deepseek-chat', 'deepseek-reasoner'],
@@ -1362,6 +1362,14 @@
         }
 
         function getActiveBackend() {
+            if (activeProvider === 'gemini' && activeModelLabel === 'gemini-universal') {
+                return {
+                    endpoint: 'https://api.covenant.sbs/api/ai/gemini',
+                    model: 'gemini-universal',
+                    provider: activeProvider,
+                };
+            }
+
             const providerRoutes = {
                 gemini: '/api/chat',
                 gpt: '/api/gpt',
