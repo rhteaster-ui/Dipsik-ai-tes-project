@@ -78,11 +78,14 @@ export default async function handler(req, res) {
   try {
     const {
       prompt = '',
+      question = '',
       images = [],
       history = [],
       mode = 'chat',
       model = 'gemini-2.5-flash',
+      system = '',
     } = req.body || {};
+    const incomingPrompt = String(prompt || question || '').trim();
     const sanitizedHistory = Array.isArray(history)
       ? history
           .filter((m) => m && typeof m === 'object' && (m.text || (Array.isArray(m.images) && m.images.length)))
@@ -93,10 +96,16 @@ export default async function handler(req, res) {
             images: Array.isArray(m.images) ? m.images.slice(0, 2) : [],
           }))
       : [];
+    if (!incomingPrompt && !images.length) {
+      return res.status(400).json({ error: 'Prompt wajib diisi.' });
+    }
     const imageParts = images.map((img) => toInlineData(img));
     const contents = [...buildHistoryParts(sanitizedHistory)];
+    const defaultSystemPrompt = 'Kamu asisten cerdas berbahasa Indonesia. Jawaban harus jelas, natural, dan helpful seperti ChatGPT. Untuk kode, gunakan markdown code block.';
+    const envSystemPrompt = String(process.env.GEMINI_SYSTEM_PROMPT || '').trim();
+    const requestSystemPrompt = String(system || '').trim();
     const systemInstruction = {
-      parts: [{ text: 'Kamu asisten cerdas berbahasa Indonesia. Jawaban harus jelas, natural, dan helpful seperti ChatGPT. Untuk kode, gunakan markdown code block.' }],
+      parts: [{ text: requestSystemPrompt || envSystemPrompt || defaultSystemPrompt }],
     };
 
     const allowedModel = 'gemini-2.5-flash';
@@ -104,7 +113,7 @@ export default async function handler(req, res) {
 
     contents.push({
       role: 'user',
-      parts: [{ text: prompt }, ...imageParts],
+      parts: [{ text: incomingPrompt }, ...imageParts],
     });
 
     const body = {
