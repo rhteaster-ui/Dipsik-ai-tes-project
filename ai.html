@@ -504,6 +504,7 @@
         let lastPrompt = "";
         let lastImageBase64 = null;
         let lastMimeType = null;
+        let deepseekSessionId = null;
         let isGenerating = false;
         let historyAddedThisSession = false; // Memastikan histori hanya dicatat sekali per sesi obrolan bersih
 
@@ -1320,15 +1321,21 @@
         }
 
         function getActiveBackend() {
-            const remoteEndpoint = 'https://api.covenant.sbs/api/ai/gemini';
+            const providerRoutes = {
+                gemini: '/api/chat',
+                gpt: '/api/gpt',
+                perplexity: '/api/gpt',
+                deepseek: '/api/deepseek',
+            };
             return {
-                endpoint: remoteEndpoint,
+                endpoint: providerRoutes[activeProvider] || '/api/chat',
                 model: activeModelLabel || 'gemini-2.5-flash',
+                provider: activeProvider,
             };
         }
 
         async function fetchAIResponse(prompt, imageBase64, mimeType) {
-            const { endpoint, model } = getActiveBackend();
+            const { endpoint, model, provider } = getActiveBackend();
             try {
                 const images = imageBase64
                     ? [`data:${mimeType || 'image/jpeg'};base64,${imageBase64}`]
@@ -1345,8 +1352,8 @@
                         prompt,
                         images,
                         history: conversationHistory.slice(-12),
-                        sessionId: 'exploreai-web',
-                        system: 'Kamu asisten AI yang menjawab ringkas, natural, dan relevan.',
+                        sessionId: provider === 'deepseek' ? (deepseekSessionId || 'exploreai-web') : 'exploreai-web',
+                        system: (localStorage.getItem('system_prompt_override') || '').trim() || undefined,
                         model,
                     })
                 });
@@ -1370,6 +1377,10 @@
 
                 if (!response.ok) {
                     throw new Error(data?.error || `Network error ${response.status}`);
+                }
+
+                if (provider === 'deepseek' && typeof data.sessionId === 'string' && data.sessionId.trim()) {
+                    deepseekSessionId = data.sessionId.trim();
                 }
 
                 const reply = typeof data.reply === 'string' ? data.reply.trim() : '';
