@@ -956,11 +956,12 @@
             sendBtn.disabled = true;
             isGenerating = true;
 
-            const responseText = await fetchAIResponse(lastPrompt, lastImageBase64, lastMimeType);
-            const renderedText = responseText;
+            const responsePayload = await fetchAIResponse(lastPrompt, lastImageBase64, lastMimeType);
+            const renderedText = responsePayload?.text || '';
+            const renderedSources = Array.isArray(responsePayload?.sources) ? responsePayload.sources : [];
             
             document.getElementById(typingId).remove();
-            await appendAIMessageSmooth(renderedText);
+            await appendAIMessageSmooth(renderedText, renderedSources);
             sendBtn.disabled = false;
             isGenerating = false;
             if (options.forceModelLabel) {
@@ -1309,6 +1310,35 @@
             }).join('');
         }
 
+        function normalizeSources(rawSources) {
+            if (!Array.isArray(rawSources)) return [];
+            return rawSources
+                .map((src) => String(src || '').trim())
+                .filter((src) => /^https?:\/\//i.test(src))
+                .slice(0, 8);
+        }
+
+        function renderSourceLinks(sources = []) {
+            const safeSources = normalizeSources(sources);
+            if (!safeSources.length) return '';
+
+            const linksHtml = safeSources.map((url, index) => {
+                const label = `Sumber ${index + 1}`;
+                return `
+                    <li>
+                        <a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline break-all">${label}</a>
+                    </li>
+                `;
+            }).join('');
+
+            return `
+                <div class="mt-4 pt-3 border-t border-slate-200 dark:border-white/10">
+                    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">Sumber Referensi</div>
+                    <ul class="list-disc pl-5 space-y-1 text-sm">${linksHtml}</ul>
+                </div>
+            `;
+        }
+
         function createAIMessageShell() {
             const msgHTML = `
             <div class="flex gap-4">
@@ -1337,13 +1367,13 @@
             return chatMessages.lastElementChild.querySelector('[data-ai-content]');
         }
 
-        function appendAIMessage(text) {
+        function appendAIMessage(text, sources = []) {
             const contentEl = createAIMessageShell();
-            contentEl.innerHTML = renderMarkdown(text);
+            contentEl.innerHTML = `${renderMarkdown(text)}${renderSourceLinks(sources)}`;
             scrollToBottom();
         }
 
-        async function appendAIMessageSmooth(text) {
+        async function appendAIMessageSmooth(text, sources = []) {
             const contentEl = createAIMessageShell();
             const normalized = text || '';
             const step = normalized.length > 1600 ? 28 : 16;
@@ -1357,7 +1387,7 @@
                 await new Promise((resolve) => setTimeout(resolve, 20));
             }
 
-            contentEl.innerHTML = renderMarkdown(normalized);
+            contentEl.innerHTML = `${renderMarkdown(normalized)}${renderSourceLinks(sources)}`;
             scrollToBottom();
         }
 
@@ -1413,7 +1443,7 @@
                     if (!response.ok) {
                         throw new Error(fallbackMessage);
                     }
-                    return `Maaf, terjadi kesalahan: ${fallbackMessage}`;
+                    return { text: `Maaf, terjadi kesalahan: ${fallbackMessage}`, sources: [] };
                 }
 
                 if (!response.ok) {
@@ -1424,26 +1454,28 @@
                     deepseekSessionId = data.sessionId.trim();
                 }
 
+                const responseSources = normalizeSources(data?.sources);
+
                 const reply = typeof data.reply === 'string' ? data.reply.trim() : '';
-                if (reply) return reply;
+                if (reply) return { text: reply, sources: responseSources };
 
                 const answer = typeof data.answer === 'string' ? data.answer.trim() : '';
-                if (answer) return answer;
+                if (answer) return { text: answer, sources: responseSources };
 
                 const result = typeof data.result === 'string' ? data.result.trim() : '';
-                if (result) return result;
+                if (result) return { text: result, sources: responseSources };
 
                 const fallback = typeof data.msg === 'string' ? data.msg.trim() : '';
-                if (fallback) return fallback;
+                if (fallback) return { text: fallback, sources: responseSources };
 
                 if (typeof data.error === 'string' && data.error.trim()) {
-                    return `Maaf, terjadi kesalahan: ${data.error.trim()}`;
+                    return { text: `Maaf, terjadi kesalahan: ${data.error.trim()}`, sources: [] };
                 }
 
-                return 'Balasan model kosong. Coba ulangi pertanyaan dengan lebih spesifik.';
+                return { text: 'Balasan model kosong. Coba ulangi pertanyaan dengan lebih spesifik.', sources: [] };
             } catch (error) {
                 console.error('Error:', error);
-                return `Maaf, terjadi kesalahan: ${error.message || 'jaringan bermasalah.'}`;
+                return { text: `Maaf, terjadi kesalahan: ${error.message || 'jaringan bermasalah.'}`, sources: [] };
             }
         }
 
@@ -1485,10 +1517,12 @@
             sendBtn.disabled = true;
             isGenerating = true;
 
-            const responseText = await fetchAIResponse(text, currentBase64, currentMime);
+            const responsePayload = await fetchAIResponse(text, currentBase64, currentMime);
+            const responseText = responsePayload?.text || '';
+            const responseSources = Array.isArray(responsePayload?.sources) ? responsePayload.sources : [];
             
             document.getElementById(typingId).remove();
-            await appendAIMessageSmooth(responseText);
+            await appendAIMessageSmooth(responseText, responseSources);
             conversationHistory.push({ role: 'user', text: text || 'Analisa lampiran', images: currentBase64 ? [`data:${currentMime || 'image/jpeg'};base64,${currentBase64}`] : [] });
             conversationHistory.push({ role: 'assistant', text: responseText, images: [] });
             sendBtn.disabled = false;
