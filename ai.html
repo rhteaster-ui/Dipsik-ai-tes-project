@@ -507,6 +507,10 @@
         let deepseekSessionId = null;
         let isGenerating = false;
         let historyAddedThisSession = false; // Memastikan histori hanya dicatat sekali per sesi obrolan bersih
+        const CHAT_STATE_STORAGE_KEY = 'exploreai-chat-state-v2';
+        const CHAT_SESSION_ID_STORAGE_KEY = 'exploreai-chat-session-id-v1';
+        const persistedSessionId = localStorage.getItem(CHAT_SESSION_ID_STORAGE_KEY) || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        localStorage.setItem(CHAT_SESSION_ID_STORAGE_KEY, persistedSessionId);
 
         // ----------------------------------------------------
         // LOGIKA TOAST NOTIFICATION
@@ -667,6 +671,9 @@
             lastMimeType = null;
             historyAddedThisSession = false;
             conversationHistory.length = 0;
+            renderedMessages.length = 0;
+            deepseekSessionId = null;
+            localStorage.removeItem(CHAT_STATE_STORAGE_KEY);
 
             showToast("Obrolan berhasil dibersihkan & dimulai ulang.");
             
@@ -775,12 +782,14 @@
             const versions = providerVersions[activeProvider] || [];
             activeModelLabel = versions[0] || activeModelLabel;
             updateModelDisplay();
+            saveChatState();
             showToast(`Provider aktif: ${providerLabelMap[activeProvider]}`);
             closeProviderPopup();
         };
 
         window.selectVersion = function(versionName) {
             activeModelLabel = versionName;
+            saveChatState();
             if (modelPopupContext.source === 'response' && modelPopupContext.targetBtn) {
                 regenerateResponse(modelPopupContext.targetBtn, { forceModelLabel: versionName });
             } else {
@@ -920,6 +929,11 @@
             
             document.getElementById(typingId).remove();
             await appendAIMessageSmooth(renderedText);
+            conversationHistory.push({ role: 'user', text: lastPrompt || 'Analisa lampiran', images: lastImageBase64 ? [`data:${lastMimeType || 'image/jpeg'};base64,${lastImageBase64}`] : [] });
+            conversationHistory.push({ role: 'assistant', text: renderedText, images: [] });
+            renderedMessages.push({ role: 'user', text: lastPrompt || 'Analisa lampiran' });
+            renderedMessages.push({ role: 'assistant', text: renderedText });
+            saveChatState();
             sendBtn.disabled = false;
             isGenerating = false;
             if (options.forceModelLabel) {
@@ -1021,7 +1035,86 @@
         const chatMessages = document.getElementById('chatMessages');
         const chatBox = document.getElementById('chatBox');
         const conversationHistory = [];
+        const renderedMessages = [];
         let lastRequestAt = 0;
+
+        function saveChatState() {
+            const payload = {
+                activeProvider,
+                activeModelLabel,
+                deepseekSessionId,
+                historyAddedThisSession,
+                renderedMessages: renderedMessages.slice(-40),
+                conversationHistory: conversationHistory.slice(-24),
+                updatedAt: Date.now(),
+            };
+            localStorage.setItem(CHAT_STATE_STORAGE_KEY, JSON.stringify(payload));
+        }
+
+        function loadChatState() {
+            const raw = localStorage.getItem(CHAT_STATE_STORAGE_KEY);
+            if (!raw) return null;
+            try {
+                return JSON.parse(raw);
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function appendHistoryFromState(firstUserText) {
+            if (!firstUserText) return;
+            historyAddedThisSession = false;
+            addHistoryItem(firstUserText);
+        }
+
+        function restoreChatFromState() {
+            const state = loadChatState();
+            if (!state || !Array.isArray(state.renderedMessages) || !state.renderedMessages.length) return;
+
+            if (state.activeProvider && providerLabelMap[state.activeProvider]) {
+                activeProvider = state.activeProvider;
+            }
+            if (typeof state.activeModelLabel === 'string' && state.activeModelLabel.trim()) {
+                activeModelLabel = state.activeModelLabel.trim();
+            }
+            if (typeof state.deepseekSessionId === 'string' && state.deepseekSessionId.trim()) {
+                deepseekSessionId = state.deepseekSessionId.trim();
+            }
+            historyAddedThisSession = Boolean(state.historyAddedThisSession);
+            updateModelDisplay();
+
+            chatMessages.innerHTML = '';
+            renderedMessages.length = 0;
+            conversationHistory.length = 0;
+
+            const safeRenderedMessages = state.renderedMessages
+                .filter((item) => item && (item.role === 'user' || item.role === 'assistant'))
+                .slice(-40);
+
+            for (const item of safeRenderedMessages) {
+                const safeText = String(item.text || '');
+                if (item.role === 'user') {
+                    appendUserMessage(safeText, null);
+                } else {
+                    appendAIMessage(safeText);
+                }
+                renderedMessages.push({ role: item.role, text: safeText });
+            }
+
+            const restoredConversation = Array.isArray(state.conversationHistory)
+                ? state.conversationHistory
+                    .filter((m) => m && typeof m === 'object' && (m.text || (Array.isArray(m.images) && m.images.length)))
+                    .slice(-24)
+                : [];
+            conversationHistory.push(...restoredConversation);
+
+            const firstUser = safeRenderedMessages.find((m) => m.role === 'user');
+            if (firstUser?.text) {
+                appendHistoryFromState(firstUser.text);
+            }
+
+            scrollToBottom();
+        }
 
         function scrollToBottom() {
             setTimeout(() => {
@@ -1352,7 +1445,7 @@
                         prompt,
                         images,
                         history: conversationHistory.slice(-12),
-                        sessionId: provider === 'deepseek' ? (deepseekSessionId || 'exploreai-web') : 'exploreai-web',
+                        sessionId: provider === 'deepseek' ? (deepseekSessionId || persistedSessionId) : persistedSessionId,
                         system: (localStorage.getItem('system_prompt_override') || '').trim() || undefined,
                         model,
                     })
@@ -1381,6 +1474,7 @@
 
                 if (provider === 'deepseek' && typeof data.sessionId === 'string' && data.sessionId.trim()) {
                     deepseekSessionId = data.sessionId.trim();
+                    saveChatState();
                 }
 
                 const reply = typeof data.reply === 'string' ? data.reply.trim() : '';
@@ -1450,6 +1544,9 @@
             await appendAIMessageSmooth(responseText);
             conversationHistory.push({ role: 'user', text: text || 'Analisa lampiran', images: currentBase64 ? [`data:${currentMime || 'image/jpeg'};base64,${currentBase64}`] : [] });
             conversationHistory.push({ role: 'assistant', text: responseText, images: [] });
+            renderedMessages.push({ role: 'user', text: text || 'Analisa lampiran' });
+            renderedMessages.push({ role: 'assistant', text: responseText });
+            saveChatState();
             sendBtn.disabled = false;
             isGenerating = false;
         }
@@ -1462,6 +1559,8 @@
                 handleSend();
             }
         });
+
+        restoreChatFromState();
 
     </script>
 </body>
