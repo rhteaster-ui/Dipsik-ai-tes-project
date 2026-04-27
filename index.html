@@ -476,18 +476,17 @@
 
                 <div class="space-y-3 p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5">
                     <div>
-                        <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Login DeepSeek (Opsional)</h5>
-                        <p class="text-xs text-slate-500 mt-1">Dipakai hanya saat model DeepSeek dipilih. Jika kosong, backend pakai env server.</p>
+                        <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider">System Prompt (Environment)</h5>
+                        <p class="text-xs text-slate-500 mt-1">Default diambil dari ENV backend. Anda bisa override dari sini, atau kosongkan untuk kembali ke default ENV.</p>
                     </div>
                     <div class="space-y-2">
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">Email DeepSeek</label>
-                        <input id="deepseekEmailInput" type="email" autocomplete="off" placeholder="email@domain.com" class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40">
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">System Prompt Aktif</label>
+                        <textarea id="systemPromptInput" rows="4" placeholder="Kamu adalah AI asisten ..." class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 resize-y"></textarea>
                     </div>
-                    <div class="space-y-2">
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">Password DeepSeek</label>
-                        <input id="deepseekPasswordInput" type="password" autocomplete="off" placeholder="Masukkan password" class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40">
+                    <div class="flex gap-2">
+                        <button id="saveSystemPromptBtn" type="button" class="flex-1 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">Simpan System Prompt</button>
+                        <button id="resetSystemPromptBtn" type="button" class="flex-1 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-gray-200 text-sm font-semibold transition-colors">Reset ke ENV</button>
                     </div>
-                    <button id="saveDeepseekCredsBtn" type="button" class="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">Simpan Login DeepSeek</button>
                 </div>
             </div>
 
@@ -591,31 +590,32 @@
         // ----------------------------------------------------
         const settingsModal = document.getElementById('settingsModal');
         const settingsContent = document.getElementById('settingsContent');
-        const deepseekEmailInput = document.getElementById('deepseekEmailInput');
-        const deepseekPasswordInput = document.getElementById('deepseekPasswordInput');
-        const saveDeepseekCredsBtn = document.getElementById('saveDeepseekCredsBtn');
+        const systemPromptInput = document.getElementById('systemPromptInput');
+        const saveSystemPromptBtn = document.getElementById('saveSystemPromptBtn');
+        const resetSystemPromptBtn = document.getElementById('resetSystemPromptBtn');
+        const DEFAULT_SYSTEM_PROMPT = 'Kamu asisten AI yang menjawab ringkas, natural, dan relevan.';
 
-        function loadDeepseekCredentials() {
-            const savedEmail = localStorage.getItem('deepseek_email') || '';
-            const savedPassword = localStorage.getItem('deepseek_password') || '';
-            deepseekEmailInput.value = savedEmail;
-            deepseekPasswordInput.value = savedPassword;
+        function loadSystemPromptSetting() {
+            const savedPrompt = localStorage.getItem('system_prompt_override') || DEFAULT_SYSTEM_PROMPT;
+            systemPromptInput.value = savedPrompt;
         }
 
-        function getDeepseekCredentials() {
-            return {
-                email: (localStorage.getItem('deepseek_email') || '').trim(),
-                password: localStorage.getItem('deepseek_password') || '',
-            };
+        function getSystemPrompt() {
+            return (localStorage.getItem('system_prompt_override') || '').trim();
         }
 
-        saveDeepseekCredsBtn.addEventListener('click', () => {
-            localStorage.setItem('deepseek_email', deepseekEmailInput.value.trim());
-            localStorage.setItem('deepseek_password', deepseekPasswordInput.value);
-            showToast('Login DeepSeek berhasil disimpan.');
+        saveSystemPromptBtn.addEventListener('click', () => {
+            localStorage.setItem('system_prompt_override', systemPromptInput.value.trim());
+            showToast('System prompt tersimpan.');
         });
 
-        loadDeepseekCredentials();
+        resetSystemPromptBtn.addEventListener('click', () => {
+            localStorage.removeItem('system_prompt_override');
+            systemPromptInput.value = '';
+            showToast('System prompt dikembalikan ke ENV backend.');
+        });
+
+        loadSystemPromptSetting();
 
         window.openSettingsPopup = function() {
             if (!sidebar.classList.contains('-translate-x-full')) {
@@ -730,7 +730,7 @@
             deepseek: 'DeepSeek',
         };
         const providerVersions = {
-            gemini: ['gemini-2.5-flash', 'gemini-2.5-pro'],
+            gemini: ['gemini-2.5-flash', 'gemini-universal'],
             gpt: ['gpt-4.1-mini', 'gpt-4.1', 'gpt-4o-mini'],
             perplexity: ['sonar', 'sonar-pro'],
             deepseek: ['deepseek-chat', 'deepseek-reasoner'],
@@ -1362,15 +1362,29 @@
         }
 
         function getActiveBackend() {
-            const remoteEndpoint = 'https://api.covenant.sbs/api/ai/gemini';
+            if (activeProvider === 'gemini' && activeModelLabel === 'gemini-universal') {
+                return {
+                    endpoint: '/api/gemini-universal',
+                    model: 'gemini-universal',
+                    provider: activeProvider,
+                };
+            }
+
+            const providerRoutes = {
+                gemini: '/api/chat',
+                gpt: '/api/gpt',
+                perplexity: '/api/gpt',
+                deepseek: '/api/deepseek',
+            };
             return {
-                endpoint: remoteEndpoint,
+                endpoint: providerRoutes[activeProvider] || '/api/chat',
                 model: activeModelLabel || 'gemini-2.5-flash',
+                provider: activeProvider,
             };
         }
 
         async function fetchAIResponse(prompt, imageBase64, mimeType) {
-            const { endpoint, model } = getActiveBackend();
+            const { endpoint, model, provider } = getActiveBackend();
             try {
                 const images = imageBase64
                     ? [`data:${mimeType || 'image/jpeg'};base64,${imageBase64}`]
@@ -1388,8 +1402,8 @@
                         images,
                         history: conversationHistory.slice(-12),
                         model,
-                        sessionId: 'exploreai-web',
-                        system: 'Kamu asisten AI yang menjawab ringkas, natural, dan relevan.',
+                        sessionId: provider === 'deepseek' ? (deepseekSessionId || 'exploreai-web') : 'exploreai-web',
+                        system: getSystemPrompt() || undefined,
                     })
                 });
 
@@ -1412,6 +1426,10 @@
 
                 if (!response.ok) {
                     throw new Error(data?.error || `Network error ${response.status}`);
+                }
+
+                if (provider === 'deepseek' && typeof data.sessionId === 'string' && data.sessionId.trim()) {
+                    deepseekSessionId = data.sessionId.trim();
                 }
 
                 const reply = typeof data.reply === 'string' ? data.reply.trim() : '';
