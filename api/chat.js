@@ -1,6 +1,8 @@
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
 const CORS_ORIGIN = process.env.CORS_ALLOW_ORIGIN || '*';
+const runtimeMemory = globalThis.__geminiChatMemory || new Map();
+globalThis.__geminiChatMemory = runtimeMemory;
 
 function applyCors(res) {
   res.setHeader('Access-Control-Allow-Origin', CORS_ORIGIN);
@@ -26,6 +28,39 @@ function buildHistoryParts(history = []) {
         ...((m.images || []).map((img) => toInlineData(img))),
       ],
     }));
+}
+
+function sanitizeHistory(history = []) {
+  return Array.isArray(history)
+    ? history
+        .filter((m) => m && typeof m === 'object' && (m.text || (Array.isArray(m.images) && m.images.length)))
+        .slice(-16)
+        .map((m) => ({
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          text: String(m.text || '').slice(0, 4000),
+          images: Array.isArray(m.images) ? m.images.slice(0, 2) : [],
+        }))
+    : [];
+}
+
+function mergeSessionHistory(sessionId, incomingHistory = []) {
+  const key = String(sessionId || '').trim();
+  const storedHistory = key && runtimeMemory.has(key) ? runtimeMemory.get(key) : [];
+  const merged = [...storedHistory, ...incomingHistory];
+  return sanitizeHistory(merged).slice(-16);
+}
+
+function persistSessionHistory(sessionId, history = [], userPrompt = '', promptImages = [], replyText = '', replyImages = []) {
+  const key = String(sessionId || '').trim();
+  if (!key) return;
+
+  const nextHistory = sanitizeHistory([
+    ...history,
+    { role: 'user', text: String(userPrompt || '').trim(), images: Array.isArray(promptImages) ? promptImages.slice(0, 2) : [] },
+    { role: 'assistant', text: String(replyText || '').trim(), images: Array.isArray(replyImages) ? replyImages.slice(0, 2) : [] },
+  ]).slice(-16);
+
+  runtimeMemory.set(key, nextHistory);
 }
 
 async function callGemini({ apiKey, model, body }) {
@@ -135,21 +170,13 @@ export default async function handler(req, res) {
       question = '',
       images = [],
       history = [],
+      sessionId = '',
       mode = 'chat',
       model = 'gemini-2.5-flash',
       system = '',
     } = req.body || {};
     const incomingPrompt = String(prompt || question || '').trim();
-    const sanitizedHistory = Array.isArray(history)
-      ? history
-          .filter((m) => m && typeof m === 'object' && (m.text || (Array.isArray(m.images) && m.images.length)))
-          .slice(-16)
-          .map((m) => ({
-            role: m.role === 'assistant' ? 'assistant' : 'user',
-            text: String(m.text || '').slice(0, 4000),
-            images: Array.isArray(m.images) ? m.images.slice(0, 2) : [],
-          }))
-      : [];
+    const sanitizedHistory = mergeSessionHistory(sessionId, sanitizeHistory(history));
     if (!incomingPrompt && !images.length) {
       return res.status(400).json({ error: 'Prompt wajib diisi.' });
     }
@@ -186,7 +213,9 @@ export default async function handler(req, res) {
           images,
           system: requestSystemPrompt || envSystemPrompt || defaultSystemPrompt,
         })
-      : extractOutput(await callGemini({ apiKey, model: 'gemini-2.5-flash', body }));
+      : extractOutput(await callGemini({ apiKey, model: requestedModel || 'gemini-2.5-flash', body }));
+
+    persistSessionHistory(sessionId, sanitizedHistory, incomingPrompt, images, output.reply, output.images);
 
     if (!output.reply && !output.images.length) {
       return res.status(200).json({ reply: 'Model tidak mengembalikan output. Coba ulangi prompt.', images: [] });
