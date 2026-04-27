@@ -1362,14 +1362,6 @@
         }
 
         function getActiveBackend() {
-            if (activeProvider === 'gemini' && activeModelLabel === 'gemini-universal') {
-                return {
-                    endpoint: 'https://api.covenant.sbs/api/ai/gemini',
-                    model: 'gemini-universal',
-                    provider: activeProvider,
-                };
-            }
-
             const providerRoutes = {
                 gemini: '/api/chat',
                 gpt: '/api/gpt',

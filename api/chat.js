@@ -1,5 +1,15 @@
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
+const CORS_ORIGIN = process.env.CORS_ALLOW_ORIGIN || '*';
+
+function applyCors(res) {
+  res.setHeader('Access-Control-Allow-Origin', CORS_ORIGIN);
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
+}
+
+
 function toInlineData(dataUrl) {
   const [meta, data] = dataUrl.split(',');
   const mime = meta?.match(/data:(.*?);base64/)?.[1] || 'image/png';
@@ -50,6 +60,44 @@ async function callGemini({ apiKey, model, body }) {
   throw new Error('Gemini API gagal setelah beberapa percobaan.');
 }
 
+
+async function callGeminiUniversal({ prompt, history = [], images = [], system = '' }) {
+  const endpoint = process.env.GEMINI_UNIVERSAL_URL || 'https://api.covenant.sbs/api/ai/gemini';
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      prompt,
+      question: prompt,
+      history,
+      images,
+      system,
+      model: 'gemini-universal',
+    }),
+  });
+
+  const raw = await response.text();
+  let data = {};
+
+  try {
+    data = raw ? JSON.parse(raw) : {};
+  } catch {
+    if (!response.ok) {
+      throw new Error(raw?.trim() || `Gemini Universal API ${response.status}: invalid response`);
+    }
+    return { reply: raw?.trim() || '', images: [] };
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || data?.message || `Gemini Universal API ${response.status}`);
+  }
+
+  return {
+    reply: String(data?.reply || data?.answer || data?.result || data?.msg || '').trim(),
+    images: Array.isArray(data?.images) ? data.images : [],
+  };
+}
+
 function extractOutput(data) {
   const parts = data?.candidates?.[0]?.content?.parts || [];
   let reply = '';
@@ -66,6 +114,12 @@ function extractOutput(data) {
 }
 
 export default async function handler(req, res) {
+  applyCors(res);
+
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -108,8 +162,8 @@ export default async function handler(req, res) {
       parts: [{ text: requestSystemPrompt || envSystemPrompt || defaultSystemPrompt }],
     };
 
-    const allowedModel = 'gemini-2.5-flash';
-    const safeModel = model === allowedModel ? model : allowedModel;
+    const requestedModel = String(model || '').trim();
+    const isUniversalModel = requestedModel === 'gemini-universal';
 
     contents.push({
       role: 'user',
@@ -125,8 +179,14 @@ export default async function handler(req, res) {
       },
     };
 
-    const data = await callGemini({ apiKey, model: safeModel, body });
-    const output = extractOutput(data);
+    const output = isUniversalModel
+      ? await callGeminiUniversal({
+          prompt: incomingPrompt,
+          history: sanitizedHistory,
+          images,
+          system: requestSystemPrompt || envSystemPrompt || defaultSystemPrompt,
+        })
+      : extractOutput(await callGemini({ apiKey, model: 'gemini-2.5-flash', body }));
 
     if (!output.reply && !output.images.length) {
       return res.status(200).json({ reply: 'Model tidak mengembalikan output. Coba ulangi prompt.', images: [] });
