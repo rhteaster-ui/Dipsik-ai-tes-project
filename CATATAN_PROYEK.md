@@ -14,6 +14,7 @@ Dokumen ini dibuat sebagai ringkasan cepat agar AI atau developer yang baru memb
 - **Endpoint Gemini** (`api/chat.js`) untuk request chat berbasis model Gemini (dengan dukungan input gambar via data URL).
 - **Endpoint GPT relay** (`api/gpt.js`) sebagai relay ke layanan streaming eksternal berbasis GPT dengan rate limit sederhana.
 - **Endpoint DeepSeek** (`api/deepseek.js`) untuk login, pembuatan session, multi-turn chat, serta upload gambar/file lewat klien DeepSeek.
+- **Endpoint Perplexity web** (`api/perplexity.js`) sebagai proxy logic TurboSeek (sources + similar questions + answer) dengan output yang sudah dibersihkan.
 - **Endpoint listing model** (`api/list.js`, `api/list-model.js`) untuk mengambil daftar model dari Google Generative Language API.
 
 ## Struktur
@@ -28,6 +29,7 @@ Struktur utama repository:
 │   ├── chat.js               # handler chat Gemini (POST)
 │   ├── gpt.js                # handler relay GPT stream (POST)
 │   ├── deepseek.js           # handler DeepSeek + session + upload file (POST)
+│   ├── perplexity.js         # handler Perplexity web (TurboSeek proxy)
 │   ├── list.js               # daftar model Gemini
 │   └── list-model.js         # varian endpoint daftar model
 ├── deepseek-example/
