@@ -92,6 +92,87 @@ async function runPerplexityWeb(question) {
   };
 }
 
+function normalizeHistory(history = []) {
+  if (!Array.isArray(history)) return [];
+
+  return history
+    .filter((item) => item && typeof item === 'object' && item.text)
+    .slice(-12)
+    .map((item) => ({
+      role: item.role === 'assistant' ? 'assistant' : 'user',
+      content: String(item.text || '').trim(),
+    }))
+    .filter((item) => item.content);
+}
+
+function resolvePerplexityMode(model = '') {
+  const value = String(model || '').trim().toLowerCase();
+  if (['chat-manual', 'manual-chat', 'perplexity-chat'].includes(value)) return 'chat-manual';
+  return 'turboseek';
+}
+
+async function runPerplexityChat({ question, history = [], model = '', system = '' }) {
+  const safeQuestion = String(question || '').trim();
+  if (!safeQuestion) throw new Error('Question is required.');
+
+  const apiKey = String(process.env.PERPLEXITY_API_KEY || '').trim();
+  if (!apiKey) {
+    throw new Error('PERPLEXITY_API_KEY belum di-set. Mode chat manual membutuhkan API key Perplexity.');
+  }
+
+  const chatModel = String(model || '').trim() || 'sonar';
+  const conversation = normalizeHistory(history);
+  const defaultSystem = 'Kamu asisten AI yang membantu user dalam bahasa Indonesia dengan jawaban jelas dan natural.';
+
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: chatModel,
+      messages: [
+        {
+          role: 'system',
+          content: String(system || process.env.PERPLEXITY_SYSTEM_PROMPT || defaultSystem).trim(),
+        },
+        ...conversation,
+        { role: 'user', content: safeQuestion },
+      ],
+      stream: false,
+    }),
+  });
+
+  const raw = await response.text();
+  let data = {};
+
+  try {
+    data = raw ? JSON.parse(raw) : {};
+  } catch {
+    if (!response.ok) {
+      throw new Error(raw?.trim() || `Perplexity chat gagal (HTTP ${response.status})`);
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || data?.error || `Perplexity chat gagal (HTTP ${response.status})`);
+  }
+
+  const reply = String(data?.choices?.[0]?.message?.content || '').trim();
+  const citations = Array.isArray(data?.citations)
+    ? data.citations.filter((item) => typeof item === 'string' && item.trim())
+    : [];
+
+  return {
+    reply: reply || 'Balasan model kosong. Coba ulangi pertanyaan.',
+    answer: reply || 'Balasan model kosong. Coba ulangi pertanyaan.',
+    sources: citations,
+    model: chatModel,
+    mode: 'chat-manual',
+  };
+}
+
 export default async function handler(req, res) {
   applyCors(res);
 
@@ -104,14 +185,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { question = '', prompt = '' } = req.body || {};
+    const { question = '', prompt = '', model = '', history = [], system = '' } = req.body || {};
     const finalQuestion = String(question || prompt || '').trim();
 
     if (!finalQuestion) {
       return res.status(400).json({ error: 'Please provide a question' });
     }
 
-    const result = await runPerplexityWeb(finalQuestion);
+    const mode = resolvePerplexityMode(model);
+    const result = mode === 'chat-manual'
+      ? await runPerplexityChat({ question: finalQuestion, history, model: 'sonar', system })
+      : await runPerplexityWeb(finalQuestion);
+
     return res.status(200).json(result);
   } catch (error) {
     console.error('perplexity handler error', error);
