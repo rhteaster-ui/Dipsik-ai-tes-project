@@ -359,6 +359,10 @@
                 </div>
                 
                 <div class="text-center mt-3">
+                    <div id="limitBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber-300/70 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30 text-[11px] font-semibold mb-2">
+                        <i data-lucide="gauge" class="w-3.5 h-3.5"></i>
+                        <span id="limitCounterText">Limit terpakai: 0 / 25</span>
+                    </div>
                     <p class="text-xs text-slate-500 dark:text-slate-500">
                         ExploreAi dapat membuat kesalahan. Harap periksa kembali informasi penting.
                     </p>
@@ -380,6 +384,16 @@
     <div id="versionSelectModal" class="fixed z-[100] hidden w-56 bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-xl shadow-2xl p-1.5">
         <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-2 py-1">Pilih Versi</div>
         <div id="versionOptionsContainer" class="space-y-0.5"></div>
+    </div>
+
+    <div id="modePanel" class="fixed right-4 bottom-36 md:bottom-32 z-[90] bg-white/95 dark:bg-darkcard/95 backdrop-blur border border-slate-200 dark:border-darkborder rounded-2xl shadow-xl p-3 w-[250px]">
+        <div class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Mode GPT VIP</div>
+        <div class="space-y-2 text-xs">
+            <label class="flex items-center justify-between"><span>Deep Research</span><input id="deepResearchToggle" type="checkbox"></label>
+            <label class="flex items-center justify-between"><span>Web Search</span><input id="webSearchToggle" type="checkbox"></label>
+            <label class="flex items-center justify-between"><span>Image Generation</span><input id="imageGenToggle" type="checkbox"></label>
+            <label class="flex items-center justify-between"><span>Agentic</span><input id="agenticToggle" type="checkbox"></label>
+        </div>
     </div>
 
     <!-- Modal Pengaturan & Profil Lengkap -->
@@ -520,6 +534,7 @@
         let lastMimeType = null;
         let deepseekSessionId = null;
         let isGenerating = false;
+        let usageLimitCount = Number(localStorage.getItem('fgsi_limit_used') || 0);
         let historyAddedThisSession = false; // Memastikan histori hanya dicatat sekali per sesi obrolan bersih
 
         // ----------------------------------------------------
@@ -533,6 +548,16 @@
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-4');
             }, 3000);
+        }
+        function refreshLimitBadge() {
+            const limitCounterText = document.getElementById('limitCounterText');
+            limitCounterText.textContent = `Limit terpakai: ${usageLimitCount} / 25`;
+        }
+        function consumeLimitAndNotify() {
+            usageLimitCount += 1;
+            localStorage.setItem('fgsi_limit_used', String(usageLimitCount));
+            refreshLimitBadge();
+            showToast(`Limit endpoint terpakai: ${usageLimitCount}/25`);
         }
 
         // ----------------------------------------------------
@@ -723,20 +748,12 @@
         const versionSelectModal = document.getElementById('versionSelectModal');
         const currentModelDisplay = document.getElementById('currentModelDisplay');
         const versionOptionsContainer = document.getElementById('versionOptionsContainer');
-        const providerLabelMap = {
-            gemini: 'Gemini',
-            gpt: 'GPT',
-            perplexity: 'Perplexity',
-            deepseek: 'DeepSeek',
-        };
+        const providerLabelMap = { gpt: 'ChatGPT AI [VIP]' };
         const providerVersions = {
-            gemini: ['gemini-2.5-flash', 'gemini-universal'],
-            gpt: ['gpt-4.1-mini', 'gpt-4.1', 'gpt-4o-mini'],
-            perplexity: ['turboseek', 'chat-manual'],
-            deepseek: ['deepseek-chat', 'deepseek-reasoner'],
+            gpt: ['openai/gpt-5.1-thinking', 'openai/gpt-5-chat:online', 'openai/gpt-5-chat', 'openai/gpt-5-nano', 'openai/gpt-5-mini', 'openai/o1', 'openai/o3', 'openai/o3-mini', 'openai/gpt-4o', 'openai/o4-mini', 'openai/gpt-4-1-mini', 'openai/gpt-4-1-nano', 'openai/gpt-5.3-chat', 'openai/gpt-5.4', 'openai/gpt-5.5'],
         };
-        let activeProvider = 'gemini';
-        let activeModelLabel = 'gemini-2.5-flash';
+        let activeProvider = 'gpt';
+        let activeModelLabel = 'openai/gpt-5.1-thinking';
         let modelPopupContext = { source: 'input', targetBtn: null };
 
         function positionPopup(anchor, modalEl, placeAbove = false) {
@@ -1392,25 +1409,21 @@
         }
 
         function getActiveBackend() {
-            const providerRoutes = {
-                gemini: '/api/chat',
-                gpt: '/api/gpt',
-                perplexity: '/api/perplexity',
-                deepseek: '/api/deepseek',
-            };
             return {
-                endpoint: providerRoutes[activeProvider] || '/api/chat',
-                model: activeModelLabel || 'gemini-2.5-flash',
+                endpoint: '/api/gpt',
+                model: activeModelLabel || 'openai/gpt-5.1-thinking',
                 provider: activeProvider,
             };
         }
 
         async function fetchAIResponse(prompt, imageBase64, mimeType) {
-            const { endpoint, model, provider } = getActiveBackend();
+            const { endpoint, model } = getActiveBackend();
             try {
-                const images = imageBase64
-                    ? [`data:${mimeType || 'image/jpeg'};base64,${imageBase64}`]
-                    : [];
+                const messages = conversationHistory.slice(-12).map((item) => ({
+                    role: item.role,
+                    content: item.text || ''
+                }));
+                messages.push({ role: 'user', content: prompt || 'Analisa lampiran' });
 
                 const response = await fetch(endpoint, {
                     method: 'POST',
@@ -1419,13 +1432,15 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        question: prompt,
                         prompt,
-                        images,
-                        history: conversationHistory.slice(-12),
+                        apikey: 'free',
                         model,
-                        sessionId: provider === 'deepseek' ? (deepseekSessionId || 'exploreai-web') : 'exploreai-web',
-                        system: getSystemPrompt() || undefined,
+                        messages,
+                        isDeepResearchMode: document.getElementById('deepResearchToggle').checked,
+                        isWebSearchMode: document.getElementById('webSearchToggle').checked,
+                        isImageGenerationMode: document.getElementById('imageGenToggle').checked,
+                        isAgenticMode: document.getElementById('agenticToggle').checked,
+                        system: getSystemPrompt() || undefined
                     })
                 });
 
@@ -1450,9 +1465,7 @@
                     throw new Error(data?.error || `Network error ${response.status}`);
                 }
 
-                if (provider === 'deepseek' && typeof data.sessionId === 'string' && data.sessionId.trim()) {
-                    deepseekSessionId = data.sessionId.trim();
-                }
+                consumeLimitAndNotify();
 
                 const responseSources = normalizeSources(data?.sources);
 
@@ -1467,6 +1480,10 @@
 
                 const fallback = typeof data.msg === 'string' ? data.msg.trim() : '';
                 if (fallback) return { text: fallback, sources: responseSources };
+                const imageUrl = data?.imageUrl || data?.image || data?.result?.image;
+                if (typeof imageUrl === 'string' && imageUrl.trim()) {
+                    return { text: `Gambar berhasil dibuat.\n\n![Generated Image](${imageUrl.trim()})`, sources: [] };
+                }
 
                 if (typeof data.error === 'string' && data.error.trim()) {
                     return { text: `Maaf, terjadi kesalahan: ${data.error.trim()}`, sources: [] };
@@ -1514,6 +1531,9 @@
             appendUserMessage(text, currentFile);
 
             const typingId = appendTypingIndicator();
+            if (document.getElementById('imageGenToggle').checked) {
+                showToast('Sedang generate gambar... mohon tunggu.');
+            }
             sendBtn.disabled = true;
             isGenerating = true;
 
@@ -1537,6 +1557,7 @@
                 handleSend();
             }
         });
+        refreshLimitBadge();
 
     </script>
 </body>
