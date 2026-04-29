@@ -386,14 +386,9 @@
         <div id="versionOptionsContainer" class="space-y-0.5"></div>
     </div>
 
-    <div id="modePanel" class="fixed right-4 bottom-36 md:bottom-32 z-[90] bg-white/95 dark:bg-darkcard/95 backdrop-blur border border-slate-200 dark:border-darkborder rounded-2xl shadow-xl p-3 w-[250px]">
-        <div class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Mode GPT VIP</div>
-        <div class="space-y-2 text-xs">
-            <label class="flex items-center justify-between"><span>Deep Research</span><input id="deepResearchToggle" type="checkbox"></label>
-            <label class="flex items-center justify-between"><span>Web Search</span><input id="webSearchToggle" type="checkbox"></label>
-            <label class="flex items-center justify-between"><span>Image Generation</span><input id="imageGenToggle" type="checkbox"></label>
-            <label class="flex items-center justify-between"><span>Agentic</span><input id="agenticToggle" type="checkbox"></label>
-        </div>
+    <div id="modePanel" class="fixed right-4 bottom-36 md:bottom-32 z-[90] bg-white/95 dark:bg-darkcard/95 backdrop-blur border border-slate-200 dark:border-darkborder rounded-2xl shadow-xl p-3 w-[280px]">
+        <div class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Pilih Versi GPT</div>
+        <div id="modeVersionContainer" class="space-y-1.5 text-xs max-h-48 overflow-auto pr-1"></div>
     </div>
 
     <!-- Modal Pengaturan & Profil Lengkap -->
@@ -748,7 +743,7 @@
         const versionSelectModal = document.getElementById('versionSelectModal');
         const currentModelDisplay = document.getElementById('currentModelDisplay');
         const versionOptionsContainer = document.getElementById('versionOptionsContainer');
-        const providerLabelMap = { gpt: 'ChatGPT AI [VIP]' };
+        const providerLabelMap = { gpt: 'ChatGPT AI' };
         const providerVersions = {
             gpt: ['openai/gpt-5.1-thinking', 'openai/gpt-5-chat:online', 'openai/gpt-5-chat', 'openai/gpt-5-nano', 'openai/gpt-5-mini', 'openai/o1', 'openai/o3', 'openai/o3-mini', 'openai/gpt-4o', 'openai/o4-mini', 'openai/gpt-4-1-mini', 'openai/gpt-4-1-nano', 'openai/gpt-5.3-chat', 'openai/gpt-5.4', 'openai/gpt-5.5'],
         };
@@ -789,6 +784,18 @@
                 <button onclick="selectVersion('${version}')" data-version-option="${version}" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">${version}</button>
             `).join('');
             highlightVersionOption();
+        }
+        function renderModePanelVersions() {
+            const panel = document.getElementById('modeVersionContainer');
+            if (!panel) return;
+            const versions = providerVersions[activeProvider] || [];
+            panel.innerHTML = versions.map((version) => `
+                <button onclick="selectVersion('${version}')" class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg transition-colors ${activeModelLabel === version ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300' : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}">
+                    <span class="truncate">${version}</span>
+                    ${activeModelLabel === version ? '<i data-lucide="check" class="w-3.5 h-3.5 shrink-0"></i>' : ''}
+                </button>
+            `).join('');
+            lucide.createIcons();
         }
 
         function highlightVersionOption() {
@@ -833,12 +840,14 @@
             const versions = providerVersions[activeProvider] || [];
             activeModelLabel = versions[0] || activeModelLabel;
             updateModelDisplay();
+            renderModePanelVersions();
             showToast(`Provider aktif: ${providerLabelMap[activeProvider]}`);
             closeProviderPopup();
         };
 
         window.selectVersion = function(versionName) {
             activeModelLabel = versionName;
+            renderModePanelVersions();
             if (modelPopupContext.source === 'response' && modelPopupContext.targetBtn) {
                 regenerateResponse(modelPopupContext.targetBtn, { forceModelLabel: versionName });
             } else {
@@ -855,6 +864,7 @@
                 closeVersionPopup();
             }
         });
+        renderModePanelVersions();
 
         // ----------------------------------------------------
         // LOGIKA SALIN TEKS (Fallback Anti Error)
@@ -1436,10 +1446,10 @@
                         apikey: 'free',
                         model,
                         messages,
-                        isDeepResearchMode: document.getElementById('deepResearchToggle').checked,
-                        isWebSearchMode: document.getElementById('webSearchToggle').checked,
-                        isImageGenerationMode: document.getElementById('imageGenToggle').checked,
-                        isAgenticMode: document.getElementById('agenticToggle').checked,
+                        isDeepResearchMode: false,
+                        isWebSearchMode: false,
+                        isImageGenerationMode: false,
+                        isAgenticMode: false,
                         system: getSystemPrompt() || undefined
                     })
                 });
@@ -1531,9 +1541,6 @@
             appendUserMessage(text, currentFile);
 
             const typingId = appendTypingIndicator();
-            if (document.getElementById('imageGenToggle').checked) {
-                showToast('Sedang generate gambar... mohon tunggu.');
-            }
             sendBtn.disabled = true;
             isGenerating = true;
 
