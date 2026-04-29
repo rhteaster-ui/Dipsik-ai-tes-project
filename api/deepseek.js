@@ -1,89 +1,109 @@
-import { createRequire } from 'node:module';
+import { randomBytes } from 'node:crypto';
 
-const require = createRequire(import.meta.url);
-const { DeepSeekClient } = require('../deepseek-example/deepseek.js');
+const base = 'https://api-preview.chatgot.io';
 
-const runtimeState = globalThis.__deepseekRuntime || {
-  client: null,
-  isLoggedIn: false,
-  sessions: new Map(),
-  credsKey: null,
+const defaultHeaders = {
+  accept: 'text/event-stream',
+  'accept-language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+  'content-type': 'application/json',
+  origin: 'https://deepseekfree.ai',
+  referer: 'https://deepseekfree.ai/',
+  'sec-ch-ua': '"Chromium";v="137", "Not/A)Brand";v="24"',
+  'sec-ch-ua-mobile': '?1',
+  'sec-ch-ua-platform': '"Android"',
+  'sec-fetch-dest': 'empty',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-site': 'cross-site',
+  'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
 };
-globalThis.__deepseekRuntime = runtimeState;
 
-function sanitizeCredential(value) {
-  return typeof value === 'string' ? value.trim() : '';
+function randomDeviceId() {
+  return randomBytes(16).toString('hex');
 }
 
-async function ensureClient(auth = {}) {
-  const bodyEmail = sanitizeCredential(auth?.email);
-  const bodyPassword = sanitizeCredential(auth?.password);
-  const envEmail = sanitizeCredential(process.env.DEEPSEEK_EMAIL);
-  const envPassword = sanitizeCredential(process.env.DEEPSEEK_PASSWORD);
-  const email = bodyEmail || envEmail;
-  const password = bodyPassword || envPassword;
-
-  if (!email || !password) {
-    throw new Error('Login DeepSeek belum diisi. Isi DEEPSEEK_EMAIL/DEEPSEEK_PASSWORD di server atau isi email/password di Pengaturan frontend.');
-  }
-
-  const nextCredsKey = `${email}::${password}`;
-  if (!runtimeState.client || runtimeState.credsKey !== nextCredsKey) {
-    runtimeState.client = new DeepSeekClient();
-    runtimeState.isLoggedIn = false;
-    runtimeState.sessions = new Map();
-    runtimeState.credsKey = nextCredsKey;
-  }
-
-  if (!runtimeState.isLoggedIn) {
-    await runtimeState.client.login(email, password);
-    runtimeState.isLoggedIn = true;
-  }
-
-  return runtimeState.client;
-}
-
-function dataUrlToBuffer(dataUrl) {
-  if (!dataUrl || typeof dataUrl !== 'string') return null;
+function parseDataUrl(dataUrl) {
+  if (typeof dataUrl !== 'string') return null;
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
   if (!match) return null;
 
-  const mimeType = match[1] || 'application/octet-stream';
-  const data = match[2] || '';
-  if (!data) return null;
-
   return {
-    buffer: Buffer.from(data, 'base64'),
-    mimeType,
+    mimeType: match[1] || 'application/octet-stream',
+    buffer: Buffer.from(match[2] || '', 'base64'),
   };
 }
 
-function buildFallbackPrompt(prompt, history = []) {
-  const safePrompt = String(prompt || '').trim();
-  const historyItems = Array.isArray(history)
-    ? history
-        .filter((m) => m && typeof m === 'object' && (m.text || (Array.isArray(m.images) && m.images.length)))
-        .slice(-6)
-    : [];
+function parseTextFromFileLike(file, idx) {
+  if (!file || typeof file !== 'object') return null;
+  const name = String(file.name || `file-${idx + 1}`).trim();
+  const mimeType = String(file.mimeType || file.type || '').toLowerCase();
 
-  if (!historyItems.length) return safePrompt;
+  if (typeof file.text === 'string') {
+    return { name, text: file.text.trim() };
+  }
 
-  const historyText = historyItems
-    .map((item) => {
-      const role = item.role === 'assistant' ? 'Assistant' : 'User';
-      const text = String(item.text || '').trim();
-      return `${role}: ${text}`;
-    })
-    .filter(Boolean)
-    .join('\n');
+  if (typeof file.dataUrl === 'string') {
+    const parsed = parseDataUrl(file.dataUrl);
+    if (parsed && (parsed.mimeType.startsWith('text/') || parsed.mimeType.includes('json') || parsed.mimeType.includes('xml'))) {
+      return { name, text: parsed.buffer.toString('utf8').trim() };
+    }
+  }
 
-  return [
-    'Lanjutkan percakapan berikut dengan konteks yang sama.',
-    'Riwayat:',
-    historyText,
-    '',
-    `Pertanyaan terbaru: ${safePrompt}`,
-  ].join('\n');
+  if (typeof file.base64 === 'string' && mimeType && (mimeType.startsWith('text/') || mimeType.includes('json') || mimeType.includes('xml'))) {
+    return { name, text: Buffer.from(file.base64, 'base64').toString('utf8').trim() };
+  }
+
+  return null;
+}
+
+function withFileContext(prompt, files = []) {
+  const snippets = (Array.isArray(files) ? files : [])
+    .map((file, idx) => parseTextFromFileLike(file, idx))
+    .filter((item) => item && item.text)
+    .slice(0, 3)
+    .map((item) => `Nama file: ${item.name}\nIsi file:\n${item.text.slice(0, 12000)}`);
+
+  if (!snippets.length) return prompt;
+
+  return `${prompt}\n\nGunakan konteks file berikut jika relevan:\n\n${snippets.join('\n\n---\n\n')}`;
+}
+
+async function chat(message, modelId = 2) {
+  const res = await fetch(`${base}/api/v1/char-gpt/conversations`, {
+    method: 'POST',
+    headers: defaultHeaders,
+    body: JSON.stringify({
+      device_id: randomDeviceId(),
+      model_id: Number.isFinite(Number(modelId)) ? Number(modelId) : 2,
+      include_reasoning: false,
+      messages: [{ role: 'user', content: message }],
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`DeepSeek API ${res.status}: ${text || 'Request gagal'}`);
+  }
+
+  if (!res.body) return '';
+
+  let data = '';
+  const decoder = new TextDecoder();
+  for await (const chunk of res.body) {
+    const lines = decoder.decode(chunk, { stream: true }).split('\n');
+    for (const line of lines) {
+      if (!line.startsWith('data:')) continue;
+      try {
+        const json = JSON.parse(line.slice(5).trim());
+        if (json?.data?.content) {
+          data += json.data.content;
+        }
+      } catch {
+        // abaikan chunk yang bukan JSON valid
+      }
+    }
+  }
+
+  return data.trim();
 }
 
 export default async function handler(req, res) {
@@ -92,75 +112,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    const {
-      prompt = '',
-      images = [],
-      history = [],
-      sessionId,
-      thinking = true,
-      search = false,
-      auth = {},
-    } = req.body || {};
+    const { prompt = '', question = '', files = [], model = '' } = req.body || {};
+    const rawPrompt = String(prompt || question || '').trim();
+    if (!rawPrompt) return res.status(400).json({ error: 'Prompt wajib diisi.' });
 
-    const safePrompt = String(prompt || '').trim().slice(0, 6000);
-    if (!safePrompt) {
-      return res.status(400).json({ error: 'Prompt wajib diisi.' });
-    }
-
-    const client = await ensureClient(auth);
-    const conversationKey = String(sessionId || '').trim() || null;
-
-    let chatSessionId = conversationKey ? runtimeState.sessions.get(conversationKey) : null;
-    const isNewSession = !chatSessionId;
-
-    if (!chatSessionId) {
-      chatSessionId = await client.createSession();
-      if (conversationKey) {
-        runtimeState.sessions.set(conversationKey, chatSessionId);
-      }
-    }
-
-    const fileIds = [];
-    for (const image of Array.isArray(images) ? images.slice(0, 1) : []) {
-      const parsed = dataUrlToBuffer(image);
-      if (!parsed) continue;
-      const extension = parsed.mimeType.split('/')[1] || 'bin';
-      const filename = `upload-${Date.now()}.${extension}`;
-      const fileId = await client.uploadFile(parsed.buffer, filename, parsed.mimeType);
-      await client.waitForFile(fileId, { maxAttempts: 12, intervalMs: 1500 });
-      fileIds.push(fileId);
-    }
-
-    const message = isNewSession
-      ? buildFallbackPrompt(safePrompt, history)
-      : safePrompt;
-
-    const reply = await client.chat(chatSessionId, message, {
-      thinking: Boolean(thinking),
-      search: Boolean(search),
-      fileIds,
-    });
-
-    const stableSessionId = conversationKey || chatSessionId;
-    runtimeState.sessions.set(stableSessionId, chatSessionId);
+    const modelId = String(model).toLowerCase().includes('reasoner') ? 3 : 2;
+    const finalPrompt = withFileContext(rawPrompt, files);
+    const reply = await chat(finalPrompt, modelId);
 
     return res.status(200).json({
-      reply: String(reply?.content || '').trim(),
-      model: 'deepseek-web',
-      sessionId: stableSessionId,
-      messageId: reply?.message_id || null,
+      reply: reply || 'Balasan model kosong. Coba ulangi pertanyaan.',
+      model: modelId === 3 ? 'deepseek-reasoner' : 'deepseek-chat',
+      sessionId: `chatgot-${Date.now()}`,
     });
   } catch (error) {
-    const lowerMessage = String(error?.message || '').toLowerCase();
-
-    if (lowerMessage.includes('login') || lowerMessage.includes('token') || lowerMessage.includes('auth')) {
-      runtimeState.isLoggedIn = false;
-    }
-
     console.error('deepseek handler error', error);
-    return res.status(500).json({
-      error: error?.message || 'Internal Server Error',
-      code: error?.code || null,
-    });
+    return res.status(500).json({ error: error?.message || 'Internal Server Error' });
   }
 }
