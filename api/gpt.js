@@ -78,7 +78,7 @@ function normalizeImageUrls(images = []) {
     .slice(0, 2);
 }
 
-async function noteGptChat({ message, imageUrls = [] }) {
+async function noteGptChat({ message, imageUrls = [], accept = 'text/event-stream' }) {
   const conversationId = crypto.randomUUID();
   const response = await fetch('https://notegpt.io/api/v2/chat/stream', {
     method: 'POST',
@@ -86,7 +86,7 @@ async function noteGptChat({ message, imageUrls = [] }) {
       'Content-Type': 'application/json',
       'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36',
       Referer: 'https://notegpt.io/ai-chat',
-      Accept: 'text/event-stream',
+      Accept: accept,
     },
     body: JSON.stringify({
       message,
@@ -165,6 +165,10 @@ async function requestWithRetry(payload) {
       return result;
     } catch (error) {
       const msg = String(error?.message || '').toLowerCase();
+      if (msg.includes('406')) {
+        const fallbackResult = await noteGptChat({ ...payload, accept: '*/*' });
+        if (fallbackResult?.message) return fallbackResult;
+      }
       const retryable = msg.includes('429') || msg.includes('500') || msg.includes('502') || msg.includes('503') || msg.includes('504') || msg.includes('timeout');
 
       if (!retryable || attempt >= maxAttempts) {
