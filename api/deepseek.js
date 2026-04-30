@@ -1,8 +1,9 @@
 import { randomBytes } from 'node:crypto';
 
 const base = 'https://api-preview.chatgot.io';
+const REQUEST_TIMEOUT_MS = 45000;
 
-const defaultHeaders = {
+const hdrs = {
   accept: 'text/event-stream',
   'accept-language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
   'content-type': 'application/json',
@@ -17,93 +18,103 @@ const defaultHeaders = {
   'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
 };
 
-function randomDeviceId() {
-  return randomBytes(16).toString('hex');
+const randomDeviceId = () => randomBytes(16).toString('hex');
+
+function makeRequestId() {
+  return `ds-${Date.now()}-${randomBytes(4).toString('hex')}`;
 }
 
-function parseDataUrl(dataUrl) {
-  if (typeof dataUrl !== 'string') return null;
-  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-  if (!match) return null;
-
-  return {
-    mimeType: match[1] || 'application/octet-stream',
-    buffer: Buffer.from(match[2] || '', 'base64'),
+function safeJsonLog(level, event, fields = {}) {
+  const payload = {
+    ts: new Date().toISOString(),
+    level,
+    event,
+    ...fields,
   };
+  const line = JSON.stringify(payload);
+  if (level === 'error') process.stderr.write(`${line}\n`);
+  else process.stdout.write(`${line}\n`);
 }
 
-function parseTextFromFileLike(file, idx) {
-  if (!file || typeof file !== 'object') return null;
-  const name = String(file.name || `file-${idx + 1}`).trim();
-  const mimeType = String(file.mimeType || file.type || '').toLowerCase();
+function extractTextFileContext(files = []) {
+  if (!Array.isArray(files)) return [];
 
-  if (typeof file.text === 'string') {
-    return { name, text: file.text.trim() };
-  }
+  return files
+    .slice(0, 3)
+    .map((file, idx) => {
+      if (!file || typeof file !== 'object') return null;
+      const name = String(file.name || `file-${idx + 1}`).trim();
+      const mime = String(file.mimeType || file.type || '').toLowerCase();
 
-  if (typeof file.dataUrl === 'string') {
-    const parsed = parseDataUrl(file.dataUrl);
-    if (parsed && (parsed.mimeType.startsWith('text/') || parsed.mimeType.includes('json') || parsed.mimeType.includes('xml'))) {
-      return { name, text: parsed.buffer.toString('utf8').trim() };
-    }
-  }
+      if (typeof file.text === 'string' && file.text.trim()) {
+        return { name, text: file.text.trim().slice(0, 12000) };
+      }
 
-  if (typeof file.base64 === 'string' && mimeType && (mimeType.startsWith('text/') || mimeType.includes('json') || mimeType.includes('xml'))) {
-    return { name, text: Buffer.from(file.base64, 'base64').toString('utf8').trim() };
-  }
+      if (typeof file.base64 === 'string' && file.base64 && (mime.startsWith('text/') || mime.includes('json') || mime.includes('xml'))) {
+        try {
+          const text = Buffer.from(file.base64, 'base64').toString('utf8').trim();
+          if (text) return { name, text: text.slice(0, 12000) };
+        } catch {
+          return null;
+        }
+      }
 
-  return null;
+      return null;
+    })
+    .filter(Boolean);
 }
 
 function withFileContext(prompt, files = []) {
-  const snippets = (Array.isArray(files) ? files : [])
-    .map((file, idx) => parseTextFromFileLike(file, idx))
-    .filter((item) => item && item.text)
-    .slice(0, 3)
-    .map((item) => `Nama file: ${item.name}\nIsi file:\n${item.text.slice(0, 12000)}`);
+  const contexts = extractTextFileContext(files);
+  if (!contexts.length) return prompt;
 
-  if (!snippets.length) return prompt;
-
-  return `${prompt}\n\nGunakan konteks file berikut jika relevan:\n\n${snippets.join('\n\n---\n\n')}`;
+  const joined = contexts.map((file) => `Nama file: ${file.name}\nIsi file:\n${file.text}`).join('\n\n---\n\n');
+  return `${prompt}\n\nGunakan konteks file berikut jika relevan:\n\n${joined}`;
 }
 
-async function chat(message, modelId = 2) {
-  const res = await fetch(`${base}/api/v1/char-gpt/conversations`, {
-    method: 'POST',
-    headers: defaultHeaders,
-    body: JSON.stringify({
-      device_id: randomDeviceId(),
-      model_id: Number.isFinite(Number(modelId)) ? Number(modelId) : 2,
-      include_reasoning: false,
-      messages: [{ role: 'user', content: message }],
-    }),
-  });
+async function chat(message, modelId = 2, requestId = makeRequestId()) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`DeepSeek API ${res.status}: ${text || 'Request gagal'}`);
-  }
+  try {
+    const res = await fetch(`${base}/api/v1/char-gpt/conversations`, {
+      method: 'POST',
+      headers: hdrs,
+      signal: controller.signal,
+      body: JSON.stringify({
+        device_id: randomDeviceId(),
+        model_id: modelId,
+        include_reasoning: false,
+        messages: [{ role: 'user', content: message }],
+      }),
+    });
 
-  if (!res.body) return '';
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`DeepSeek API ${res.status}: ${text || 'Request gagal'}`);
+    }
 
-  let data = '';
-  const decoder = new TextDecoder();
-  for await (const chunk of res.body) {
-    const lines = decoder.decode(chunk, { stream: true }).split('\n');
-    for (const line of lines) {
-      if (!line.startsWith('data:')) continue;
-      try {
-        const json = JSON.parse(line.slice(5).trim());
-        if (json?.data?.content) {
-          data += json.data.content;
+    if (!res.body) return '';
+
+    let data = '';
+    const decoder = new TextDecoder();
+    for await (const chunk of res.body) {
+      const lines = decoder.decode(chunk, { stream: true }).split('\n');
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        try {
+          const json = JSON.parse(line.slice(5).trim());
+          if (json?.data?.content) data += json.data.content;
+        } catch {
+          safeJsonLog('warn', 'deepseek.sse_chunk_parse_failed', { requestId });
         }
-      } catch {
-        // abaikan chunk yang bukan JSON valid
       }
     }
-  }
 
-  return data.trim();
+    return data.trim();
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export default async function handler(req, res) {
@@ -111,22 +122,37 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  const requestId = makeRequestId();
+
   try {
     const { prompt = '', question = '', files = [], model = '' } = req.body || {};
     const rawPrompt = String(prompt || question || '').trim();
-    if (!rawPrompt) return res.status(400).json({ error: 'Prompt wajib diisi.' });
+
+    if (!rawPrompt) {
+      return res.status(400).json({ error: 'Prompt wajib diisi.', requestId });
+    }
 
     const modelId = String(model).toLowerCase().includes('reasoner') ? 3 : 2;
     const finalPrompt = withFileContext(rawPrompt, files);
-    const reply = await chat(finalPrompt, modelId);
+    const reply = await chat(finalPrompt, modelId, requestId);
 
     return res.status(200).json({
       reply: reply || 'Balasan model kosong. Coba ulangi pertanyaan.',
       model: modelId === 3 ? 'deepseek-reasoner' : 'deepseek-chat',
+      requestId,
       sessionId: `chatgot-${Date.now()}`,
     });
   } catch (error) {
-    console.error('deepseek handler error', error);
-    return res.status(500).json({ error: error?.message || 'Internal Server Error' });
+    safeJsonLog('error', 'deepseek.handler_error', {
+      requestId,
+      message: error?.message || 'Internal Server Error',
+      name: error?.name || 'Error',
+    });
+
+    const isTimeout = error?.name === 'AbortError';
+    return res.status(isTimeout ? 504 : 500).json({
+      error: isTimeout ? 'Timeout saat menghubungi DeepSeek. Coba ulangi.' : (error?.message || 'Internal Server Error'),
+      requestId,
+    });
   }
 }
