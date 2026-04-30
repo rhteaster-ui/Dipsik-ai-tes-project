@@ -125,14 +125,16 @@ export default async function handler(req, res) {
   const requestId = makeRequestId();
 
   try {
-    const { prompt = '', question = '', files = [], model = '' } = req.body || {};
-    const rawPrompt = String(prompt || question || '').trim();
+    const { prompt = '', question = '', messages = [], files = [], model = '' } = req.body || {};
+    const latestMessage = Array.isArray(messages) ? [...messages].reverse().find((m) => m && m.role === 'user' && typeof m.content === 'string' && m.content.trim()) : null;
+    const rawPrompt = String(prompt || question || latestMessage?.content || '').trim();
 
     if (!rawPrompt) {
       return res.status(400).json({ error: 'Prompt wajib diisi.', requestId });
     }
 
-    const modelId = String(model).toLowerCase().includes('reasoner') ? 3 : 2;
+    const normalizedModel = String(model || '').toLowerCase();
+    const modelId = normalizedModel.includes('reasoner') ? 3 : 2;
     const finalPrompt = withFileContext(rawPrompt, files);
     const reply = await chat(finalPrompt, modelId, requestId);
 
