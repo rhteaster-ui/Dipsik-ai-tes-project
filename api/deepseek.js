@@ -97,9 +97,12 @@ async function chat(message, modelId = 2, requestId = makeRequestId()) {
     if (!res.body) return '';
 
     let data = '';
+    let sseBuffer = '';
     const decoder = new TextDecoder();
     for await (const chunk of res.body) {
-      const lines = decoder.decode(chunk, { stream: true }).split('\n');
+      sseBuffer += decoder.decode(chunk, { stream: true });
+      const lines = sseBuffer.split('\n');
+      sseBuffer = lines.pop() || '';
       for (const line of lines) {
         if (!line.startsWith('data:')) continue;
         try {
@@ -108,6 +111,15 @@ async function chat(message, modelId = 2, requestId = makeRequestId()) {
         } catch {
           safeJsonLog('warn', 'deepseek.sse_chunk_parse_failed', { requestId });
         }
+      }
+    }
+
+    if (sseBuffer.startsWith('data:')) {
+      try {
+        const tailJson = JSON.parse(sseBuffer.slice(5).trim());
+        if (tailJson?.data?.content) data += tailJson.data.content;
+      } catch {
+        safeJsonLog('warn', 'deepseek.sse_tail_parse_failed', { requestId });
       }
     }
 
