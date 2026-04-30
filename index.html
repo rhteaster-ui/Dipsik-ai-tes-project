@@ -955,12 +955,15 @@
             sendBtn.disabled = true;
             isGenerating = true;
 
+            const aiShell = createAIMessageShell();
+            if (isLikelyImagePrompt(lastPrompt)) renderImageGenerationPlaceholder(aiShell);
             const responsePayload = await fetchAIResponse(lastPrompt, lastImageBase64, lastMimeType);
             const renderedText = responsePayload?.text || '';
             const renderedSources = Array.isArray(responsePayload?.sources) ? responsePayload.sources : [];
             
             document.getElementById(typingId).remove();
-            await appendAIMessageSmooth(renderedText, renderedSources);
+            aiShell.innerHTML = `${renderMarkdown(renderedText)}${renderSourceLinks(renderedSources)}`;
+            if (responsePayload?.imageUrl) appendGeneratedImage(aiShell, responsePayload.imageUrl);
             sendBtn.disabled = false;
             isGenerating = false;
             if (options.forceModelLabel) {
@@ -1372,6 +1375,46 @@
             scrollToBottom();
         }
 
+        function isLikelyImagePrompt(prompt = '') {
+            const normalized = String(prompt || '').toLowerCase();
+            return /(buat|generate|create|gambar|image|ilustrasi|poster|render)/.test(normalized);
+        }
+
+        function renderImageGenerationPlaceholder(contentEl) {
+            if (!contentEl) return;
+            contentEl.innerHTML = `
+                <div class="rounded-2xl border border-blue-300/40 dark:border-blue-400/30 bg-gradient-to-br from-blue-100/50 to-indigo-100/40 dark:from-blue-500/10 dark:to-indigo-500/10 p-4 animate-pulse">
+                    <div class="h-5 w-44 bg-blue-200/70 dark:bg-blue-400/30 rounded mb-4"></div>
+                    <div class="aspect-square max-w-sm w-full rounded-xl border border-dashed border-blue-400/70 dark:border-blue-300/40 flex items-center justify-center overflow-hidden">
+                        <div class="w-24 h-24 rounded-full border-4 border-blue-300/50 border-t-blue-600 dark:border-blue-400/40 dark:border-t-blue-200 animate-spin"></div>
+                    </div>
+                    <p class="text-xs mt-3 text-blue-700 dark:text-blue-300">Sedang membuat gambar, mohon tunggu...</p>
+                </div>
+            `;
+            scrollToBottom();
+        }
+
+        function appendGeneratedImage(contentEl, imageUrl) {
+            if (!contentEl || typeof imageUrl !== 'string' || !imageUrl.trim()) return;
+            const safeUrl = escapeHtml(imageUrl.trim());
+            const imageBlock = `
+                <div class="mt-4">
+                    <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/5">
+                        <img src="${safeUrl}" alt="Generated image" loading="lazy" class="w-full h-auto object-cover">
+                    </div>
+                    <div class="mt-2">
+                        <a href="${safeUrl}" download="generated-image.png" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                            Download Gambar
+                        </a>
+                    </div>
+                </div>
+            `;
+            contentEl.insertAdjacentHTML('beforeend', imageBlock);
+            lucide.createIcons();
+            scrollToBottom();
+        }
+
         async function appendAIMessageSmooth(text, sources = []) {
             const contentEl = createAIMessageShell();
             const normalized = text || '';
@@ -1445,7 +1488,7 @@
                     if (!response.ok) {
                         throw new Error(fallbackMessage);
                     }
-                    return { text: `Maaf, terjadi kesalahan: ${fallbackMessage}`, sources: [] };
+                    return { text: `Maaf, terjadi kesalahan: ${fallbackMessage}`, sources: [], imageUrl: '' };
                 }
 
                 if (!response.ok) {
@@ -1454,31 +1497,31 @@
 
 
                 const responseSources = normalizeSources(data?.sources);
+                const imageUrl = data?.imageUrl || data?.image || data?.result?.image;
 
                 const reply = typeof data.reply === 'string' ? data.reply.trim() : '';
-                if (reply) return { text: reply, sources: responseSources };
+                if (reply) return { text: reply, sources: responseSources, imageUrl };
 
                 const answer = typeof data.answer === 'string' ? data.answer.trim() : '';
-                if (answer) return { text: answer, sources: responseSources };
+                if (answer) return { text: answer, sources: responseSources, imageUrl };
 
                 const result = typeof data.result === 'string' ? data.result.trim() : '';
-                if (result) return { text: result, sources: responseSources };
+                if (result) return { text: result, sources: responseSources, imageUrl };
 
                 const fallback = typeof data.msg === 'string' ? data.msg.trim() : '';
-                if (fallback) return { text: fallback, sources: responseSources };
-                const imageUrl = data?.imageUrl || data?.image || data?.result?.image;
+                if (fallback) return { text: fallback, sources: responseSources, imageUrl };
                 if (typeof imageUrl === 'string' && imageUrl.trim()) {
-                    return { text: `Gambar berhasil dibuat.\n\n![Generated Image](${imageUrl.trim()})`, sources: [] };
+                    return { text: 'Gambar berhasil dibuat.', sources: [], imageUrl: imageUrl.trim() };
                 }
 
                 if (typeof data.error === 'string' && data.error.trim()) {
-                    return { text: `Maaf, terjadi kesalahan: ${data.error.trim()}`, sources: [] };
+                    return { text: `Maaf, terjadi kesalahan: ${data.error.trim()}`, sources: [], imageUrl: '' };
                 }
 
-                return { text: 'Balasan model kosong. Coba ulangi pertanyaan dengan lebih spesifik.', sources: [] };
+                return { text: 'Balasan model kosong. Coba ulangi pertanyaan dengan lebih spesifik.', sources: [], imageUrl: '' };
             } catch (error) {
                 console.error('Error:', error);
-                return { text: `Maaf, terjadi kesalahan: ${error.message || 'jaringan bermasalah.'}`, sources: [] };
+                return { text: `Maaf, terjadi kesalahan: ${error.message || 'jaringan bermasalah.'}`, sources: [], imageUrl: '' };
             }
         }
 
@@ -1519,12 +1562,15 @@
             sendBtn.disabled = true;
             isGenerating = true;
 
+            const aiShell = createAIMessageShell();
+            if (isLikelyImagePrompt(text)) renderImageGenerationPlaceholder(aiShell);
             const responsePayload = await fetchAIResponse(text, currentBase64, currentMime);
             const responseText = responsePayload?.text || '';
             const responseSources = Array.isArray(responsePayload?.sources) ? responsePayload.sources : [];
             
             document.getElementById(typingId).remove();
-            await appendAIMessageSmooth(responseText, responseSources);
+            aiShell.innerHTML = `${renderMarkdown(responseText)}${renderSourceLinks(responseSources)}`;
+            if (responsePayload?.imageUrl) appendGeneratedImage(aiShell, responsePayload.imageUrl);
             conversationHistory.push({ role: 'user', text: text || 'Analisa lampiran', images: currentBase64 ? [`data:${currentMime || 'image/jpeg'};base64,${currentBase64}`] : [] });
             conversationHistory.push({ role: 'assistant', text: responseText, images: [] });
             sendBtn.disabled = false;
