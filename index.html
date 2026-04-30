@@ -1421,9 +1421,8 @@
                     },
                     body: JSON.stringify({
                         prompt,
-                        apikey: 'free',
                         model,
-                        messages,
+                        history: messages.map((item) => ({ role: item.role, text: item.content })),
                         isDeepResearchMode: false,
                         isWebSearchMode: false,
                         isImageGenerationMode: false,
