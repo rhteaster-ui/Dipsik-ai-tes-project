@@ -358,11 +358,7 @@
                     </div>
                 </div>
                 
-                <div class="text-center mt-3">
-                    <div id="limitBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber-300/70 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30 text-[11px] font-semibold mb-2">
-                        <i data-lucide="gauge" class="w-3.5 h-3.5"></i>
-                        <span id="limitCounterText">Limit terpakai: 0 / 25</span>
-                    </div>
+                <div class="text-center mt-4">
                     <p class="text-xs text-slate-500 dark:text-slate-500">
                         ExploreAi dapat membuat kesalahan. Harap periksa kembali informasi penting.
                     </p>
@@ -529,7 +525,6 @@
         let lastMimeType = null;
         let deepseekSessionId = null;
         let isGenerating = false;
-        let usageLimitCount = Number(localStorage.getItem('fgsi_limit_used') || 0);
         let historyAddedThisSession = false; // Memastikan histori hanya dicatat sekali per sesi obrolan bersih
 
         // ----------------------------------------------------
@@ -544,22 +539,6 @@
                 toast.classList.add('opacity-0', 'translate-y-4');
             }, 3000);
         }
-        function refreshLimitBadge() {
-            const limitCounterText = document.getElementById('limitCounterText');
-            if (activeProvider === 'gpt') {
-                limitCounterText.textContent = `Limit GPT terpakai: ${usageLimitCount} / 25`;
-                return;
-            }
-            limitCounterText.textContent = 'Provider non-GPT tidak memakai limit ini.';
-        }
-        function consumeLimitAndNotify() {
-            if (activeProvider !== 'gpt') return;
-            usageLimitCount += 1;
-            localStorage.setItem('fgsi_limit_used', String(usageLimitCount));
-            refreshLimitBadge();
-            showToast(`Limit GPT terpakai: ${usageLimitCount}/25`);
-        }
-
         // ----------------------------------------------------
         // LOGIKA THEME TOGGLE (Di dalam Modal Pengaturan)
         // ----------------------------------------------------
@@ -751,7 +730,7 @@
         const providerLabelMap = { gemini: 'Gemini AI', gpt: 'ChatGPT AI', deepseek: 'DeepSeek AI', perplexity: 'Perplexity AI' };
         const providerVersions = {
             gemini: ['gemini-2.5-flash'],
-            gpt: ['openai/gpt-5-mini', 'openai/gpt-4o'],
+            gpt: ['gpt-5.1', 'gpt-5-online', 'gpt-5', 'gpt-5-nano', 'gpt-5-mini', 'openai-o1', 'openai-o3', 'openai-o3-mini', 'gpt-4o', 'openai-o4-mini', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-5.3', 'gpt-5.4', 'gpt-5.5'],
             deepseek: ['deepseek-chat', 'deepseek-reasoner'],
             perplexity: ['sonar-pro', 'sonar'],
         };
@@ -836,7 +815,6 @@
             const versions = providerVersions[activeProvider] || [];
             activeModelLabel = versions[0] || activeModelLabel;
             updateModelDisplay();
-            refreshLimitBadge();
             showToast(`Provider aktif: ${providerLabelMap[activeProvider]}`);
             closeProviderPopup();
         };
@@ -1475,7 +1453,6 @@
                     throw new Error(data?.error || `Network error ${response.status}`);
                 }
 
-                consumeLimitAndNotify();
 
                 const responseSources = normalizeSources(data?.sources);
 
@@ -1513,7 +1490,6 @@
 
             const now = Date.now();
             if (now - lastRequestAt < 1200) {
-                showToast('Tunggu sebentar sebelum mengirim lagi agar tidak spam.');
                 return;
             }
             lastRequestAt = now;
@@ -1564,7 +1540,6 @@
                 handleSend();
             }
         });
-        refreshLimitBadge();
 
     </script>
 </body>
