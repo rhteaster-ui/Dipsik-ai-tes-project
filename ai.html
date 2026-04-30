@@ -359,7 +359,7 @@
                     </div>
                 </div>
                 
-                <div class="text-center mt-3">
+                <div class="text-center mt-4">
                     <p class="text-xs text-slate-500 dark:text-slate-500">
                         ExploreAi dapat membuat kesalahan. Harap periksa kembali informasi penting.
                     </p>
@@ -701,7 +701,7 @@
         };
         const providerVersions = {
             gemini: ['gemini-2.5-flash', 'gemini-2.5-pro'],
-            gpt: ['openai/gpt-5.1-thinking', 'openai/gpt-5-chat:online', 'openai/gpt-5-chat', 'openai/gpt-5-nano', 'openai/gpt-5-mini', 'openai/o1', 'openai/o3', 'openai/o3-mini', 'openai/gpt-4o', 'openai/o4-mini', 'openai/gpt-4-1-mini', 'openai/gpt-4-1-nano', 'openai/gpt-5.3-chat', 'openai/gpt-5.4', 'openai/gpt-5.5'],
+            gpt: ['gpt-5.1', 'gpt-5-online', 'gpt-5', 'gpt-5-nano', 'gpt-5-mini', 'openai-o1', 'openai-o3', 'openai-o3-mini', 'gpt-4o', 'openai-o4-mini', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-5.3', 'gpt-5.4', 'gpt-5.5'],
             perplexity: ['sonar', 'sonar-pro'],
             deepseek: ['deepseek-chat', 'deepseek-reasoner'],
         };
@@ -1556,7 +1556,6 @@
 
             const now = Date.now();
             if (now - lastRequestAt < 1200) {
-                showToast('Tunggu sebentar sebelum mengirim lagi agar tidak spam.');
                 return;
             }
             lastRequestAt = now;
