@@ -60,6 +60,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Prompt wajib diisi.' });
     }
 
+
+    const apiKey = String(process.env.FGSI_API_KEY || '').trim();
+    if (!apiKey) {
+      return res.status(500).json({ error: 'FGSI_API_KEY belum di-set di Vercel Environment Variables.' });
+    }
+
     const resolvedModel = resolveModel(model);
     const messages = [
       ...normalizeHistory(history),
@@ -77,7 +83,7 @@ export default async function handler(req, res) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        apikey: process.env.FGSI_API_KEY || 'You Apikey',
+        apikey: apiKey,
         model: resolvedModel,
         messages,
         isDeepResearchMode: Boolean(isDeepResearchMode),
