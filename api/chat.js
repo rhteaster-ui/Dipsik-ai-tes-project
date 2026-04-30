@@ -50,6 +50,20 @@ function mergeSessionHistory(sessionId, incomingHistory = []) {
   return sanitizeHistory(merged).slice(-16);
 }
 
+
+function getGeminiApiKeys() {
+  const raw = [
+    process.env.GEMINI_API_KEYS || '',
+    process.env.GEMINI_API_KEY || '',
+  ]
+    .join(',')
+    .split(',')
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+
+  return Array.from(new Set(raw));
+}
+
 function persistSessionHistory(sessionId, history = [], userPrompt = '', promptImages = [], replyText = '', replyImages = []) {
   const key = String(sessionId || '').trim();
   if (!key) return;
@@ -63,36 +77,54 @@ function persistSessionHistory(sessionId, history = [], userPrompt = '', promptI
   runtimeMemory.set(key, nextHistory);
 }
 
-async function callGemini({ apiKey, model, body }) {
-  const url = `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${apiKey}`;
-  const maxAttempts = 3;
-  const retryDelayMs = [800, 1600];
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      return data;
-    }
-
-    const msg = data?.error?.message || JSON.stringify(data);
-    const retryable = [429, 500, 503].includes(response.status);
-    const hasNextAttempt = attempt < maxAttempts;
-
-    if (retryable && hasNextAttempt) {
-      await new Promise((resolve) => setTimeout(resolve, retryDelayMs[attempt - 1] || 2000));
-      continue;
-    }
-
-    throw new Error(`Gemini API ${response.status}: ${msg}`);
+async function callGemini({ apiKeys = [], model, body }) {
+  const keys = Array.isArray(apiKeys) ? apiKeys.filter(Boolean) : [];
+  if (!keys.length) {
+    throw new Error('GEMINI_API_KEY/GEMINI_API_KEYS belum di-set.');
   }
 
-  throw new Error('Gemini API gagal setelah beberapa percobaan.');
+  const maxAttemptsPerKey = 3;
+  const retryDelayMs = [800, 1600];
+  const keyErrors = [];
+
+  for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
+    const apiKey = keys[keyIndex];
+    const url = `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${apiKey}`;
+
+    for (let attempt = 1; attempt <= maxAttemptsPerKey; attempt++) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const raw = await response.text();
+      let data = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        data = { error: { message: raw?.slice(0, 400) || 'Invalid JSON response' } };
+      }
+
+      if (response.ok) {
+        return data;
+      }
+
+      const msg = data?.error?.message || JSON.stringify(data);
+      const retryable = [429, 500, 503].includes(response.status);
+      const hasNextAttempt = attempt < maxAttemptsPerKey;
+
+      if (retryable && hasNextAttempt) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs[attempt - 1] || 2000));
+        continue;
+      }
+
+      keyErrors.push(`key#${keyIndex + 1} status ${response.status}: ${msg}`);
+      break;
+    }
+  }
+
+  throw new Error(`Gemini API gagal setelah rotasi key. Detail: ${keyErrors.join(' | ')}`);
 }
 
 
@@ -159,9 +191,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'GEMINI_API_KEY belum di-set di Vercel Environment Variables.' });
+  const apiKeys = getGeminiApiKeys();
+  if (!apiKeys.length) {
+    return res.status(500).json({ error: 'GEMINI_API_KEY/GEMINI_API_KEYS belum di-set di Vercel Environment Variables.' });
   }
 
   try {
@@ -213,7 +245,7 @@ export default async function handler(req, res) {
           images,
           system: requestSystemPrompt || envSystemPrompt || defaultSystemPrompt,
         })
-      : extractOutput(await callGemini({ apiKey, model: requestedModel || 'gemini-2.5-flash', body }));
+      : extractOutput(await callGemini({ apiKeys, model: requestedModel || 'gemini-2.5-flash', body }));
 
     persistSessionHistory(sessionId, sanitizedHistory, incomingPrompt, images, output.reply, output.images);
 
