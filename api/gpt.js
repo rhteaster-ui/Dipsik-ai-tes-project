@@ -1,185 +1,42 @@
-import crypto from 'node:crypto';
+const GPT_MODEL_MAP = {
+  'gpt-5.1': 'openai/gpt-5.1-thinking',
+  'gpt-5-online': 'openai/gpt-5-chat:online',
+  'gpt-5': 'openai/gpt-5-chat',
+  'gpt-5-nano': 'openai/gpt-5-nano',
+  'gpt-5-mini': 'openai/gpt-5-mini',
+  'openai-o1': 'openai/o1',
+  'openai-o3': 'openai/o3',
+  'openai-o3-mini': 'openai/o3-mini',
+  'gpt-4o': 'openai/gpt-4o',
+  'openai-o4-mini': 'openai/o4-mini',
+  'gpt-4.1-mini': 'openai/gpt-4-1-mini',
+  'gpt-4.1-nano': 'openai/gpt-4-1-nano',
+  'gpt-5.3': 'openai/gpt-5.3-chat',
+  'gpt-5.4': 'openai/gpt-5.4',
+  'gpt-5.5': 'openai/gpt-5.5',
+};
 
-const limiter = globalThis.__gptLimiter || new Map();
-globalThis.__gptLimiter = limiter;
-
-function getIp(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') return forwarded.split(',')[0].trim();
-  return req.socket?.remoteAddress || 'unknown';
-}
-
-function enforceRateLimit(ip) {
-  const now = Date.now();
-  const item = limiter.get(ip) || { count: 0, resetAt: now + 60_000, last: 0 };
-
-  if (now > item.resetAt) {
-    item.count = 0;
-    item.resetAt = now + 60_000;
-  }
-
-  if (now - item.last < 1500) {
-    return { ok: false, status: 429, message: 'Terlalu cepat. Beri jeda sekitar 1-2 detik antar request.' };
-  }
-
-  item.count += 1;
-  item.last = now;
-  limiter.set(ip, item);
-
-  if (item.count > 16) {
-    return { ok: false, status: 429, message: 'Batas request per menit tercapai. Coba lagi sebentar.' };
-  }
-
-  return { ok: true };
+function resolveModel(modelLabel = '') {
+  const normalized = String(modelLabel || '').trim();
+  if (!normalized) return GPT_MODEL_MAP['gpt-5.3'];
+  if (GPT_MODEL_MAP[normalized]) return GPT_MODEL_MAP[normalized];
+  return normalized;
 }
 
 function normalizeHistory(history = []) {
   if (!Array.isArray(history)) return [];
 
   return history
-    .filter((m) => m && typeof m === 'object' && (m.text || (Array.isArray(m.images) && m.images.length)))
+    .filter((item) => item && typeof item === 'object' && (item.text || item.role))
     .slice(-12)
-    .map((m) => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
-      text: String(m.text || '').trim().slice(0, 1200),
-      images: (Array.isArray(m.images) ? m.images : []).slice(0, 2),
+    .map((item) => ({
+      id: '',
+      role: item.role === 'assistant' ? 'assistant' : 'user',
+      parts: [{
+        type: 'text',
+        text: String(item.text || '').trim().slice(0, 1200),
+      }],
     }));
-}
-
-function buildUserMessage(prompt, history = []) {
-  const safePrompt = String(prompt || '').trim().slice(0, 4000);
-  const safeHistory = normalizeHistory(history);
-
-  if (!safeHistory.length) return safePrompt;
-
-  const historyText = safeHistory
-    .map((item) => {
-      const role = item.role === 'assistant' ? 'Assistant' : 'User';
-      return `${role}: ${item.text}`;
-    })
-    .filter(Boolean)
-    .join('\n');
-
-  return [
-    'Lanjutkan percakapan berikut secara konsisten dan natural.',
-    'Riwayat percakapan:',
-    historyText,
-    '',
-    `Pertanyaan terbaru pengguna: ${safePrompt}`,
-  ].join('\n');
-}
-
-function normalizeImageUrls(images = []) {
-  if (!Array.isArray(images)) return [];
-
-  return images
-    .map((value) => String(value || '').trim())
-    .filter((url) => /^https?:\/\//i.test(url) || /^data:image\//i.test(url))
-    .slice(0, 2);
-}
-
-async function noteGptChat({ message, imageUrls = [], accept = 'text/event-stream' }) {
-  const conversationId = crypto.randomUUID();
-  const response = await fetch('https://notegpt.io/api/v2/chat/stream', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36',
-      Referer: 'https://notegpt.io/ai-chat',
-      Accept: accept,
-    },
-    body: JSON.stringify({
-      message,
-      language: 'id',
-      model: 'gpt-5-mini',
-      tone: 'default',
-      length: 'moderate',
-      conversation_id: conversationId,
-      image_urls: imageUrls,
-      chat_mode: 'standard',
-    }),
-  });
-
-  if (!response.ok || !response.body) {
-    const bodyText = await response.text().catch(() => '');
-    throw new Error(`NoteGPT error ${response.status}: ${bodyText || 'empty response body'}`);
-  }
-
-  const decoder = new TextDecoder();
-  const reader = response.body.getReader();
-  let fullText = '';
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      const payload = line.slice(6).trim();
-      if (!payload || payload === '[DONE]') continue;
-
-      try {
-        const json = JSON.parse(payload);
-        if (typeof json.text === 'string' && json.text) {
-          fullText += json.text;
-        }
-        if (json.done) {
-          return {
-            success: true,
-            message: fullText.trim(),
-            conversationId,
-          };
-        }
-      } catch {
-        // ignore malformed chunk
-      }
-    }
-  }
-
-  return {
-    success: true,
-    message: fullText.trim(),
-    conversationId,
-  };
-}
-
-async function requestWithRetry(payload) {
-  const maxAttempts = 3;
-  const retryDelayMs = [900, 1600];
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const result = await noteGptChat(payload);
-      if (result?.message) return result;
-
-      if (attempt < maxAttempts) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelayMs[attempt - 1] || 2000));
-        continue;
-      }
-
-      return result;
-    } catch (error) {
-      const msg = String(error?.message || '').toLowerCase();
-      if (msg.includes('406')) {
-        const fallbackResult = await noteGptChat({ ...payload, accept: '*/*' });
-        if (fallbackResult?.message) return fallbackResult;
-      }
-      const retryable = msg.includes('429') || msg.includes('500') || msg.includes('502') || msg.includes('503') || msg.includes('504') || msg.includes('timeout');
-
-      if (!retryable || attempt >= maxAttempts) {
-        throw error;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, retryDelayMs[attempt - 1] || 2000));
-    }
-  }
-
-  throw new Error('NoteGPT gagal setelah beberapa percobaan.');
 }
 
 export default async function handler(req, res) {
@@ -187,17 +44,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const ip = getIp(req);
-  const limited = enforceRateLimit(ip);
-  if (!limited.ok) {
-    return res.status(limited.status).json({ error: limited.message });
-  }
-
   try {
     const {
       prompt = '',
       history = [],
-      images = [],
+      model = 'gpt-5.3',
+      isDeepResearchMode = false,
+      isWebSearchMode = false,
+      isImageGenerationMode = false,
+      isAgenticMode = false,
     } = req.body || {};
 
     const safePrompt = String(prompt || '').trim().slice(0, 4000);
@@ -205,30 +60,76 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Prompt wajib diisi.' });
     }
 
-    const message = buildUserMessage(safePrompt, history);
-    const imageUrls = normalizeImageUrls(images);
-    const result = await requestWithRetry({ message, imageUrls });
-    const cleanReply = String(result?.message || '').trim();
+    const resolvedModel = resolveModel(model);
+    const messages = [
+      ...normalizeHistory(history),
+      {
+        id: '',
+        role: 'user',
+        parts: [{ type: 'text', text: safePrompt }],
+      },
+    ];
 
-    if (!cleanReply) {
-      return res.status(200).json({
-        reply: 'Balasan model kosong. Silakan ulangi pertanyaan dengan lebih spesifik.',
-        reason: 'EMPTY_MODEL_OUTPUT',
-        model: 'gpt-5-mini',
-        conversationId: result?.conversationId || null,
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
+    const requestBody = {
+      model: resolvedModel,
+      messages,
+      isDeepResearchMode: Boolean(isDeepResearchMode),
+      isWebSearchMode: Boolean(isWebSearchMode),
+      isImageGenerationMode: Boolean(isImageGenerationMode),
+      isAgenticMode: Boolean(isAgenticMode),
+    };
+
+    if (process.env.FGSI_API_KEY && String(process.env.FGSI_API_KEY).trim()) {
+      requestBody.apikey = String(process.env.FGSI_API_KEY).trim();
+    }
+
+    const apiResponse = await fetch('https://fgsi.dpdns.org/api/ai/chatgpt', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    const raw = await apiResponse.text();
+    let data = {};
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch {
+      data = {};
+    }
+
+    if (!apiResponse.ok) {
+      return res.status(apiResponse.status).json({
+        error: data?.message || data?.error || `GPT API error ${apiResponse.status}`,
       });
     }
 
+    if (Array.isArray(data?.data?.images) && data.data.images.length > 0) {
+      return res.status(200).json({
+        reply: data?.data?.text || 'Gambar berhasil dibuat.',
+        imageUrl: data.data.images[0]?.url || null,
+        model: resolvedModel,
+      });
+    }
+
+    const reply = String(data?.data?.text || '').trim();
     return res.status(200).json({
-      reply: cleanReply,
-      model: 'gpt-5-mini',
-      conversationId: result?.conversationId || null,
-      imageCount: imageUrls.length,
+      reply: reply || 'Balasan model kosong. Silakan ulangi pertanyaan dengan lebih spesifik.',
+      model: resolvedModel,
     });
   } catch (error) {
     console.error('gpt handler error', error);
-    return res.status(500).json({
-      error: error.message || 'Internal Server Error',
+    const isAbort = error?.name === 'AbortError';
+    return res.status(isAbort ? 504 : 500).json({
+      error: isAbort ? 'Request ke server GPT timeout. Silakan coba lagi.' : (error.message || 'Internal Server Error'),
     });
   }
 }
