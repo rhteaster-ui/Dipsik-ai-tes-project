@@ -529,7 +529,9 @@
         let lastMimeType = null;
         let deepseekSessionId = null;
         let isGenerating = false;
-        let usageLimitCount = Number(localStorage.getItem('fgsi_limit_used') || 0);
+        const LIMIT_MAX = 25;
+        const LIMIT_STORAGE_KEY = 'fgsi_limit_used_gpt';
+        let usageLimitCount = Number(localStorage.getItem(LIMIT_STORAGE_KEY) || 0);
         let historyAddedThisSession = false; // Memastikan histori hanya dicatat sekali per sesi obrolan bersih
 
         // ----------------------------------------------------
@@ -545,14 +547,25 @@
             }, 3000);
         }
         function refreshLimitBadge() {
+            const limitBadge = document.getElementById('limitBadge');
             const limitCounterText = document.getElementById('limitCounterText');
-            limitCounterText.textContent = `Limit terpakai: ${usageLimitCount} / 25`;
+            if (!limitBadge || !limitCounterText) return;
+
+            const isGptProvider = activeProvider === 'gpt';
+            limitBadge.classList.toggle('hidden', !isGptProvider);
+            if (!isGptProvider) {
+                limitCounterText.textContent = 'Limit GPT tidak berlaku di provider ini';
+                return;
+            }
+
+            limitCounterText.textContent = `Limit terpakai: ${usageLimitCount} / ${LIMIT_MAX}`;
         }
         function consumeLimitAndNotify() {
+            if (activeProvider !== 'gpt') return;
             usageLimitCount += 1;
-            localStorage.setItem('fgsi_limit_used', String(usageLimitCount));
+            localStorage.setItem(LIMIT_STORAGE_KEY, String(usageLimitCount));
             refreshLimitBadge();
-            showToast(`Limit endpoint terpakai: ${usageLimitCount}/25`);
+            showToast(`Limit GPT terpakai: ${usageLimitCount}/${LIMIT_MAX}`);
         }
 
         // ----------------------------------------------------
@@ -771,6 +784,7 @@
 
         function updateModelDisplay() {
             currentModelDisplay.textContent = `ExploreAi (${providerLabelMap[activeProvider]})`;
+            refreshLimitBadge();
         }
 
         function highlightProviderOption() {
@@ -1526,6 +1540,11 @@
                 return;
             }
             lastRequestAt = now;
+
+            if (activeProvider === 'gpt' && usageLimitCount >= LIMIT_MAX) {
+                showToast('Limit GPT harian sudah habis (25/25). Silakan pilih provider lain.');
+                return;
+            }
 
             const currentFile = attachedFile;
             const currentBase64 = base64Image;
