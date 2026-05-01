@@ -374,6 +374,7 @@
         <button onclick="selectProvider('gpt')" data-provider-option="gpt" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">GPT</button>
                 <button onclick="selectProvider('perplexity')" data-provider-option="perplexity" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">Perplexity</button>
         <button onclick="selectProvider('deepseek')" data-provider-option="deepseek" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">DeepSeek</button>
+        <button onclick="selectProvider('claude')" data-provider-option="claude" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">Claude</button>
     </div>
 
     <!-- Popup Pilihan Versi -->
@@ -727,12 +728,13 @@
         const versionSelectModal = document.getElementById('versionSelectModal');
         const currentModelDisplay = document.getElementById('currentModelDisplay');
         const versionOptionsContainer = document.getElementById('versionOptionsContainer');
-        const providerLabelMap = { gemini: 'Gemini AI', gpt: 'ChatGPT AI', deepseek: 'DeepSeek AI', perplexity: 'Perplexity AI' };
+        const providerLabelMap = { gemini: 'Gemini AI', gpt: 'ChatGPT AI', deepseek: 'DeepSeek AI', perplexity: 'Perplexity AI', claude: 'Claude AI' };
         const providerVersions = {
             gemini: ['gemini-2.5-flash'],
             gpt: ['gpt-5.1', 'gpt-5-online', 'gpt-5', 'gpt-5-nano', 'gpt-5-mini', 'openai-o1', 'openai-o3', 'openai-o3-mini', 'gpt-4o', 'openai-o4-mini', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-5.3', 'gpt-5.4', 'gpt-5.5'],
             deepseek: ['deepseek-chat', 'deepseek-reasoner'],
             perplexity: ['sonar-pro', 'sonar'],
+            claude: ['claude'],
         };
         let activeProvider = 'gemini';
         let activeModelLabel = 'gemini-2.5-flash';
@@ -1438,7 +1440,8 @@
                 gemini: '/api/chat',
                 gpt: '/api/gpt',
                 deepseek: '/api/deepseek',
-                perplexity: '/api/perplexity'
+                perplexity: '/api/perplexity',
+                claude: '/api/claude'
             };
             return {
                 endpoint: endpointMap[activeProvider] || '/api/gpt',
