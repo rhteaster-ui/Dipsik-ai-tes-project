@@ -698,12 +698,14 @@
             gpt: 'GPT',
             perplexity: 'Perplexity',
             deepseek: 'DeepSeek',
+            claude: 'Claude',
         };
         const providerVersions = {
             gemini: ['gemini-2.5-flash', 'gemini-2.5-pro'],
             gpt: ['gpt-5.1', 'gpt-5-online', 'gpt-5', 'gpt-5-nano', 'gpt-5-mini', 'openai-o1', 'openai-o3', 'openai-o3-mini', 'gpt-4o', 'openai-o4-mini', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-5.3', 'gpt-5.4', 'gpt-5.5'],
             perplexity: ['sonar', 'sonar-pro'],
             deepseek: ['deepseek-chat', 'deepseek-reasoner'],
+            claude: ['claude-standard'],
         };
         const modelModes = [
             { key: 'isWebSearchMode', label: 'Web Search' },
@@ -960,18 +962,17 @@
             }
 
             // Panggil loading indikator
-            const typingId = appendTypingIndicator();
-            sendBtn.disabled = true;
             isGenerating = true;
+            activeRequestController = new AbortController();
+            setSendButtonState(true);
 
             const aiShell = createAIMessageShell();
             if (isLikelyImagePrompt(lastPrompt)) {
                 renderImageGenerationPlaceholder(aiShell);
             }
-            const responsePayload = await fetchAIResponse(lastPrompt, lastImageBase64, lastMimeType);
+            const responsePayload = await fetchAIResponse(lastPrompt, lastImageBase64, lastMimeType, activeRequestController.signal);
             const renderedText = typeof responsePayload === 'string' ? responsePayload : responsePayload.text;
             
-            document.getElementById(typingId).remove();
             aiShell.innerHTML = renderMarkdown(renderedText);
             if (responsePayload?.imageUrl) appendGeneratedImage(aiShell, responsePayload.imageUrl);
             conversationHistory.push({ role: 'user', text: lastPrompt || 'Analisa lampiran', images: lastImageBase64 ? [`data:${lastMimeType || 'image/jpeg'};base64,${lastImageBase64}`] : [] });
@@ -979,8 +980,9 @@
             renderedMessages.push({ role: 'user', text: lastPrompt || 'Analisa lampiran' });
             renderedMessages.push({ role: 'assistant', text: renderedText });
             saveChatState();
-            sendBtn.disabled = false;
+            activeRequestController = null;
             isGenerating = false;
+            setSendButtonState(false);
             if (options.forceModelLabel) {
                 showToast(`Jawaban dibuat ulang dalam tampilan ${options.forceModelLabel}.`);
             }
@@ -1082,6 +1084,7 @@
         const conversationHistory = [];
         const renderedMessages = [];
         let lastRequestAt = 0;
+        let activeRequestController = null;
 
         function saveChatState() {
             const payload = {
@@ -1512,6 +1515,7 @@
                 gpt: '/api/gpt',
                 perplexity: '/api/perplexity',
                 deepseek: '/api/deepseek',
+                claude: '/api/claude',
             };
             return {
                 endpoint: providerRoutes[activeProvider] || '/api/chat',
@@ -1520,7 +1524,7 @@
             };
         }
 
-        async function fetchAIResponse(prompt, imageBase64, mimeType) {
+        async function fetchAIResponse(prompt, imageBase64, mimeType, signal) {
             const { endpoint, model, provider } = getActiveBackend();
             try {
                 const images = imageBase64
@@ -1542,7 +1546,8 @@
                         system: (localStorage.getItem('system_prompt_override') || '').trim() || undefined,
                         model,
                         ...activeModes,
-                    })
+                    }),
+                    signal
                 });
 
                 const rawBody = await response.text();
@@ -1593,15 +1598,39 @@
 
                 return { text: 'Balasan model kosong. Coba ulangi pertanyaan dengan lebih spesifik.', imageUrl };
             } catch (error) {
-                console.error('Error:', error);
-                return { text: `Maaf, terjadi kesalahan: ${error.message || 'jaringan bermasalah.'}`, imageUrl: '' };
+                if (error?.name === 'AbortError') {
+                    return { text: 'Permintaan dihentikan manual. Anda bisa kirim ulang kapan saja.', imageUrl: '' };
+                }
+                const safeMessage = typeof error?.message === 'string'
+                    ? error.message
+                    : (typeof error === 'string' ? error : JSON.stringify(error));
+                return { text: `Maaf, terjadi kesalahan: ${safeMessage || 'jaringan bermasalah.'}`, imageUrl: '' };
             }
+        }
+
+
+        function setSendButtonState(isGeneratingState) {
+            sendBtn.disabled = false;
+            sendBtn.dataset.mode = isGeneratingState ? 'stop' : 'send';
+            sendBtn.innerHTML = isGeneratingState
+                ? '<span class="w-3.5 h-3.5 bg-white/95 rounded-[3px] block"></span>'
+                : '<i data-lucide="arrow-up" class="w-4 h-4"></i>';
+            lucide.createIcons();
+        }
+
+        function cancelActiveGeneration(reason = 'Dihentikan manual.') {
+            if (!isGenerating || !activeRequestController) return;
+            activeRequestController.abort();
+            showToast(reason);
         }
 
         async function handleSend() {
             const text = chatInput.value.trim();
+            if (isGenerating) {
+                cancelActiveGeneration();
+                return;
+            }
             if (!text && !attachedFile) return;
-            if (isGenerating) return;
 
             const now = Date.now();
             if (now - lastRequestAt < 1200) {
@@ -1631,18 +1660,17 @@
 
             appendUserMessage(text, currentFile);
 
-            const typingId = appendTypingIndicator();
-            sendBtn.disabled = true;
             isGenerating = true;
+            activeRequestController = new AbortController();
+            setSendButtonState(true);
 
             const aiShell = createAIMessageShell();
             if (isLikelyImagePrompt(text)) {
                 renderImageGenerationPlaceholder(aiShell);
             }
-            const responsePayload = await fetchAIResponse(text, currentBase64, currentMime);
+            const responsePayload = await fetchAIResponse(text, currentBase64, currentMime, activeRequestController.signal);
             const responseText = typeof responsePayload === 'string' ? responsePayload : responsePayload.text;
             
-            document.getElementById(typingId).remove();
             aiShell.innerHTML = renderMarkdown(responseText);
             if (responsePayload?.imageUrl) appendGeneratedImage(aiShell, responsePayload.imageUrl);
             conversationHistory.push({ role: 'user', text: text || 'Analisa lampiran', images: currentBase64 ? [`data:${currentMime || 'image/jpeg'};base64,${currentBase64}`] : [] });
@@ -1650,8 +1678,9 @@
             renderedMessages.push({ role: 'user', text: text || 'Analisa lampiran' });
             renderedMessages.push({ role: 'assistant', text: responseText });
             saveChatState();
-            sendBtn.disabled = false;
+            activeRequestController = null;
             isGenerating = false;
+            setSendButtonState(false);
         }
 
         sendBtn.addEventListener('click', handleSend);
@@ -1663,6 +1692,7 @@
             }
         });
 
+        setSendButtonState(false);
         restoreChatFromState();
 
     </script>
