@@ -938,7 +938,10 @@
         // LOGIKA GENERATE ULANG AI
         // ----------------------------------------------------
         window.regenerateResponse = async function(btn, options = {}) {
-            if (isGenerating) return;
+            if (isGenerating) {
+                cancelActiveGeneration();
+                return;
+            }
             
             // Jika memencet tombol generate ulang di pesan selamat datang
             if (!lastPrompt && !lastImageBase64) {
@@ -952,21 +955,20 @@
                 aiBubble.remove();
             }
 
-            // Panggil loading indikator
-            const typingId = appendTypingIndicator();
-            sendBtn.disabled = true;
             isGenerating = true;
+            setSendButtonState(true);
+            activeRequestController = new AbortController();
 
             const aiShell = createAIMessageShell();
             if (isLikelyImagePrompt(lastPrompt)) renderImageGenerationPlaceholder(aiShell);
-            const responsePayload = await fetchAIResponse(lastPrompt, lastImageBase64, lastMimeType);
+            const responsePayload = await fetchAIResponse(lastPrompt, lastImageBase64, lastMimeType, activeRequestController.signal);
             const renderedText = responsePayload?.text || '';
             const renderedSources = Array.isArray(responsePayload?.sources) ? responsePayload.sources : [];
             
-            document.getElementById(typingId).remove();
             aiShell.innerHTML = `${renderMarkdown(renderedText)}${renderSourceLinks(renderedSources)}`;
             if (responsePayload?.imageUrl) appendGeneratedImage(aiShell, responsePayload.imageUrl);
-            sendBtn.disabled = false;
+            activeRequestController = null;
+            setSendButtonState(false);
             isGenerating = false;
             if (options.forceModelLabel) {
                 showToast(`Jawaban dibuat ulang dalam tampilan ${options.forceModelLabel}.`);
@@ -1068,6 +1070,7 @@
         const chatBox = document.getElementById('chatBox');
         const conversationHistory = [];
         let lastRequestAt = 0;
+        let activeRequestController = null;
 
         function scrollToBottom() {
             setTimeout(() => {
@@ -1435,6 +1438,29 @@
             scrollToBottom();
         }
 
+
+        function setSendButtonState(isLoading) {
+            if (!sendBtn) return;
+            if (isLoading) {
+                sendBtn.dataset.mode = 'stop';
+                sendBtn.innerHTML = '<i data-lucide="square" class="w-4 h-4 fill-current"></i>';
+                sendBtn.classList.remove('from-blue-500', 'to-indigo-600', 'hover:from-blue-600', 'hover:to-indigo-700');
+                sendBtn.classList.add('bg-red-600', 'hover:bg-red-500');
+            } else {
+                sendBtn.dataset.mode = 'send';
+                sendBtn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i>';
+                sendBtn.classList.remove('bg-red-600', 'hover:bg-red-500');
+                sendBtn.classList.add('from-blue-500', 'to-indigo-600', 'hover:from-blue-600', 'hover:to-indigo-700');
+            }
+            lucide.createIcons();
+        }
+
+        function cancelActiveGeneration() {
+            if (activeRequestController) {
+                activeRequestController.abort();
+            }
+        }
+
         function getActiveBackend() {
             const endpointMap = {
                 gemini: '/api/chat',
@@ -1450,7 +1476,7 @@
             };
         }
 
-        async function fetchAIResponse(prompt, imageBase64, mimeType) {
+        async function fetchAIResponse(prompt, imageBase64, mimeType, signal) {
             const { endpoint, model } = getActiveBackend();
             try {
                 const messages = conversationHistory.slice(-12).map((item) => ({
@@ -1465,6 +1491,7 @@
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
+                    signal,
                     body: JSON.stringify({
                         prompt,
                         model,
@@ -1523,15 +1550,20 @@
 
                 return { text: 'Balasan model kosong. Coba ulangi pertanyaan dengan lebih spesifik.', sources: [], imageUrl: '' };
             } catch (error) {
-                console.error('Error:', error);
-                return { text: `Maaf, terjadi kesalahan: ${error.message || 'jaringan bermasalah.'}`, sources: [], imageUrl: '' };
+                if (error?.name === 'AbortError') {
+                    return { text: 'Proses dihentikan manual oleh pengguna.', sources: [], imageUrl: '' };
+                }
+                return { text: `Maaf, terjadi kesalahan: ${error?.message || 'jaringan bermasalah.'}`, sources: [], imageUrl: '' };
             }
         }
 
         async function handleSend() {
             const text = chatInput.value.trim();
             if (!text && !attachedFile) return;
-            if (isGenerating) return;
+            if (isGenerating) {
+                cancelActiveGeneration();
+                return;
+            }
 
             const now = Date.now();
             if (now - lastRequestAt < 1200) {
@@ -1561,25 +1593,26 @@
 
             appendUserMessage(text, currentFile);
 
-            const typingId = appendTypingIndicator();
-            sendBtn.disabled = true;
             isGenerating = true;
+            setSendButtonState(true);
+            activeRequestController = new AbortController();
 
             const aiShell = createAIMessageShell();
             if (isLikelyImagePrompt(text)) renderImageGenerationPlaceholder(aiShell);
-            const responsePayload = await fetchAIResponse(text, currentBase64, currentMime);
+            const responsePayload = await fetchAIResponse(text, currentBase64, currentMime, activeRequestController.signal);
             const responseText = responsePayload?.text || '';
             const responseSources = Array.isArray(responsePayload?.sources) ? responsePayload.sources : [];
             
-            document.getElementById(typingId).remove();
             aiShell.innerHTML = `${renderMarkdown(responseText)}${renderSourceLinks(responseSources)}`;
             if (responsePayload?.imageUrl) appendGeneratedImage(aiShell, responsePayload.imageUrl);
             conversationHistory.push({ role: 'user', text: text || 'Analisa lampiran', images: currentBase64 ? [`data:${currentMime || 'image/jpeg'};base64,${currentBase64}`] : [] });
             conversationHistory.push({ role: 'assistant', text: responseText, images: [] });
-            sendBtn.disabled = false;
+            activeRequestController = null;
+            setSendButtonState(false);
             isGenerating = false;
         }
 
+        setSendButtonState(false);
         sendBtn.addEventListener('click', handleSend);
 
         chatInput.addEventListener('keydown', (e) => {
