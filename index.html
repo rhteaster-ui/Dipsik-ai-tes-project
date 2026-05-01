@@ -713,6 +713,7 @@
             deepseekSessionId = null;
             historyAddedThisSession = false;
             conversationHistory.length = 0;
+            persistConversationHistory();
 
             showToast("Obrolan berhasil dibersihkan & dimulai ulang.");
             
@@ -730,14 +731,16 @@
         const versionOptionsContainer = document.getElementById('versionOptionsContainer');
         const providerLabelMap = { gemini: 'Gemini AI', gpt: 'ChatGPT AI', deepseek: 'DeepSeek AI', perplexity: 'Perplexity AI', claude: 'Claude AI' };
         const providerVersions = {
-            gemini: ['gemini-2.5-flash'],
+            gemini: ['gemini-3.1-flash-lite-preview', 'gemini-2.5-flash'],
             gpt: ['gpt-5.1', 'gpt-5-online', 'gpt-5', 'gpt-5-nano', 'gpt-5-mini', 'openai-o1', 'openai-o3', 'openai-o3-mini', 'gpt-4o', 'openai-o4-mini', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-5.3', 'gpt-5.4', 'gpt-5.5'],
             deepseek: ['deepseek-chat', 'deepseek-reasoner'],
             perplexity: ['sonar-pro', 'sonar'],
             claude: ['claude'],
         };
+        const DEFAULT_GEMINI_CHAT_MODEL = 'gemini-3.1-flash-lite-preview';
+        const DEFAULT_GEMINI_FILE_MODEL = 'gemini-2.5-flash';
         let activeProvider = 'gemini';
-        let activeModelLabel = 'gemini-2.5-flash';
+        let activeModelLabel = DEFAULT_GEMINI_CHAT_MODEL;
         let modelPopupContext = { source: 'input', targetBtn: null };
 
         function positionPopup(anchor, modalEl, placeAbove = false) {
@@ -757,6 +760,11 @@
 
         function updateModelDisplay() {
             currentModelDisplay.textContent = `ExploreAi (${providerLabelMap[activeProvider]})`;
+        }
+        function syncGeminiModelForAttachment(hasAttachment) {
+            if (activeProvider !== 'gemini') return;
+            activeModelLabel = hasAttachment ? DEFAULT_GEMINI_FILE_MODEL : DEFAULT_GEMINI_CHAT_MODEL;
+            highlightVersionOption();
         }
 
         function highlightProviderOption() {
@@ -1039,6 +1047,7 @@
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 attachedFile = e.target.files[0];
+                syncGeminiModelForAttachment(true);
                 
                 filePreviewName.textContent = attachedFile.name;
                 filePreviewContainer.classList.remove('hidden');
@@ -1057,6 +1066,7 @@
         removeFileBtn.addEventListener('click', () => {
             attachedFile = null;
             base64Image = null;
+            syncGeminiModelForAttachment(false);
             fileInput.value = '';
             filePreviewContainer.classList.add('hidden');
         });
@@ -1068,7 +1078,11 @@
         const sendBtn = document.getElementById('sendBtn');
         const chatMessages = document.getElementById('chatMessages');
         const chatBox = document.getElementById('chatBox');
-        const conversationHistory = [];
+        const HISTORY_STORAGE_KEY = 'exploreai_chat_history_v1';
+        const conversationHistory = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]').filter((item) => item && item.role && item.text);
+        function persistConversationHistory() {
+            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(conversationHistory.slice(-60)));
+        }
         let lastRequestAt = 0;
         let activeRequestController = null;
 
@@ -1463,7 +1477,7 @@
 
         function getActiveBackend() {
             const endpointMap = {
-                gemini: '/api/chat',
+                gemini: '/api/gemini',
                 gpt: '/api/gpt',
                 deepseek: '/api/deepseek',
                 perplexity: '/api/perplexity',
@@ -1471,7 +1485,7 @@
             };
             return {
                 endpoint: endpointMap[activeProvider] || '/api/gpt',
-                model: activeModelLabel || 'gemini-2.5-flash',
+                model: activeModelLabel || DEFAULT_GEMINI_CHAT_MODEL,
                 provider: activeProvider,
             };
         }
@@ -1495,6 +1509,7 @@
                     body: JSON.stringify({
                         prompt,
                         model,
+                        hasFile: Boolean(imageBase64),
                         history: messages.map((item) => ({ role: item.role, text: item.content })),
                         isDeepResearchMode: false,
                         isWebSearchMode: false,
@@ -1607,6 +1622,7 @@
             if (responsePayload?.imageUrl) appendGeneratedImage(aiShell, responsePayload.imageUrl);
             conversationHistory.push({ role: 'user', text: text || 'Analisa lampiran', images: currentBase64 ? [`data:${currentMime || 'image/jpeg'};base64,${currentBase64}`] : [] });
             conversationHistory.push({ role: 'assistant', text: responseText, images: [] });
+            persistConversationHistory();
             activeRequestController = null;
             setSendButtonState(false);
             isGenerating = false;
