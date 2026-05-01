@@ -1152,7 +1152,7 @@
                 if (isImage) {
                     const fileUrl = URL.createObjectURL(file);
                     fileHTML = `
-                    <div class="mb-2 relative cursor-pointer rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-darkborder inline-block group/img" onclick="openImagePreview('${fileUrl}')">
+                    <div class="relative cursor-pointer rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-darkborder inline-block group/img" onclick="openImagePreview('${fileUrl}')">
                         <img src="${fileUrl}" alt="Uploaded image" class="max-w-[200px] md:max-w-xs max-h-48 object-cover">
                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
                             <i data-lucide="zoom-in" class="w-8 h-8 text-white drop-shadow-md"></i>
@@ -1160,7 +1160,7 @@
                     </div>`;
                 } else {
                     fileHTML = `
-                    <div class="mb-2 flex items-center gap-3 p-2.5 pr-4 rounded-xl bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder shadow-sm">
+                    <div class="flex items-center gap-3 p-2.5 pr-4 rounded-xl bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder shadow-sm">
                         <div class="w-8 h-8 rounded bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                             <i data-lucide="file-text" class="w-4 h-4"></i>
                         </div>
@@ -1175,11 +1175,13 @@
             const msgHTML = `
             <div class="flex justify-end opacity-0 animate-fade-in-up">
                 <div class="flex flex-col items-end max-w-[90%] md:max-w-[75%] min-w-0 group">
-                    ${fileHTML}
-                    ${text ? `
-                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm leading-relaxed text-[15px] shadow-sm text-left user-message-content">
-                        ${text}
-                    </div>` : ''}
+                    <div class="flex flex-col items-start md:flex-row md:items-end gap-2 md:gap-3 w-full md:w-auto">
+                        ${fileHTML}
+                        ${text ? `
+                        <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm leading-relaxed text-[15px] shadow-sm text-left user-message-content">
+                            ${text}
+                        </div>` : ''}
+                    </div>
                     
                     <!-- Aksi Gelembung Pengguna -->
                     <div class="flex items-center gap-1 mt-1 justify-end text-slate-400 dark:text-slate-500 opacity-50 hover:opacity-100 transition-opacity">
