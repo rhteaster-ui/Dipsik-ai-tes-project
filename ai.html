@@ -510,8 +510,12 @@
         let deepseekSessionId = null;
         let isGenerating = false;
         let historyAddedThisSession = false; // Memastikan histori hanya dicatat sekali per sesi obrolan bersih
-        const CHAT_STATE_STORAGE_KEY = 'exploreai-chat-state-v2';
+        const CHAT_STATE_STORAGE_KEY = 'exploreai-chat-state-v3';
         const CHAT_SESSION_ID_STORAGE_KEY = 'exploreai-chat-session-id-v1';
+        const CHAT_HISTORY_LIST_STORAGE_KEY = 'exploreai-history-list-v1';
+        const DEFAULT_CHAT_PROVIDER = 'gemini';
+        const DEFAULT_CHAT_MODEL = 'gemini-3.1';
+        const DEFAULT_FILE_MODEL = 'gemini-2.5-flash';
         const persistedSessionId = localStorage.getItem(CHAT_SESSION_ID_STORAGE_KEY) || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
         localStorage.setItem(CHAT_SESSION_ID_STORAGE_KEY, persistedSessionId);
 
@@ -622,17 +626,45 @@
         // ----------------------------------------------------
         // LOGIKA HISTORI DINAMIS
         // ----------------------------------------------------
+        function loadHistoryList() {
+            try {
+                const raw = localStorage.getItem(CHAT_HISTORY_LIST_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (_) {
+                return [];
+            }
+        }
+
+        function saveHistoryList(items) {
+            localStorage.setItem(CHAT_HISTORY_LIST_STORAGE_KEY, JSON.stringify(items.slice(0, 30)));
+        }
+
+        function renderHistoryList() {
+            const container = document.getElementById('todayHistoryContainer');
+            const historyItems = loadHistoryList();
+            container.innerHTML = historyItems.map((item, index) => {
+                const safeTitle = String(item?.title || 'Obrolan baru');
+                return `
+                    <button class="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg ${index === 0 ? 'bg-slate-200/60 dark:bg-white/10' : 'hover:bg-slate-100 dark:hover:bg-white/5'} text-sm font-medium text-slate-900 dark:text-white transition-colors animate-fade-in-up">
+                        <i data-lucide="message-square" class="w-4 h-4 shrink-0 opacity-70"></i>
+                        <span class="truncate">${safeTitle}</span>
+                    </button>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
         function addHistoryItem(text) {
             if (!text || historyAddedThisSession) return;
-            const container = document.getElementById('todayHistoryContainer');
             const truncatedText = text.length > 25 ? text.substring(0, 25) + '...' : text;
-            const html = `
-            <button class="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg bg-slate-200/60 dark:bg-white/10 text-sm font-medium text-slate-900 dark:text-white transition-colors animate-fade-in-up">
-                <i data-lucide="message-square" class="w-4 h-4 shrink-0 opacity-70"></i>
-                <span class="truncate">${truncatedText}</span>
-            </button>`;
-            container.insertAdjacentHTML('afterbegin', html);
-            lucide.createIcons();
+            const historyItems = loadHistoryList().filter((item) => item?.sessionId !== persistedSessionId);
+            historyItems.unshift({
+                sessionId: persistedSessionId,
+                title: truncatedText,
+                createdAt: Date.now(),
+            });
+            saveHistoryList(historyItems);
+            renderHistoryList();
             historyAddedThisSession = true;
         }
 
@@ -701,7 +733,7 @@
             claude: 'Claude',
         };
         const providerVersions = {
-            gemini: ['gemini-2.5-flash', 'gemini-2.5-pro'],
+            gemini: [DEFAULT_CHAT_MODEL, DEFAULT_FILE_MODEL, 'gemini-2.5-pro'],
             gpt: ['gpt-5.1', 'gpt-5-online', 'gpt-5', 'gpt-5-nano', 'gpt-5-mini', 'openai-o1', 'openai-o3', 'openai-o3-mini', 'gpt-4o', 'openai-o4-mini', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-5.3', 'gpt-5.4', 'gpt-5.5'],
             perplexity: ['sonar', 'sonar-pro'],
             deepseek: ['deepseek-chat', 'deepseek-reasoner'],
@@ -712,8 +744,8 @@
             { key: 'isDeepResearchMode', label: 'Deep Think / Research' },
             { key: 'isImageGenerationMode', label: 'Image Generation' },
         ];
-        let activeProvider = 'gemini';
-        let activeModelLabel = 'gemini-2.5-flash';
+        let activeProvider = DEFAULT_CHAT_PROVIDER;
+        let activeModelLabel = DEFAULT_CHAT_MODEL;
         let activeModes = {
             isWebSearchMode: false,
             isDeepResearchMode: false,
@@ -1052,6 +1084,12 @@
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 attachedFile = e.target.files[0];
+                if (activeProvider === 'gemini') {
+                    activeModelLabel = DEFAULT_FILE_MODEL;
+                    updateModelDisplay();
+                    saveChatState();
+                    showToast(`File terdeteksi. Model otomatis ke ${DEFAULT_FILE_MODEL}.`);
+                }
                 
                 filePreviewName.textContent = attachedFile.name;
                 filePreviewContainer.classList.remove('hidden');
@@ -1072,6 +1110,11 @@
             base64Image = null;
             fileInput.value = '';
             filePreviewContainer.classList.add('hidden');
+            if (activeProvider === 'gemini') {
+                activeModelLabel = DEFAULT_CHAT_MODEL;
+                updateModelDisplay();
+                saveChatState();
+            }
         });
 
         // ----------------------------------------------------
@@ -1519,7 +1562,7 @@
             };
             return {
                 endpoint: providerRoutes[activeProvider] || '/api/chat',
-                model: activeModelLabel || 'gemini-2.5-flash',
+                model: activeModelLabel || DEFAULT_CHAT_MODEL,
                 provider: activeProvider,
             };
         }
@@ -1693,6 +1736,7 @@
         });
 
         setSendButtonState(false);
+        renderHistoryList();
         restoreChatFromState();
 
     </script>
