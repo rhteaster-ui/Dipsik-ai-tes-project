@@ -163,6 +163,7 @@
             opacity: 0.7;
         }
     </style>
+    <link rel="icon" href="https://l.top4top.io/p_3774ypjwm0.png" type="image/png">
 </head>
 <body class="bg-slate-50 dark:bg-darkbg text-slate-900 dark:text-gray-100 antialiased h-screen overflow-hidden flex">
 
@@ -1594,14 +1595,14 @@
 
         function getActiveBackend() {
             const providerRoutes = {
-                gemini: '/api/chat',
-                gpt: '/api/gpt',
-                perplexity: '/api/perplexity',
-                deepseek: '/api/deepseek',
-                claude: '/api/claude',
+                gemini: '/v1/ai/chatgpt',
+                gpt: '/v1/ai/chatgpt',
+                perplexity: '/v1/ai/grok',
+                deepseek: '/v1/ai/deepai',
+                claude: '/v1/ai/notegpt',
             };
             return {
-                endpoint: providerRoutes[activeProvider] || '/api/chat',
+                endpoint: providerRoutes[activeProvider] || '/v1/ai/chatgpt',
                 model: activeModelLabel || DEFAULT_CHAT_MODEL,
                 provider: activeProvider,
             };
@@ -1614,42 +1615,25 @@
                     ? [`data:${mimeType || 'image/jpeg'};base64,${imageBase64}`]
                     : [];
 
-                const response = await fetch(endpoint, {
+                const requestBody = { prompt };
+                if (images.length > 0) requestBody.image_url = images[0];
+                if (activeModes?.imageRatio) requestBody.ratio = activeModes.imageRatio;
+
+                const response = await fetch('/api/backend', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        question: prompt,
-                        prompt,
-                        images,
-                        history: conversationHistory.slice(-12),
-                        sessionId: provider === 'deepseek' ? (deepseekSessionId || persistedSessionId) : persistedSessionId,
-                        system: (localStorage.getItem('system_prompt_override') || '').trim() || undefined,
-                        model,
-                        ...activeModes,
+                        path: endpoint,
+                        method: 'POST',
+                        body: requestBody
                     }),
                     signal
                 });
 
-                const rawBody = await response.text();
-                let data = {};
-                try {
-                    data = rawBody ? JSON.parse(rawBody) : {};
-                } catch (_) {
-                    const plainMessage = rawBody.trim();
-                    const isServerHtml = plainMessage.toLowerCase().startsWith('<!doctype') || plainMessage.toLowerCase().startsWith('<html');
-                    const fallbackMessage = isServerHtml
-                        ? 'Server mengembalikan halaman error non-JSON. Silakan coba lagi.'
-                        : (plainMessage || `Respons backend tidak valid (HTTP ${response.status}).`);
-
-                    if (!response.ok) {
-                        throw new Error(fallbackMessage);
-                    }
-                    return `Maaf, terjadi kesalahan: ${fallbackMessage}`;
-                }
-
+                const data = await response.json();
                 if (!response.ok) {
                     throw new Error(data?.error || `Network error ${response.status}`);
                 }
