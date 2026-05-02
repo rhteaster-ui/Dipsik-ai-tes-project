@@ -177,8 +177,8 @@
         <!-- Logo & New Chat -->
         <div class="p-4 border-b border-slate-200 dark:border-darkborder">
             <a href="index.html" class="flex items-center gap-3 group mb-6 px-2">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-white/5 dark:to-white/5 border border-blue-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-gray-300">
-                    <i data-lucide="layers" class="w-4 h-4"></i>
+                <div class="w-8 h-8 rounded-lg overflow-hidden border border-blue-200 dark:border-white/10">
+                    <img src="https://l.top4top.io/p_3774ypjwm0.png" alt="Explore AI Icon" class="w-full h-full object-cover">
                 </div>
                 <span class="font-bold text-lg tracking-tight">Explore<span class="font-normal text-slate-500 dark:text-gray-500">Ai</span></span>
             </a>
@@ -372,10 +372,7 @@
     <!-- Popup Pilihan Provider -->
     <div id="providerSelectModal" class="fixed z-[100] hidden w-48 bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-xl shadow-2xl p-1.5">
         <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-2 py-1">Pilih Provider</div>
-        <button onclick="selectProvider('gemini')" data-provider-option="gemini" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">Gemini</button>
-        <button onclick="selectProvider('gpt')" data-provider-option="gpt" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">GPT</button>
-        <button onclick="selectProvider('perplexity')" data-provider-option="perplexity" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">Perplexity</button>
-        <button onclick="selectProvider('deepseek')" data-provider-option="deepseek" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">DeepSeek</button>
+        <div id="providerOptionsContainer" class="space-y-0.5"></div>
     </div>
 
     <!-- Popup Pilihan Versi + Mode -->
@@ -726,20 +723,9 @@
         const currentModelDisplay = document.getElementById('currentModelDisplay');
         const versionOptionsContainer = document.getElementById('versionOptionsContainer');
         const modeOptionsContainer = document.getElementById('modeOptionsContainer');
-        const providerLabelMap = {
-            gemini: 'Gemini',
-            gpt: 'GPT',
-            perplexity: 'Perplexity',
-            deepseek: 'DeepSeek',
-            claude: 'Claude',
-        };
-        const providerVersions = {
-            gemini: [DEFAULT_CHAT_MODEL, DEFAULT_FILE_MODEL, 'gemini-2.5-pro'],
-            gpt: ['gpt-5.1', 'gpt-5-online', 'gpt-5', 'gpt-5-nano', 'gpt-5-mini', 'openai-o1', 'openai-o3', 'openai-o3-mini', 'gpt-4o', 'openai-o4-mini', 'gpt-4.1-mini', 'gpt-4.1-nano', 'gpt-5.3', 'gpt-5.4', 'gpt-5.5'],
-            perplexity: ['sonar', 'sonar-pro'],
-            deepseek: ['deepseek-chat', 'deepseek-reasoner'],
-            claude: ['claude-standard'],
-        };
+        const providerOptionsContainer = document.getElementById('providerOptionsContainer');
+        const providerLabelMap = { gemini: 'Gemini', perplexity: 'Perplexity Search', dauns: 'Dauns API' };
+        const providerVersions = { gemini: [DEFAULT_CHAT_MODEL], perplexity: ['sonar','sonar-pro'], dauns: ['chatgpt','notegpt','grok','deepai','nanobanana'] };
         const modelModes = [
             { key: 'isWebSearchMode', label: 'Web Search' },
             { key: 'isDeepResearchMode', label: 'Deep Think / Research' },
@@ -753,6 +739,30 @@
             isImageGenerationMode: false,
         };
         let modelPopupContext = { source: 'input', targetBtn: null };
+
+        async function syncModelsFromBackend() {
+            try {
+                const response = await fetch('/api/backend');
+                const data = await response.json();
+                if (!response.ok) throw new Error(data?.error || `HTTP ${response.status}`);
+
+                const providers = Array.isArray(data?.providers) ? data.providers : [];
+                providers.forEach((p) => {
+                    providerLabelMap[p.key] = p.label || p.key;
+                    providerVersions[p.key] = Array.isArray(p.models) && p.models.length ? p.models : [DEFAULT_CHAT_MODEL];
+                });
+
+                providerOptionsContainer.innerHTML = providers.map((p) => `<button onclick="selectProvider('${p.key}')" data-provider-option="${p.key}" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">${p.label || p.key}</button>`).join('');
+                activeProvider = data?.defaultProvider || activeProvider;
+                const versions = providerVersions[activeProvider] || [DEFAULT_CHAT_MODEL];
+                activeModelLabel = versions.includes(activeModelLabel) ? activeModelLabel : (data?.defaultModel || versions[0]);
+                updateModelDisplay();
+                renderVersionOptions();
+            } catch (error) {
+                showToast(`Gagal sinkron model backend: ${error?.message || error}`);
+                providerOptionsContainer.innerHTML = `<button onclick="selectProvider('gemini')" data-provider-option="gemini" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">Gemini</button>`;
+            }
+        }
 
         function positionPopup(anchor, modalEl, placeAbove = false) {
             const rect = anchor.getBoundingClientRect();
@@ -1594,15 +1604,9 @@
         }
 
         function getActiveBackend() {
-            const providerRoutes = {
-                gemini: '/v1/ai/chatgpt',
-                gpt: '/v1/ai/chatgpt',
-                perplexity: '/v1/ai/grok',
-                deepseek: '/v1/ai/deepai',
-                claude: '/v1/ai/notegpt',
-            };
+            const providerRoutes = { gemini: '/v1/chat', perplexity: '/v1/perplexity', dauns: '/v1/dauns' };
             return {
-                endpoint: providerRoutes[activeProvider] || '/v1/ai/chatgpt',
+                endpoint: providerRoutes[activeProvider] || '/v1/chat',
                 model: activeModelLabel || DEFAULT_CHAT_MODEL,
                 provider: activeProvider,
             };
@@ -1615,7 +1619,7 @@
                     ? [`data:${mimeType || 'image/jpeg'};base64,${imageBase64}`]
                     : [];
 
-                const requestBody = { prompt };
+                const requestBody = { prompt, model };
                 if (images.length > 0) requestBody.image_url = images[0];
                 if (activeModes?.imageRatio) requestBody.ratio = activeModes.imageRatio;
 
@@ -1636,11 +1640,6 @@
                 const data = await response.json();
                 if (!response.ok) {
                     throw new Error(data?.error || `Network error ${response.status}`);
-                }
-
-                if (provider === 'deepseek' && typeof data.sessionId === 'string' && data.sessionId.trim()) {
-                    deepseekSessionId = data.sessionId.trim();
-                    saveChatState();
                 }
 
                 const reply = typeof data.reply === 'string' ? data.reply.trim() : '';
