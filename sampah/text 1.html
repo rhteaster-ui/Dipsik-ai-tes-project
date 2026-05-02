@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Lab | AI Tools</title>
+    
+    <!-- Google Fonts: Inter for a clean, minimal, and premium look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Tailwind Config for Dark/Light Mode & Animations -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Mengaktifkan toggle dark mode berbasis class
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Inter"', 'sans-serif'],
+                    },
+                    colors: {
+                        // Palet Dark Mode (Netral gelap, tanpa dominasi biru)
+                        darkbg: '#030712', 
+                        darkcard: '#0B0F19',
+                        darkborder: 'rgba(255, 255, 255, 0.08)',
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'scroll-left': 'scrollLeft 35s linear infinite',
+                        'scroll-right': 'scrollRight 35s linear infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        
+                        // Animasi untuk gelombang laut
+                        'wave-1': 'wave 20s linear infinite',
+                        'wave-2': 'wave 25s linear infinite reverse',
+                        'wave-3': 'wave 32s linear infinite',
+                        
+                        // Animasi untuk ikon 3D
+                        'float-3d': 'float3d 8s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        scrollLeft: {
+                            '0%': { transform: 'translateX(0)' },
+                            '100%': { transform: 'translateX(-50%)' },
+                        },
+                        scrollRight: {
+                            '0%': { transform: 'translateX(-50%)' },
+                            '100%': { transform: 'translateX(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        },
+                        wave: {
+                            '0%': { transform: 'translateX(0)' },
+                            '100%': { transform: 'translateX(-50%)' },
+                        },
+                        float3d: {
+                            '0%, 100%': { transform: 'translateY(0) rotateX(0deg) rotateY(0deg)' },
+                            '50%': { transform: 'translateY(-20px) rotateX(10deg) rotateY(-10deg)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Base Transition for Theme Switching */
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Glassmorphism Navigation */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .dark .glass-nav {
+            background: rgba(3, 7, 18, 0.75);
+            border-bottom: 1px solid var(--darkborder);
+        }
+
+        /* Premium Cards dengan Warna yang Hidup (Light) */
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.1);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-card:hover {
+            border-color: #bfdbfe; 
+            box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.2);
+            transform: translateY(-5px);
+        }
+
+        /* Dark mode card variants (Putih/Netral, tanpa bayangan biru) */
+        .dark .glass-card {
+            background: var(--darkcard);
+            border: 1px solid var(--darkborder);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+        .dark .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px -10px rgba(255, 255, 255, 0.05);
+        }
+
+        /* Gradient Text (Light: Biru Segar | Dark: Putih/Silver Halus) */
+        .gradient-text {
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .dark .gradient-text {
+            background: linear-gradient(135deg, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Scrollbar Minimalist */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        /* Tech Badge */
+        .tech-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 999px;
+            border: 1px solid #e2e8f0;
+            background-color: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            color: #334155;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+        }
+        .tech-badge:hover {
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        /* Dark Mode Tech Badge (Berwarna, tidak pudar) */
+        .dark .tech-badge {
+            border: 1px solid rgba(255,255,255,0.1);
+            background-color: rgba(255,255,255,0.03);
+            color: #e2e8f0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .dark .tech-badge:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+            background-color: rgba(255,255,255,0.06);
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+        .hover-pause:hover { animation-play-state: paused; }
+
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+    </style>
+</head>
+<body class="text-slate-900 dark:text-gray-100 antialiased overflow-x-hidden selection:bg-blue-200 selection:text-blue-900 dark:selection:bg-white/20 dark:selection:text-white">
+
+    <!-- Base Background Solid -->
+    <div class="fixed inset-0 bg-slate-50 dark:bg-darkbg transition-colors duration-300 z-[-2]"></div>
+
+    <!-- BACKGROUND GELOMBANG LAUT (Waves) -->
+    <!-- Dihapus: flex items-center justify-center. Diganti dengan absolute positioning dari bawah -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
+        <!-- SVG Gradient Definitions & Glow Filter -->
+        <svg style="width:0;height:0;position:absolute;" aria-hidden="true">
+            <defs>
+                <!-- Gradien Biru (Cyan/Blue) -->
+                <linearGradient id="wave-blue" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0" />
+                    <stop offset="25%" stop-color="#3b82f6" stop-opacity="1" />
+                    <stop offset="50%" stop-color="#0ea5e9" stop-opacity="0" />
+                    <stop offset="75%" stop-color="#3b82f6" stop-opacity="1" />
+                    <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0" />
+                </linearGradient>
+                <!-- Gradien Merah Muda (Pink/Purple) -->
+                <linearGradient id="wave-pink" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#ec4899" stop-opacity="0" />
+                    <stop offset="25%" stop-color="#a855f7" stop-opacity="1" />
+                    <stop offset="50%" stop-color="#ec4899" stop-opacity="0" />
+                    <stop offset="75%" stop-color="#a855f7" stop-opacity="1" />
+                    <stop offset="100%" stop-color="#ec4899" stop-opacity="0" />
+                </linearGradient>
+                <!-- Gradien Kuning (Yellow/Amber) -->
+                <linearGradient id="wave-yellow" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#eab308" stop-opacity="0" />
+                    <stop offset="25%" stop-color="#f59e0b" stop-opacity="1" />
+                    <stop offset="50%" stop-color="#eab308" stop-opacity="0" />
+                    <stop offset="75%" stop-color="#f59e0b" stop-opacity="1" />
+                    <stop offset="100%" stop-color="#eab308" stop-opacity="0" />
+                </linearGradient>
+
+                <!-- Filter Efek Cahaya / Glow -->
+                <filter id="wave-glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <!-- Blur sangat luas untuk pendaran luar yang lembut -->
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="35" result="blur1" />
+                    <!-- Blur sedang untuk ketebalan gradien -->
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur2" />
+                    <!-- Blur sempit untuk inti cahaya -->
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur3" />
+                    <feMerge>
+                        <feMergeNode in="blur1" />
+                        <feMergeNode in="blur2" />
+                        <feMergeNode in="blur3" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+        </svg>
+
+        <!-- POSISI MUTLAK DI BAWAH (absolute bottom-0) -->
+        <!-- Garis putih di tengah sudah dihapus, tersisa hanya glow warna murni -->
+        
+        <!-- Wave 1: Biru/Cyan -->
+        <svg class="absolute bottom-0 left-0 w-[200vw] min-w-[2000px] h-[40vh] opacity-50 dark:opacity-95 animate-wave-1" viewBox="0 0 2000 200" preserveAspectRatio="none">
+            <path d="M 0 100 Q 250 50, 500 100 T 1000 100 T 1500 100 T 2000 100" fill="none" stroke="url(#wave-blue)" stroke-width="12" filter="url(#wave-glow)" vector-effect="non-scaling-stroke" />
+        </svg>
+        
+        <!-- Wave 2: Merah Muda/Ungu -->
+        <svg class="absolute bottom-[-5vh] left-0 w-[200vw] min-w-[2000px] h-[45vh] opacity-40 dark:opacity-85 animate-wave-2" viewBox="0 0 2000 200" preserveAspectRatio="none">
+            <path d="M 0 100 Q 250 140, 500 100 T 1000 100 T 1500 100 T 2000 100" fill="none" stroke="url(#wave-pink)" stroke-width="10" filter="url(#wave-glow)" vector-effect="non-scaling-stroke" />
+        </svg>
+        
+        <!-- Wave 3: Kuning Lembut -->
+        <svg class="absolute bottom-[-10vh] left-0 w-[200vw] min-w-[2000px] h-[50vh] opacity-35 dark:opacity-75 animate-wave-3" viewBox="0 0 2000 200" preserveAspectRatio="none">
+            <path d="M 0 100 Q 250 65, 500 100 T 1000 100 T 1500 100 T 2000 100" fill="none" stroke="url(#wave-yellow)" stroke-width="8" filter="url(#wave-glow)" vector-effect="non-scaling-stroke" />
+        </svg>
+
+        <!-- Texture overlay untuk kesan Premium (Noise Halus) -->
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMTUwLDE1MCwxNTAsMC4wNSkiLz48L3N2Zz4=')] opacity-70 dark:opacity-30"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="fixed w-full top-0 z-40 glass-nav transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <!-- Brand -->
+            <a href="#" class="text-xl font-bold tracking-tight flex items-center gap-3 group">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-white/5 dark:to-white/5 border border-blue-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-gray-300 group-hover:scale-105 transition-all duration-300 shadow-sm">
+                    <i data-lucide="layers" class="w-4 h-4"></i>
+                </div>
+                <span>Explore<span class="font-normal text-slate-500 dark:text-gray-500">Lab</span></span>
+            </a>
+            
+            <!-- Links -->
+            <div class="hidden md:flex gap-8 text-sm font-medium text-slate-600 dark:text-gray-400">
+                <a href="#tools" class="hover:text-blue-600 dark:hover:text-white transition-colors">AI Tools</a>
+                <a href="#tech" class="hover:text-blue-600 dark:hover:text-white transition-colors">Teknologi</a>
+            </div>
+            
+            <!-- Controls (Theme Toggle & CTA) -->
+            <div class="flex items-center gap-4">
+                <button id="themeToggle" class="p-2.5 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-gray-300 transition-colors shadow-sm" aria-label="Toggle Theme">
+                    <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
+                    <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-yellow-400"></i>
+                </button>
+                
+                <a href="#tools" class="hidden sm:inline-block px-5 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-semibold hover:bg-blue-600 dark:hover:bg-slate-200 transition-all shadow-md">
+                    Akses Lab
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-40 pb-20 px-6 min-h-[90vh] flex items-center justify-center text-center">
+        <div class="max-w-4xl mx-auto relative z-10">
+            
+            <!-- Indikator Status -->
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 dark:border-white/10 bg-blue-50 dark:bg-white/5 shadow-sm text-xs font-semibold text-blue-700 dark:text-slate-300 mb-8 opacity-0 animate-fade-in-up">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)] animate-pulse"></span>
+                Sistem Online & Siap Digunakan
+            </div>
+            
+            <!-- TEKS HERO & IKON 3D MENGAMBANG DI BELAKANGNYA -->
+            <div class="relative inline-block w-full">
+                
+                <!-- IKON 3D MENGAMBANG -->
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] pointer-events-none z-[-1] opacity-30 dark:opacity-40 mix-blend-multiply dark:mix-blend-screen">
+                    <div class="w-full h-full animate-float-3d flex items-center justify-center">
+                        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                            <defs>
+                                <linearGradient id="cube-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#38bdf8" />
+                                    <stop offset="50%" stop-color="#818cf8" />
+                                    <stop offset="100%" stop-color="#c084fc" />
+                                </linearGradient>
+                                <filter id="glow-3d" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feGaussianBlur stdDeviation="6" result="blur" />
+                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                </filter>
+                            </defs>
+                            
+                            <!-- Kubus isometrik (Wireframe kristal 3D) -->
+                            <g filter="url(#glow-3d)" stroke="url(#cube-grad)" stroke-width="1.5" stroke-linejoin="round">
+                                <polygon points="100,20 170,60 170,140 100,180 30,140 30,60" fill="rgba(255,255,255,0.02)" />
+                                <line x1="30" y1="60" x2="100" y2="100" />
+                                <line x1="170" y1="60" x2="100" y2="100" />
+                                <line x1="100" y1="180" x2="100" y2="100" />
+                                <polygon points="100,60 135,80 135,120 100,140 65,120 65,80" stroke-width="1" opacity="0.6"/>
+                                <line x1="65" y1="80" x2="100" y2="100" opacity="0.6"/>
+                                <line x1="135" y1="80" x2="100" y2="100" opacity="0.6"/>
+                                <line x1="100" y1="140" x2="100" y2="100" opacity="0.6"/>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+
+                <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6 opacity-0 animate-fade-in-up delay-100">
+                    Eksplorasi Tanpa Batas di <br class="hidden md:block"/>
+                    <span class="gradient-text drop-shadow-sm">Explore Lab</span>
+                </h1>
+            </div>
+            
+            <p class="text-lg md:text-xl text-slate-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed opacity-0 animate-fade-in-up delay-200">
+                Pusat inovasi tempat kreativitas bertemu dengan kecerdasan buatan. Temukan berbagai alat AI mutakhir dalam platform yang responsif, elegan, dan penuh tenaga.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center opacity-0 animate-fade-in-up delay-300">
+                <!-- Tombol Utama -->
+                <a href="#tools" class="px-8 py-4 rounded-xl bg-blue-600 dark:bg-white text-white dark:text-slate-900 font-bold hover:bg-blue-700 dark:hover:bg-slate-200 transition-all shadow-lg shadow-blue-500/30 dark:shadow-white/10 flex items-center justify-center gap-2 hover:-translate-y-1">
+                    Mulai Eksplorasi <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+                <!-- Tombol Sekunder -->
+                <a href="#tech" class="px-8 py-4 rounded-xl bg-white dark:bg-darkcard border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 font-semibold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-sm flex items-center justify-center gap-2">
+                    Lihat Teknologi
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Tools / Lab Section -->
+    <section id="tools" class="py-24 px-6 relative border-y border-slate-200 dark:border-white/5 bg-white/50 dark:bg-[#050810]/50 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto">
+            <div class="mb-16 md:text-center opacity-0 animate-fade-in-up">
+                <h2 class="text-xs font-bold text-blue-600 dark:text-slate-400 tracking-[0.2em] uppercase mb-4">Pusat Instrumen</h2>
+                <h3 class="text-3xl md:text-5xl font-extrabold mb-4 text-slate-900 dark:text-white">Pilih Alat AI-mu</h3>
+                <p class="text-slate-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">Kumpulan tools yang ditenagai oleh model AI generatif terbaik, dirancang untuk mempermudah pekerjaan dan memicu kreativitasmu dengan efisiensi tinggi.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="glass-card rounded-3xl p-8 opacity-0 animate-fade-in-up delay-100 group">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-white/5 border border-blue-100 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-slate-300 mb-6 group-hover:scale-110 transition-transform animate-float">
+                        <i data-lucide="terminal-square" class="w-6 h-6"></i>
+                    </div>
+                    <h4 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Tengpt Chat</h4>
+                    <p class="text-sm text-slate-600 dark:text-gray-400 mb-8 leading-relaxed">Asisten interaktif berbasis Gemini API. Mendukung analisis teks dan gambar (vision) dalam antarmuka yang sangat clean dan responsif.</p>
+                    <a href="/chat.html" class="inline-flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-slate-300 group-hover:gap-3 transition-all">
+                        Inisiasi Prompt <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="glass-card rounded-3xl p-8 opacity-0 animate-fade-in-up delay-200 group">
+                    <div class="w-14 h-14 rounded-2xl bg-cyan-50 dark:bg-white/5 border border-cyan-100 dark:border-white/10 flex items-center justify-center text-cyan-600 dark:text-slate-300 mb-6 group-hover:scale-110 transition-transform animate-float" style="animation-delay: 1s;">
+                        <i data-lucide="image" class="w-6 h-6"></i>
+                    </div>
+                    <h4 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Image Studio</h4>
+                    <p class="text-sm text-slate-600 dark:text-gray-400 mb-8 leading-relaxed">Mesin render visual. Menerjemahkan instruksi teks menjadi mahakarya visual resolusi tinggi atau memanipulasi gambar menggunakan AI generatif.</p>
+                    <a href="#" class="inline-flex items-center gap-2 text-sm font-bold text-cyan-600 dark:text-slate-300 group-hover:gap-3 transition-all">
+                        Render Visual <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="glass-card rounded-3xl p-8 opacity-0 animate-fade-in-up delay-300 group">
+                    <div class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-white/5 border border-indigo-100 dark:border-white/10 flex items-center justify-center text-indigo-600 dark:text-slate-300 mb-6 group-hover:scale-110 transition-transform animate-float" style="animation-delay: 2s;">
+                        <i data-lucide="radar" class="w-6 h-6"></i>
+                    </div>
+                    <h4 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Insight Radar</h4>
+                    <p class="text-sm text-slate-600 dark:text-gray-400 mb-8 leading-relaxed">Sistem pelacakan data dan peringkas berita real-time. Mengeliminasi noise untuk menyajikan informasi terkini secara terstruktur.</p>
+                    <a href="#" class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 dark:text-slate-300 group-hover:gap-3 transition-all">
+                        Mulai Pelacakan <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technologies Section -->
+    <section id="tech" class="py-24 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto text-center px-6 mb-12 opacity-0 animate-fade-in-up">
+            <h2 class="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-[0.3em] uppercase">Arsitektur & Teknologi Lab</h2>
+        </div>
+
+        <div class="flex flex-col gap-6 relative z-10 w-full overflow-hidden opacity-0 animate-fade-in-up delay-100">
+            <!-- Edge Fade Overlays -->
+            <div class="absolute inset-y-0 left-0 w-24 sm:w-40 bg-gradient-to-r from-slate-50 dark:from-darkbg to-transparent z-20 pointer-events-none"></div>
+            <div class="absolute inset-y-0 right-0 w-24 sm:w-40 bg-gradient-to-l from-slate-50 dark:from-darkbg to-transparent z-20 pointer-events-none"></div>
+
+            <!-- Baris 1: Kiri -->
+            <!-- PENGHAPUSAN KELAS ABU-ABU PADA IKON (dihapus: dark:text-gray-400) AGAR WARNA ASLI TETAP HIDUP DI MODE GELAP -->
+            <div class="flex w-max animate-scroll-left hover-pause">
+                <div class="flex gap-4 px-2">
+                    <div class="tech-badge"><i data-lucide="file-json" class="w-5 h-5 text-orange-500"></i><span>HTML5</span></div>
+                    <div class="tech-badge"><i data-lucide="palette" class="w-5 h-5 text-blue-500"></i><span>CSS3</span></div>
+                    <div class="tech-badge"><i data-lucide="file-code-2" class="w-5 h-5 text-yellow-500"></i><span>JavaScript</span></div>
+                    <div class="tech-badge"><i data-lucide="code" class="w-5 h-5 text-blue-600"></i><span>TypeScript</span></div>
+                    <div class="tech-badge"><i data-lucide="component" class="w-5 h-5 text-emerald-500"></i><span>Vue.js</span></div>
+                    <div class="tech-badge"><i data-lucide="atom" class="w-5 h-5 text-cyan-400"></i><span>React</span></div>
+                    <div class="tech-badge"><i data-lucide="wind" class="w-5 h-5 text-cyan-500"></i><span>Tailwind CSS</span></div>
+                    <div class="tech-badge"><i data-lucide="zap" class="w-5 h-5 text-teal-500"></i><span>FastAPI</span></div>
+                </div>
+                <!-- Duplicate for Loop -->
+                <div class="flex gap-4 px-2">
+                    <div class="tech-badge"><i data-lucide="file-json" class="w-5 h-5 text-orange-500"></i><span>HTML5</span></div>
+                    <div class="tech-badge"><i data-lucide="palette" class="w-5 h-5 text-blue-500"></i><span>CSS3</span></div>
+                    <div class="tech-badge"><i data-lucide="file-code-2" class="w-5 h-5 text-yellow-500"></i><span>JavaScript</span></div>
+                    <div class="tech-badge"><i data-lucide="code" class="w-5 h-5 text-blue-600"></i><span>TypeScript</span></div>
+                    <div class="tech-badge"><i data-lucide="component" class="w-5 h-5 text-emerald-500"></i><span>Vue.js</span></div>
+                    <div class="tech-badge"><i data-lucide="atom" class="w-5 h-5 text-cyan-400"></i><span>React</span></div>
+                    <div class="tech-badge"><i data-lucide="wind" class="w-5 h-5 text-cyan-500"></i><span>Tailwind CSS</span></div>
+                    <div class="tech-badge"><i data-lucide="zap" class="w-5 h-5 text-teal-500"></i><span>FastAPI</span></div>
+                </div>
+            </div>
+
+            <!-- Baris 2: Kanan -->
+            <div class="flex w-max animate-scroll-right hover-pause">
+                <div class="flex gap-4 px-2">
+                    <div class="tech-badge"><i data-lucide="server" class="w-5 h-5 text-indigo-500"></i><span>REST API</span></div>
+                    <div class="tech-badge"><i data-lucide="database" class="w-5 h-5 text-red-500"></i><span>Upstash Redis</span></div>
+                    <!-- Untuk GitHub & Vercel, diberi dark:text-white karena aslinya berwarna hitam yang tak terlihat di dark bg -->
+                    <div class="tech-badge"><i data-lucide="github" class="w-5 h-5 text-slate-800 dark:text-white"></i><span>GitHub</span></div>
+                    <div class="tech-badge"><i data-lucide="triangle" class="w-5 h-5 text-black dark:text-white"></i><span>Vercel</span></div>
+                    <div class="tech-badge"><i data-lucide="cloud" class="w-5 h-5 text-teal-400"></i><span>Netlify</span></div>
+                    <div class="tech-badge"><i data-lucide="smartphone" class="w-5 h-5 text-blue-400"></i><span>PWA</span></div>
+                    <div class="tech-badge"><i data-lucide="layout-template" class="w-5 h-5 text-pink-500"></i><span>UI/UX Design</span></div>
+                    <div class="tech-badge"><i data-lucide="bot" class="w-5 h-5 text-blue-500"></i><span>AI Integration</span></div>
+                </div>
+                <!-- Duplicate for Loop -->
+                <div class="flex gap-4 px-2">
+                    <div class="tech-badge"><i data-lucide="server" class="w-5 h-5 text-indigo-500"></i><span>REST API</span></div>
+                    <div class="tech-badge"><i data-lucide="database" class="w-5 h-5 text-red-500"></i><span>Upstash Redis</span></div>
+                    <div class="tech-badge"><i data-lucide="github" class="w-5 h-5 text-slate-800 dark:text-white"></i><span>GitHub</span></div>
+                    <div class="tech-badge"><i data-lucide="triangle" class="w-5 h-5 text-black dark:text-white"></i><span>Vercel</span></div>
+                    <div class="tech-badge"><i data-lucide="cloud" class="w-5 h-5 text-teal-400"></i><span>Netlify</span></div>
+                    <div class="tech-badge"><i data-lucide="smartphone" class="w-5 h-5 text-blue-400"></i><span>PWA</span></div>
+                    <div class="tech-badge"><i data-lucide="layout-template" class="w-5 h-5 text-pink-500"></i><span>UI/UX Design</span></div>
+                    <div class="tech-badge"><i data-lucide="bot" class="w-5 h-5 text-blue-500"></i><span>AI Integration</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Minimalis -->
+    <footer class="py-10 px-6 border-t border-slate-200 dark:border-white/5 bg-white dark:bg-darkcard text-center relative z-10">
+        <div class="max-w-7xl mx-auto flex flex-col items-center">
+            <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 dark:text-gray-500 flex items-center justify-center mb-4">
+                <i data-lucide="cpu" class="w-5 h-5"></i>
+            </div>
+            <p class="text-slate-500 dark:text-gray-500 text-xs font-bold uppercase tracking-[0.2em]">
+                &copy; 2024 Explore Lab // Core System Online
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Inisialisasi Ikon Lucide
+        lucide.createIcons();
+
+        // LOGIKA THEME TOGGLE (DARK/LIGHT MODE)
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const htmlElement = document.documentElement;
+
+        // Cek LocalStorage atau preferensi sistem saat pertama kali dimuat
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            htmlElement.classList.add('dark');
+        } else {
+            htmlElement.classList.remove('dark');
+        }
+
+        // Fungsi ketika tombol ditekan
+        themeToggleBtn.addEventListener('click', () => {
+            htmlElement.classList.toggle('dark');
+            
+            // Simpan pilihan user
+            if (htmlElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        });
+    </script>
+</body>
+</html>
