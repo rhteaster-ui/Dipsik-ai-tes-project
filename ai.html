@@ -514,7 +514,7 @@
         const CHAT_SESSION_ID_STORAGE_KEY = 'exploreai-chat-session-id-v1';
         const CHAT_HISTORY_LIST_STORAGE_KEY = 'exploreai-history-list-v1';
         const DEFAULT_CHAT_PROVIDER = 'gemini';
-        const DEFAULT_CHAT_MODEL = 'gemini-3.1';
+        const DEFAULT_CHAT_MODEL = 'gemini-2.5-flash';
         const DEFAULT_FILE_MODEL = 'gemini-2.5-flash';
         const persistedSessionId = localStorage.getItem(CHAT_SESSION_ID_STORAGE_KEY) || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
         localStorage.setItem(CHAT_SESSION_ID_STORAGE_KEY, persistedSessionId);
@@ -1513,6 +1513,26 @@
             scrollToBottom();
         }
 
+        
+
+        function renderTextLoadingState(contentEl) {
+            if (!contentEl) return;
+            contentEl.innerHTML = `
+                <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                        <span class="text-sm font-medium text-slate-600 dark:text-slate-300">AI sedang menyusun jawaban...</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="h-3 rounded bg-slate-200/80 dark:bg-slate-700/70 animate-pulse"></div>
+                        <div class="h-3 rounded bg-slate-200/80 dark:bg-slate-700/70 animate-pulse w-11/12"></div>
+                        <div class="h-3 rounded bg-slate-200/80 dark:bg-slate-700/70 animate-pulse w-9/12"></div>
+                    </div>
+                </div>
+            `;
+            scrollToBottom();
+        }
+
         function appendGeneratedImage(contentEl, imageUrl) {
             if (!contentEl || !imageUrl) return;
             const safeUrl = escapeHtml(imageUrl);
@@ -1548,6 +1568,26 @@
                 await new Promise((resolve) => setTimeout(resolve, 20));
             }
 
+            contentEl.innerHTML = renderMarkdown(normalized);
+            scrollToBottom();
+        }
+
+        async function appendAIMessageSmoothToShell(contentEl, text) {
+            if (!contentEl) return;
+            const normalized = String(text || '');
+            if (!normalized) {
+                contentEl.innerHTML = renderMarkdown('');
+                return;
+            }
+            const step = normalized.length > 1600 ? 28 : 16;
+            let i = 0;
+            while (i < normalized.length) {
+                i = Math.min(i + step, normalized.length);
+                const partial = normalized.slice(0, i);
+                contentEl.innerHTML = `${renderMarkdown(partial)}<span class="typing-cursor">▍</span>`;
+                scrollToBottom();
+                await new Promise((resolve) => setTimeout(resolve, 18));
+            }
             contentEl.innerHTML = renderMarkdown(normalized);
             scrollToBottom();
         }
@@ -1708,13 +1748,15 @@
             setSendButtonState(true);
 
             const aiShell = createAIMessageShell();
-            if (isLikelyImagePrompt(text)) {
+            if (isLikelyImagePrompt(text) || activeModes.isImageGenerationMode) {
                 renderImageGenerationPlaceholder(aiShell);
+            } else {
+                renderTextLoadingState(aiShell);
             }
             const responsePayload = await fetchAIResponse(text, currentBase64, currentMime, activeRequestController.signal);
             const responseText = typeof responsePayload === 'string' ? responsePayload : responsePayload.text;
             
-            aiShell.innerHTML = renderMarkdown(responseText);
+            await appendAIMessageSmoothToShell(aiShell, responseText);
             if (responsePayload?.imageUrl) appendGeneratedImage(aiShell, responsePayload.imageUrl);
             conversationHistory.push({ role: 'user', text: text || 'Analisa lampiran', images: currentBase64 ? [`data:${currentMime || 'image/jpeg'};base64,${currentBase64}`] : [] });
             conversationHistory.push({ role: 'assistant', text: responseText, images: [] });
