@@ -51,7 +51,14 @@ export default async function handler(req, res) {
       const target = `${proto}://${host}/api/chat`;
       const response = await fetch(target, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: body.prompt, question: body.prompt, model, images: body.image_url ? [body.image_url] : [] }),
+        body: JSON.stringify({
+          prompt: body.prompt,
+          question: body.prompt,
+          model,
+          images: body.image_url ? [body.image_url] : [],
+          history: Array.isArray(body.history) ? body.history : [],
+          sessionId: String(body.sessionId || '').trim(),
+        }),
       });
       const data = await safeJson(response);
       return res.status(response.status).json(data);
