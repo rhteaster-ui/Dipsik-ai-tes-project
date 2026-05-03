@@ -5,7 +5,7 @@ const MODEL_CATALOG = {
   providers: [
     { key: 'gemini', label: 'Gemini', models: ['gemini-2.5-flash', 'gemini-2.5-pro'] },
     { key: 'perplexity', label: 'Perplexity Search', models: ['sonar', 'sonar-pro'] },
-    { key: 'dauns', label: 'Dauns API', models: ['chatgpt', 'notegpt', 'grok', 'deepai', 'nanobanana'] },
+    { key: 'dauns', label: 'Model Endpoint', models: ['chatgpt', 'notegpt', 'grok', 'deepai', 'nanobanana'] },
   ],
   defaultProvider: 'gemini',
   defaultModel: 'gemini-2.5-flash',
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
     if (path === '/v1/dauns') {
       const model = String(body?.model || '').trim().toLowerCase();
       const targetPath = PATH_BY_MODEL[model];
-      if (!targetPath) return res.status(400).json({ error: `Model Dauns tidak didukung: ${model}` });
+      if (!targetPath) return res.status(400).json({ error: `Model endpoint tidak didukung: ${model}` });
 
       const payload = { prompt: String(body?.prompt || '').trim() };
       if (body?.image_url) payload.image_url = String(body.image_url);
