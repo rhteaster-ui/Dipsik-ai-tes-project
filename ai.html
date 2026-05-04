@@ -43,7 +43,16 @@
     </script>
 
     <style>
-        body { transition: background-color 0.3s ease, color 0.3s ease; }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+            min-height: 100dvh;
+            height: var(--app-height, 100dvh);
+        }
         
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -165,7 +174,7 @@
     </style>
     <link rel="icon" href="https://l.top4top.io/p_3774ypjwm0.png" type="image/png">
 </head>
-<body class="bg-slate-50 dark:bg-darkbg text-slate-900 dark:text-gray-100 antialiased h-screen overflow-hidden flex">
+<body class="bg-slate-50 dark:bg-darkbg text-slate-900 dark:text-gray-100 antialiased overflow-hidden flex min-h-0">
 
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-slate-900/80 dark:bg-white/80 backdrop-blur-md text-white dark:text-slate-900 px-3.5 py-1.5 rounded-full text-xs font-medium shadow-md transition-all duration-300 opacity-0 pointer-events-none z-[200] transform translate-y-4">
@@ -173,7 +182,7 @@
     </div>
 
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-72 h-full border-r border-slate-200 dark:border-darkborder glass-panel flex flex-col transition-transform duration-300 absolute md:relative z-40 -translate-x-full md:translate-x-0">
+    <aside id="sidebar" class="w-72 h-full shrink-0 min-h-0 border-r border-slate-200 dark:border-darkborder glass-panel flex flex-col transition-transform duration-300 absolute md:relative z-40 -translate-x-full md:translate-x-0">
         <!-- Logo & New Chat -->
         <div class="p-4 border-b border-slate-200 dark:border-darkborder">
             <a href="index.html" class="flex items-center gap-3 group mb-6 px-2">
@@ -211,7 +220,7 @@
     </aside>
 
     <!-- MAIN CHAT AREA -->
-    <main class="flex-1 flex flex-col h-full relative w-full">
+    <main class="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative w-full">
         <!-- Header -->
         <header class="h-16 px-4 md:px-8 border-b border-slate-200 dark:border-darkborder glass-panel flex items-center justify-between sticky top-0 z-30">
             <button id="mobileMenuBtn" class="md:hidden p-2 -ml-2 text-slate-600 dark:text-gray-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5">
@@ -263,7 +272,7 @@
         </header>
 
         <!-- Chat Container -->
-        <div id="chatBox" class="flex-1 overflow-y-auto p-4 md:p-6 pt-20 md:pt-6 pb-44">
+        <div id="chatBox" class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 md:p-6 pt-20 md:pt-6 pb-44">
             <div id="chatMessages" class="max-w-3xl mx-auto space-y-8">
                 
                 <!-- AI Welcome Message -->
@@ -1677,17 +1686,19 @@
                     throw new Error(data?.error || `Network error ${response.status}`);
                 }
 
-                const reply = typeof data.reply === 'string' ? data.reply.trim() : '';
+                const reply = typeof data.reply === 'string' ? data.reply.trim() : (typeof data?.data?.reply === 'string' ? data.data.reply.trim() : '');
                 const imageUrl =
                     (typeof data.imageUrl === 'string' && data.imageUrl.trim()) ? data.imageUrl.trim() :
                     (typeof data.image === 'string' && data.image.trim()) ? data.image.trim() :
-                    (typeof data?.result?.image === 'string' && data.result.image.trim()) ? data.result.image.trim() : '';
+                    (typeof data?.result?.image === 'string' && data.result.image.trim()) ? data.result.image.trim() :
+                    (typeof data?.data?.image === 'string' && data.data.image.trim()) ? data.data.image.trim() :
+                    (typeof data?.data?.imageUrl === 'string' && data.data.imageUrl.trim()) ? data.data.imageUrl.trim() : '';
                 if (reply) return { text: reply, imageUrl };
 
-                const answer = typeof data.answer === 'string' ? data.answer.trim() : '';
+                const answer = typeof data.answer === 'string' ? data.answer.trim() : (typeof data?.data?.answer === 'string' ? data.data.answer.trim() : '');
                 if (answer) return { text: answer, imageUrl };
 
-                const result = typeof data.result === 'string' ? data.result.trim() : '';
+                const result = typeof data.result === 'string' ? data.result.trim() : (typeof data?.data?.result === 'string' ? data.data.result.trim() : '');
                 if (result) return { text: result, imageUrl };
 
                 const fallback = typeof data.msg === 'string' ? data.msg.trim() : '';
@@ -1800,5 +1811,24 @@
         restoreChatFromState();
 
     </script>
+
+    <script>
+        (function syncAppHeight() {
+            const root = document.documentElement;
+            const setHeight = () => {
+                const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+                root.style.setProperty('--app-height', `${viewportHeight}px`);
+            };
+
+            setHeight();
+            window.addEventListener('resize', setHeight);
+            window.addEventListener('orientationchange', setHeight);
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', setHeight);
+                window.visualViewport.addEventListener('scroll', setHeight);
+            }
+        })();
+    </script>
+
 </body>
 </html>

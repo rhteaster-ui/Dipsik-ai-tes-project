@@ -19,6 +19,45 @@ const PATH_BY_MODEL = {
   nanobanana: '/v1/ai/nanobanana',
 };
 
+
+
+function normalizeDaunsResponse(data = {}) {
+  const payload = data && typeof data === 'object' ? data : {};
+  const reply = [
+    payload.reply,
+    payload.answer,
+    payload.result,
+    payload.message,
+    payload.msg,
+    payload.text,
+    payload?.data?.reply,
+    payload?.data?.answer,
+    payload?.data?.result,
+    payload?.data?.message,
+  ].find((v) => typeof v === 'string' && v.trim());
+
+  const imageUrl = [
+    payload.imageUrl,
+    payload.image,
+    payload.url,
+    payload?.result?.image,
+    payload?.data?.image,
+    payload?.data?.imageUrl,
+  ].find((v) => typeof v === 'string' && v.trim());
+
+  return {
+    ...payload,
+    reply: reply ? String(reply).trim() : '',
+    imageUrl: imageUrl ? String(imageUrl).trim() : '',
+  };
+}
+
+function resolveDaunsPath(model = '') {
+  const normalized = String(model || '').trim().toLowerCase();
+  if (PATH_BY_MODEL[normalized]) return PATH_BY_MODEL[normalized];
+  return PATH_BY_MODEL.chatgpt;
+}
+
 function applyCors(res) {
   res.setHeader('Access-Control-Allow-Origin', CORS_ORIGIN);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -75,8 +114,7 @@ export default async function handler(req, res) {
 
     if (path === '/v1/dauns') {
       const model = String(body?.model || '').trim().toLowerCase();
-      const targetPath = PATH_BY_MODEL[model];
-      if (!targetPath) return res.status(400).json({ error: `Model endpoint tidak didukung: ${model}` });
+      const targetPath = resolveDaunsPath(model);
 
       const payload = { prompt: String(body?.prompt || '').trim() };
       if (body?.image_url) payload.image_url = String(body.image_url);
@@ -86,7 +124,7 @@ export default async function handler(req, res) {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       });
       const data = await safeJson(response);
-      return res.status(response.status).json(data);
+      return res.status(response.status).json(normalizeDaunsResponse(data));
     }
 
     return res.status(400).json({ error: 'Path tidak didukung. Gunakan /v1/models, /v1/chat, /v1/perplexity, atau /v1/dauns.' });
