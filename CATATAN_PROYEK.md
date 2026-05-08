@@ -1,49 +1,91 @@
-# Catatan
+# Catatan Proyek — Explore Lab
 
-Dokumen ini dibuat sebagai ringkasan cepat agar AI atau developer yang baru membaca repository ini langsung paham: ini web apa, tujuannya apa, komponen utamanya apa, dan perubahan terakhir ada di mana.
+Ringkasan singkat agar developer/AI yang baru membuka repo ini langsung paham
+arah, arsitektur, dan area kerja terakhir.
 
 ## Tujuan
 
-- Menyediakan **web AI workspace** berbasis antarmuka chat dengan tampilan modern (halaman utama + halaman chat).
-- Menjadi **jembatan (proxy API)** antara frontend dan beberapa sumber model AI tanpa menaruh kredensial sensitif di frontend.
-- Mendukung use case chat multimodal (teks + gambar) melalui endpoint backend yang ada.
+- Web AI workspace tanpa login: chat multi-model, web search, image generation
+  & editing, plus upload dokumen — semua via satu interface ringan.
+- Frontend statis (HTML + Tailwind CDN) + serverless function di `api/*` ala Vercel.
+- Tidak ada API key di browser; semua key disimpan via env vars di server.
 
-## Fungsi
+## Arsitektur
 
-- **Frontend chat** di `index.html` / `ai.html` untuk interaksi pengguna, histori chat, pengaturan, dan pemilihan model.
-- **Endpoint Gemini** (`api/chat.js`) untuk request chat berbasis model Gemini (dengan dukungan input gambar via data URL).
-- **Endpoint GPT relay** (`api/gpt.js`) sebagai relay ke layanan streaming eksternal berbasis GPT dengan rate limit sederhana.
-- **Endpoint DeepSeek** (`api/deepseek.js`) untuk login, pembuatan session, multi-turn chat, serta upload gambar/file lewat klien DeepSeek.
-- **Endpoint Perplexity web** (`api/perplexity.js`) sebagai proxy logic TurboSeek (sources + similar questions + answer) dengan output yang sudah dibersihkan.
-- **Endpoint listing model** (`api/list.js`, `api/list-model.js`) untuk mengambil daftar model dari Google Generative Language API.
+```
+Browser (ai.html)
+   └── POST /api/backend  ← satu pintu masuk gateway
+        ├── /v1/auto             auto-routing (default)
+        ├── /v1/chat              → api/chat.js (Gemini official + fallback universal)
+        ├── /v1/perplexity        → api/perplexity.js (TurboSeek/Sonar)
+        ├── /v1/dauns             → Daunscode REST (chatgpt/notegpt/grok/deepai/nanobanana)
+        ├── /v1/image-generate    → api/imagegen.js (Pollinations.ai)
+        └── /v1/image-edit        → Daunscode nanobanana (image edit)
+```
 
-## Struktur
+Setiap path POST melewati rate-limit per IP (`api/utils/rate-limit.js`,
+sliding window, 60 req/menit, 20 req/menit khusus image-gen).
 
-Struktur utama repository:
+## File penting
 
 ```text
 /
-├── index.html                # UI utama workspace/chat
-├── ai.html                   # alternatif halaman chat (layout sejenis)
+├── index.html                # landing page Explore Lab (tema dark/light)
+├── ai.html                   # workspace chat (layout flex, responsif, no login)
 ├── api/
-│   ├── chat.js               # handler chat Gemini (POST)
-│   ├── gpt.js                # handler relay GPT stream (POST)
-│   ├── deepseek.js           # handler DeepSeek + session + upload file (POST)
-│   ├── perplexity.js         # handler Perplexity web (TurboSeek proxy)
-│   ├── list.js               # daftar model Gemini
-│   └── list-model.js         # varian endpoint daftar model
-├── deepseek-example/
-│   ├── deepseek.js           # client DeepSeek reverse-engineered
-│   ├── tes.js                # contoh penggunaan client
-│   ├── sha3_wasm.wasm        # komponen PoW yang dibutuhkan client
-│   └── README.md             # dokumentasi client DeepSeek
-├── package.json
-└── vercel.json
+│   ├── backend.js            # gateway universal + auto-routing + rate-limit
+│   ├── chat.js               # Gemini official + fallback universal/Daunscode
+│   ├── perplexity.js         # web search (TurboSeek/Sonar)
+│   ├── imagegen.js           # text-to-image (Pollinations.ai), key-less
+│   └── utils/
+│       └── rate-limit.js     # in-memory sliding-window rate limiter per IP
+├── DAUNS_API_DOCS.md         # detail format payload & contoh per path
+├── CATATAN_PROYEK.md         # file ini
+└── vercel.json               # konfigurasi serverless
 ```
+
+File `imgeditor (1).js` dan `keekvx6ha5i0000-aifacefy (1).js` di root adalah
+referensi script Node CLI untuk image edit/face swap. Tidak dipakai langsung
+di runtime serverless karena terlalu berat — fitur image-edit di web memakai
+endpoint `/v1/image-edit` (Daunscode nanobanana).
+
+## Auto-routing (heuristik)
+
+Diimplementasikan sama di backend (`/v1/auto`) dan frontend (`detectIntent` di
+`ai.html`):
+
+1. Punya gambar + kata kerja edit → `/v1/image-edit`.
+2. Tanpa gambar + kata kerja generate → `/v1/image-generate`.
+3. Tanpa gambar + kata pencarian → `/v1/perplexity`.
+4. Default → `/v1/chat` (Gemini → fallback Daunscode → Perplexity).
+
+## Frontend ai.html
+
+- Layout flex (bukan absolute) → input area tidak "tenggelam" lagi.
+- Responsif (mobile / tablet / desktop), dark+light mode persistent.
+- Sidebar history + mode (Auto / Web Search / Image Studio).
+- Upload gambar (≤5MB) & dokumen teks (≤200KB: txt/md/html/json/csv/log/xml/css/js/yaml).
+- Markdown rendering + code block highlight + streaming text.
+- LocalStorage keys: `exploreLab.sessionId`, `.history`, `.historyList`, `.theme`,
+  `.mode`, `.model`, `.ratio`.
+
+## Keamanan & resilience
+
+- Rate-limit per IP di gateway dan image-gen.
+- Validasi panjang prompt (8000 char di gateway, 2000 di image-gen).
+- Validasi MIME & ukuran file di frontend sebelum kirim.
+- Cascade fallback chat: Gemini → Daunscode chatgpt → Perplexity.
+- Provider label dikembalikan di response untuk transparansi/debug.
+- Tidak ada secret/API key yang masuk repo; semua via env Vercel.
 
 ## Terakhir di-update
 
-- **Tanggal (UTC): 2026-04-25**
-- **Update terakhir:** Perbaikan endpoint `api/gpt.js` agar memaksimalkan relay GPT tanpa API key (via NoteGPT stream), mendukung context `history`, dukungan `images`, retry, validasi input, dan rate limit.
+- **Tanggal (UTC): 2026-05-08**
+- **Update:** Rebuild ai.html (fix layout sunken-input, responsif, branding
+  Explore Lab); tambah `api/imagegen.js`; tambah `api/utils/rate-limit.js`;
+  refactor `api/backend.js` (auto-routing, image-gen/edit path, fallback chain);
+  `api/chat.js` resilient + provider label; landing page card descriptions &
+  CTAs di-update; docs disinkronkan.
 
-> Saran penggunaan: setiap kali ada perubahan arsitektur, endpoint baru, atau pergantian model/provider AI, update bagian ini terlebih dahulu sebelum merge.
+> Saran: setiap perubahan endpoint atau provider AI, update bagian ini dulu
+> sebelum merge.

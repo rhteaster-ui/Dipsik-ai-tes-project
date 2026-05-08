@@ -192,9 +192,6 @@ export default async function handler(req, res) {
   }
 
   const apiKeys = getGeminiApiKeys();
-  if (!apiKeys.length) {
-    return res.status(500).json({ error: 'GEMINI_API_KEY/GEMINI_API_KEYS belum di-set di Vercel Environment Variables.' });
-  }
 
   try {
     const {
@@ -214,15 +211,14 @@ export default async function handler(req, res) {
     }
     const imageParts = images.map((img) => toInlineData(img));
     const contents = [...buildHistoryParts(sanitizedHistory)];
-    const defaultSystemPrompt = 'Kamu asisten cerdas berbahasa Indonesia. Jawaban harus jelas, natural, dan helpful seperti ChatGPT. Untuk kode, gunakan markdown code block.';
+    const defaultSystemPrompt = 'Kamu asisten cerdas Explore Lab berbahasa Indonesia. Jawaban harus jelas, natural, dan helpful. Untuk kode, gunakan markdown code block.';
     const envSystemPrompt = String(process.env.GEMINI_SYSTEM_PROMPT || '').trim();
     const requestSystemPrompt = String(system || '').trim();
-    const systemInstruction = {
-      parts: [{ text: requestSystemPrompt || envSystemPrompt || defaultSystemPrompt }],
-    };
+    const finalSystemPrompt = requestSystemPrompt || envSystemPrompt || defaultSystemPrompt;
+    const systemInstruction = { parts: [{ text: finalSystemPrompt }] };
 
     const requestedModel = String(model || '').trim();
-    const isUniversalModel = requestedModel === 'gemini-universal';
+    const isUniversalModel = requestedModel === 'gemini-universal' || apiKeys.length === 0;
 
     contents.push({
       role: 'user',
@@ -232,28 +228,42 @@ export default async function handler(req, res) {
     const body = {
       contents,
       systemInstruction,
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 4096,
-      },
+      generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
     };
 
-    const output = isUniversalModel
-      ? await callGeminiUniversal({
+    let output;
+    let providerLabel;
+    if (isUniversalModel) {
+      output = await callGeminiUniversal({
+        prompt: incomingPrompt,
+        history: sanitizedHistory,
+        images,
+        system: finalSystemPrompt,
+      });
+      providerLabel = 'gemini-universal';
+    } else {
+      try {
+        output = extractOutput(await callGemini({ apiKeys, model: requestedModel || 'gemini-2.5-flash', body }));
+        providerLabel = `gemini:${requestedModel || 'gemini-2.5-flash'}`;
+      } catch (geminiError) {
+        console.warn('Gemini official failed, fallback to universal:', geminiError?.message || geminiError);
+        output = await callGeminiUniversal({
           prompt: incomingPrompt,
           history: sanitizedHistory,
           images,
-          system: requestSystemPrompt || envSystemPrompt || defaultSystemPrompt,
-        })
-      : extractOutput(await callGemini({ apiKeys, model: requestedModel || 'gemini-2.5-flash', body }));
+          system: finalSystemPrompt,
+        });
+        providerLabel = 'gemini-universal-fallback';
+      }
+    }
 
     persistSessionHistory(sessionId, sanitizedHistory, incomingPrompt, images, output.reply, output.images);
 
     if (!output.reply && !output.images.length) {
-      return res.status(200).json({ reply: 'Model tidak mengembalikan output. Coba ulangi prompt.', images: [] });
+      return res.status(200).json({ reply: 'Model tidak mengembalikan output. Coba ulangi prompt.', images: [], provider: providerLabel });
     }
 
-    return res.status(200).json(output);
+    return res.status(200).json({ ...output, provider: providerLabel });
   } catch (error) {
     console.error('chat handler error', error);
     return res.status(500).json({ error: error.message || 'Internal Server Error' });
