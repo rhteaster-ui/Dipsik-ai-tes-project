@@ -1,3 +1,5 @@
+import { buildIdentitySummaryText } from './about.js';
+
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
 const CORS_ORIGIN = process.env.CORS_ALLOW_ORIGIN || '*';
@@ -211,10 +213,14 @@ export default async function handler(req, res) {
     }
     const imageParts = images.map((img) => toInlineData(img));
     const contents = [...buildHistoryParts(sanitizedHistory)];
-    const defaultSystemPrompt = 'Kamu asisten cerdas Explore Lab berbahasa Indonesia. Jawaban harus jelas, natural, dan helpful. Untuk kode, gunakan markdown code block.';
+    const defaultSystemPrompt = 'Kamu asisten cerdas Explore Lab berbahasa Indonesia. Jawaban harus jelas, natural, dan helpful. Untuk kode, gunakan markdown code block dengan label bahasa. Jangan pakai emoji sebagai ikon, gunakan teks biasa.';
     const envSystemPrompt = String(process.env.GEMINI_SYSTEM_PROMPT || '').trim();
     const requestSystemPrompt = String(system || '').trim();
-    const finalSystemPrompt = requestSystemPrompt || envSystemPrompt || defaultSystemPrompt;
+    let finalSystemPrompt = requestSystemPrompt || envSystemPrompt || defaultSystemPrompt;
+    // Auto-inject ringkasan identitas kalau belum ada di system prompt (mis. langsung ke /api/chat tanpa lewat backend gateway).
+    if (!/Explore Lab.*Pengembang/i.test(finalSystemPrompt)) {
+      finalSystemPrompt = `${buildIdentitySummaryText()}\n\n${finalSystemPrompt}`;
+    }
     const systemInstruction = { parts: [{ text: finalSystemPrompt }] };
 
     const requestedModel = String(model || '').trim();
