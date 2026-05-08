@@ -6,7 +6,7 @@
  * <img src=... />. Tidak download blob ke server (hemat bandwidth).
  */
 
-import { applyRateLimit } from './utils/rate-limit.js';
+import { applyRateLimit, applyImageGenCooldown } from './utils/rate-limit.js';
 
 const CORS_ORIGIN = process.env.CORS_ALLOW_ORIGIN || '*';
 const POLLINATIONS_BASE = 'https://image.pollinations.ai/prompt';
@@ -109,6 +109,19 @@ export default async function handler(req, res) {
 
     if (!prompt) return res.status(400).json({ error: 'Prompt wajib diisi.' });
     if (prompt.length > 2000) return res.status(400).json({ error: 'Prompt terlalu panjang (max 2000 karakter).' });
+
+    // Cooldown khusus untuk generate (bukan edit). Default: 3 burst, lalu wajib jeda 2 menit.
+    if (mode === 'generate') {
+      const cooldown = applyImageGenCooldown(req, res, { burstMax: 3, cooldownMs: 120_000 });
+      if (!cooldown.allowed) {
+        const minutes = Math.ceil(cooldown.retryAfter / 60);
+        return res.status(429).json({
+          error: `Sudah generate 3 gambar berturut. Tunggu ${cooldown.retryAfter} detik (~${minutes} menit) sebelum generate lagi.`,
+          retryAfter: cooldown.retryAfter,
+          cooldown: true,
+        });
+      }
+    }
 
     if (mode === 'edit') {
       const edited = await tryDaunsImageEdit({ prompt, imageUrl });

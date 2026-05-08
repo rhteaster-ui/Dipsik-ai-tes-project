@@ -18,10 +18,21 @@
  */
 
 import { applyRateLimit } from './utils/rate-limit.js';
+import { IDENTITY, buildIdentitySummaryText, isIdentityQuery } from './about.js';
 
 const CORS_ORIGIN = process.env.CORS_ALLOW_ORIGIN || '*';
 const DAUNS_BASE = 'https://daunsloveelaina.daunscode.com';
 const REQUEST_TIMEOUT_MS = 35_000;
+
+const THINKING_SYSTEM_PROMPT = [
+  'Kamu adalah asisten Explore Lab dalam mode Thinking — analisis mendalam.',
+  'Sebelum menjawab, susun reasoning langkah demi langkah secara internal.',
+  'Output kamu HARUS dalam dua bagian:',
+  '1. Bagian "**Reasoning**" — penalaran ringkas (3-6 poin) yang menjelaskan asumsi, langkah, dan trade-off.',
+  '2. Bagian "**Jawaban**" — kesimpulan akhir yang to the point.',
+  'Gunakan markdown. Untuk kode, selalu pakai code block dengan label bahasa.',
+  'Jangan halusinasi; bila kurang konteks, sebut asumsi yang kamu pakai.',
+].join('\n');
 
 const MODEL_CATALOG = {
   providers: [
@@ -165,19 +176,33 @@ async function callDaunsModel(model, body) {
   }
 }
 
+function buildSystemPromptWithIdentity(extraSystem = '') {
+  const identitySummary = buildIdentitySummaryText();
+  const extra = String(extraSystem || '').trim();
+  return [identitySummary, extra].filter(Boolean).join('\n\n');
+}
+
 async function chatViaGemini(req, body) {
   try {
+    const requestedModel = String(body.model || '').trim();
+    const isThinking = body.thinking === true || requestedModel === 'thinking';
+    const finalModel = isThinking
+      ? 'gemini-2.5-pro'
+      : (requestedModel && /^gemini/.test(requestedModel) ? requestedModel : MODEL_CATALOG.defaultModel);
+    const baseSystem = isThinking ? THINKING_SYSTEM_PROMPT : (body.system || '');
+    const finalSystem = buildSystemPromptWithIdentity(baseSystem);
+
     const response = await fetchWithTimeout(buildSelfUrl(req, '/api/chat'), {
       method: 'POST',
       headers: buildInternalHeaders(req),
       body: JSON.stringify({
         prompt: body.prompt,
         question: body.prompt,
-        model: body.model && /^gemini/.test(body.model) ? body.model : MODEL_CATALOG.defaultModel,
+        model: finalModel,
         images: body.image_url ? [body.image_url] : (Array.isArray(body.images) ? body.images : []),
         history: Array.isArray(body.history) ? body.history : [],
         sessionId: String(body.sessionId || '').trim(),
-        system: body.system || '',
+        system: finalSystem,
       }),
     });
     const data = await safeJson(response);
@@ -263,41 +288,91 @@ async function runDaunsChain(body, preferred) {
   };
 }
 
+/**
+ * Klasifikasi niat dari prompt + konteks. Urutan prioritas:
+ *   1. Identity (siapa kamu / siapa dev / dll) -> chat (jangan ke image-gen)
+ *   2. Code/script request -> chat (jangan ke image-gen)
+ *   3. Edit gambar (butuh image attachment + kata edit)
+ *   4. Generate gambar (butuh kata generate + bukan kode)
+ *   5. Search (kata cari/berita/terbaru)
+ *   6. Default -> chat
+ */
+function classifyIntent({ prompt = '', hasImage = false, history = [] }) {
+  const lower = String(prompt || '').toLowerCase();
+  const recent = Array.isArray(history)
+    ? history.slice(-3).map((m) => String(m?.text || '').toLowerCase()).join(' ')
+    : '';
+  const combined = `${recent} ${lower}`;
+
+  // Code-related keywords menang atas image-gen
+  const codeKeywords = [
+    'script', 'kode', 'code', 'codingan', 'coding', 'function', 'fungsi',
+    'html', 'css', 'javascript', 'js ', 'python', 'java ', 'typescript',
+    'react', 'vue', 'angular', 'node', 'fastapi', 'django', 'flask',
+    'sql', 'query', 'database', 'api', 'endpoint', 'class ', 'method',
+    'algorithm', 'algoritma', 'regex', 'json', 'xml', 'yaml',
+    'bug', 'error', 'debug', 'fix', 'refactor', 'optimize',
+    'tampilkan kode', 'beri code', 'bikin script', 'tulis script',
+    'tulis kode', 'buatkan script', 'buatkan kode', 'buat script',
+    'buat kode', 'contoh kode', 'contoh script', 'contoh code',
+    'snippet', 'syntax', 'sintaks', 'logic', 'logika', 'pseudocode',
+  ];
+  const isCode = codeKeywords.some((kw) => lower.includes(kw));
+
+  // Identity / about
+  if (isIdentityQuery(lower)) return 'chat-identity';
+
+  // Code request menang
+  if (isCode) return 'chat';
+
+  const editPattern = /\b(edit|ubah|ganti|tambahkan|hapus|hilangkan|jadikan|tukar|ubahlah|kasih warna|jadikan latar)\b/;
+  const generatePattern = /\b(generate gambar|bikin gambar|buatkan gambar|buat gambar|gambarkan|render(kan)? gambar|ilustrasi(kan)?|poster|wallpaper|draw|design(kan)? gambar|buatkan ilustrasi)\b/;
+  const standaloneImageHint = /\b(gambar|image|foto)\b/.test(lower) && /\b(buat|bikin|generate|render|draw|create)\b/.test(lower);
+  const searchPattern = /\b(cari|search|berita|terbaru|harga sekarang|update|news|trending|kurs|saham hari)\b/;
+
+  if (hasImage && editPattern.test(lower)) return 'image-edit';
+  if (!hasImage && (generatePattern.test(lower) || standaloneImageHint)) return 'image-generate';
+  if (!hasImage && searchPattern.test(combined)) return 'search';
+
+  return 'chat';
+}
+
 async function autoRoute(req, body) {
-  const prompt = String(body?.prompt || '').toLowerCase();
-  const hasImage = Boolean(body?.image_url);
-  const editPattern = /(edit|ubah|ganti|tambahkan|hapus|hilangkan|jadikan|tukar|ubahlah|kasih|kasi)\b/;
-  const generatePattern = /(buat|generate|create|bikin|gambar(kan)?|render|draw|ilustrasi(kan)?|poster|wallpaper|design(kan)?)\b/;
-  const searchPattern = /(cari|search|berita|terbaru|harga|update|news|kapan|siapa|dimana)\b/;
+  const intent = classifyIntent({
+    prompt: body?.prompt || '',
+    hasImage: Boolean(body?.image_url),
+    history: Array.isArray(body?.history) ? body.history : [],
+  });
 
-  if (hasImage && editPattern.test(prompt)) {
+  if (intent === 'image-edit') {
     const out = await chatViaImageGen(req, body, 'edit');
-    if (out.ok) return out;
+    if (out.ok) return { ...out, intent };
   }
 
-  if (!hasImage && generatePattern.test(prompt)) {
+  if (intent === 'image-generate') {
     const out = await chatViaImageGen(req, body, 'generate');
-    if (out.ok) return out;
+    if (out.ok) return { ...out, intent };
   }
 
-  if (!hasImage && searchPattern.test(prompt)) {
+  if (intent === 'search') {
     const out = await chatViaPerplexity(req, body);
-    if (out.ok) return out;
+    if (out.ok) return { ...out, intent };
   }
 
   const gemini = await chatViaGemini(req, body);
-  if (gemini.ok) return gemini;
+  if (gemini.ok) return { ...gemini, intent };
 
   const dauns = await runDaunsChain(body, 'chatgpt');
-  if (dauns.ok) return dauns;
+  if (dauns.ok) return { ...dauns, intent };
 
   const perplexity = await chatViaPerplexity(req, body);
-  if (perplexity.ok) return perplexity;
+  if (perplexity.ok) return { ...perplexity, intent };
 
   return {
     ok: false,
     status: 503,
     provider: 'auto',
+    intent,
     data: { reply: '', imageUrl: '' },
     error: [gemini.error, dauns.error, perplexity.error].filter(Boolean).join(' | ') || 'Semua endpoint tidak tersedia.',
   };
@@ -326,6 +401,10 @@ export default async function handler(req, res) {
 
     if (!requestPath || requestPath === '/v1/models') {
       return res.status(200).json(MODEL_CATALOG);
+    }
+
+    if (requestPath === '/v1/about') {
+      return res.status(200).json({ identity: IDENTITY, summary: buildIdentitySummaryText() });
     }
 
     const safeBody = (body && typeof body === 'object') ? body : {};

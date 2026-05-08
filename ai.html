@@ -199,6 +199,203 @@
             opacity: 1;
             pointer-events: auto;
         }
+
+        /* Code block wrapper with copy button + language label */
+        .codeblock-wrap {
+            position: relative;
+            margin: 0.6em 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+        }
+        .dark .codeblock-wrap { border-color: rgba(255, 255, 255, 0.08); }
+        .codeblock-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            background: #1e293b;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'Menlo', 'Monaco', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .dark .codeblock-head { background: #0b1220; }
+        .codeblock-copy {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .codeblock-copy:hover { background: rgba(255, 255, 255, 0.12); }
+        .codeblock-copy.done { color: #6ee7b7; }
+        .codeblock-wrap pre {
+            margin: 0 !important;
+            border-radius: 0 0 12px 12px !important;
+        }
+
+        /* Per-message action bar */
+        .msg-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 6px;
+            opacity: 0;
+            transition: opacity 0.18s ease;
+        }
+        .msg-row:hover .msg-actions,
+        .msg-row:focus-within .msg-actions,
+        .msg-actions.always-on { opacity: 1; }
+        @media (max-width: 768px) {
+            .msg-actions { opacity: 1; }
+        }
+        .msg-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #475569;
+            background: rgba(15, 23, 42, 0.04);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+        .msg-action-btn:hover {
+            background: rgba(15, 23, 42, 0.08);
+            color: #0f172a;
+        }
+        .dark .msg-action-btn {
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .dark .msg-action-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        /* Provider badge chip */
+        .provider-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 8px;
+            padding: 3px 8px 3px 6px;
+            border-radius: 999px;
+            font-size: 10.5px;
+            font-weight: 600;
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(37, 99, 235, 0.12));
+            color: #1d4ed8;
+            border: 1px solid rgba(37, 99, 235, 0.18);
+        }
+        .dark .provider-chip {
+            background: rgba(255, 255, 255, 0.06);
+            color: #93c5fd;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .provider-chip .dot {
+            width: 6px; height: 6px; border-radius: 999px;
+            background: #2563eb;
+            box-shadow: 0 0 6px rgba(37, 99, 235, 0.6);
+        }
+        .dark .provider-chip .dot { background: #93c5fd; box-shadow: 0 0 6px rgba(147, 197, 253, 0.6); }
+
+        /* Image-gen skeleton shimmer */
+        .imggen-skeleton {
+            position: relative;
+            width: 100%;
+            max-width: 28rem;
+            aspect-ratio: 1 / 1;
+            border-radius: 16px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            background: linear-gradient(110deg, #e2e8f0 8%, #f1f5f9 18%, #e2e8f0 33%);
+            background-size: 200% 100%;
+            animation: imgShimmer 1.4s linear infinite;
+            overflow: hidden;
+        }
+        .dark .imggen-skeleton {
+            background: linear-gradient(110deg, #1e293b 8%, #334155 18%, #1e293b 33%);
+            background-size: 200% 100%;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        .imggen-skeleton::after {
+            content: 'Membuat gambar…';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: rgba(15, 23, 42, 0.45);
+            letter-spacing: 0.04em;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+        .dark .imggen-skeleton::after {
+            color: rgba(255, 255, 255, 0.55);
+            text-shadow: none;
+        }
+        @keyframes imgShimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* File card style for non-image attachments in messages */
+        .filecard {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.05);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            max-width: 100%;
+        }
+        .dark .filecard {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        .filecard .icon {
+            flex-shrink: 0;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(37, 99, 235, 0.1);
+            color: #2563eb;
+        }
+        .dark .filecard .icon {
+            background: rgba(147, 197, 253, 0.12);
+            color: #93c5fd;
+        }
+        .filecard .meta { min-width: 0; flex: 1; }
+        .filecard .meta .name { font-weight: 600; font-size: 12.5px; color: #0f172a; }
+        .dark .filecard .meta .name { color: #f1f5f9; }
+        .filecard .meta .sub { font-size: 11px; color: #64748b; }
+        .dark .filecard .meta .sub { color: #94a3b8; }
+
+        /* Mobile polish */
+        @media (max-width: 768px) {
+            .glass-panel { backdrop-filter: blur(12px); }
+            #chatBox { padding-left: 12px; padding-right: 12px; padding-top: 14px; padding-bottom: 14px; }
+            #chatBox > div + div { margin-top: 14px; }
+            .prose-msg { font-size: 14px; line-height: 1.55; }
+            .prose-msg pre { font-size: 12.5px; padding: 10px 12px; }
+            .codeblock-head { padding: 4px 10px; font-size: 10.5px; }
+            .msg-action-btn { padding: 3px 7px; font-size: 11px; }
+            .filecard { padding: 6px 10px; gap: 8px; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-darkbg text-slate-900 dark:text-gray-100 antialiased">
@@ -234,6 +431,10 @@
                 <button id="newChatHeaderBtn" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-semibold hover:bg-blue-600 dark:hover:bg-slate-200 transition-colors shadow-sm" title="Mulai sesi baru">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     Sesi baru
+                </button>
+
+                <button id="settingsBtn" class="p-2 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-gray-300 transition-colors shadow-sm" aria-label="Pengaturan" title="Pengaturan">
+                    <i data-lucide="settings-2" class="w-4 h-4"></i>
                 </button>
 
                 <button id="themeToggle" class="p-2 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-gray-300 transition-colors shadow-sm" aria-label="Toggle Theme">
@@ -273,6 +474,19 @@
                         <span class="flex-1 text-left">Image Studio</span>
                         <span id="modeImageCheck" class="hidden text-blue-500 dark:text-white"><i data-lucide="check" class="w-4 h-4"></i></span>
                     </button>
+                    <button id="modeThinkingBtn" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        <i data-lucide="brain-circuit" class="w-4 h-4"></i>
+                        <span class="flex-1 text-left">Thinking Mode</span>
+                        <span id="modeThinkingCheck" class="hidden text-blue-500 dark:text-white"><i data-lucide="check" class="w-4 h-4"></i></span>
+                    </button>
+                </div>
+
+                <div class="border-t border-slate-200 dark:border-white/5 p-3">
+                    <a href="about.html" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        <i data-lucide="info" class="w-4 h-4"></i>
+                        <span class="flex-1 text-left">Tentang</span>
+                        <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-60"></i>
+                    </a>
                 </div>
             </aside>
 
@@ -395,6 +609,84 @@
         </div>
     </div>
 
+    <div id="settingsBackdrop" class="modal-backdrop fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-0 md:p-6">
+        <div class="w-full md:max-w-lg bg-white dark:bg-darkcard rounded-t-3xl md:rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl p-5 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <div class="text-[10.5px] font-bold tracking-[0.18em] uppercase text-slate-400 dark:text-gray-500">Pengaturan</div>
+                    <h3 class="text-base font-bold mt-0.5">Workspace & Prompt</h3>
+                </div>
+                <button id="closeSettingsBtn" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[12px] font-bold text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                        <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+                        System Prompt (override env)
+                    </label>
+                    <p class="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5 mb-2">
+                        Kosongkan untuk pakai default Explore Lab. Maks 1500 karakter.
+                    </p>
+                    <textarea id="settingSystemPrompt" rows="4"
+                        placeholder="Contoh: Kamu adalah asisten yang fokus pada copywriting bahasa Indonesia, jawab singkat dan padat..."
+                        class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-[13px] outline-none focus:border-blue-300 dark:focus:border-white/30 resize-y"></textarea>
+                </div>
+
+                <div>
+                    <label class="text-[12px] font-bold text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                        <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                        Model Default Chat
+                    </label>
+                    <select id="settingDefaultModel" class="mt-2 w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-[13px] outline-none focus:border-blue-300 dark:focus:border-white/30">
+                        <option value="">Auto Routing (rekomendasi)</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (cepat)</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro (akurat)</option>
+                        <option value="thinking">Thinking Mode (analisis mendalam)</option>
+                        <option value="gemini-universal">Gemini Universal (fallback)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-[12px] font-bold text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                        <i data-lucide="image-plus" class="w-3.5 h-3.5"></i>
+                        Aspek Rasio Default Gambar
+                    </label>
+                    <div id="settingRatioGroup" class="mt-2 flex flex-wrap gap-1.5"></div>
+                </div>
+
+                <div class="rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3">
+                    <div class="text-[12px] font-bold text-slate-600 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                        Proteksi Anti-Spam
+                    </div>
+                    <p class="text-[11.5px] text-slate-500 dark:text-gray-400 leading-relaxed">
+                        Setiap IP dibatasi <strong>60 request/menit</strong> untuk gateway dan <strong>20/menit</strong> untuk image. Setelah 3x generate gambar berturut, ada jeda <strong>2 menit</strong>. Tetap aktif tanpa login.
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between gap-2">
+                    <button id="resetSettingsBtn" class="px-3 py-2 rounded-xl text-[12.5px] font-semibold text-slate-600 dark:text-gray-300 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors">Reset default</button>
+                    <button id="saveSettingsBtn" class="flex-1 px-3 py-2 rounded-xl text-[12.5px] font-semibold bg-blue-600 dark:bg-white text-white dark:text-slate-900 hover:bg-blue-700 dark:hover:bg-slate-200 transition-colors shadow-sm">Simpan pengaturan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="regenPickerBackdrop" class="modal-backdrop fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-0 md:p-6">
+        <div class="w-full md:max-w-sm bg-white dark:bg-darkcard rounded-t-3xl md:rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl p-5 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-base font-bold">Generate ulang dengan model</h3>
+                <button id="closeRegenPickerBtn" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div id="regenList" class="space-y-1.5"></div>
+        </div>
+    </div>
+
     <div id="toast" class="toast fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-slate-900 text-white text-[12.5px] font-medium shadow-lg">Toast</div>
 
     <script>
@@ -413,9 +705,24 @@
             mode: 'exploreLab.mode',
             model: 'exploreLab.model',
             ratio: 'exploreLab.ratio',
+            settings: 'exploreLab.settings',
+            sessionPrefix: 'exploreLab.session.',
         };
 
         const DEFAULT_AUTO_LABEL = 'Auto Routing';
+        const DEFAULT_SETTINGS = {
+            systemPrompt: '',
+            defaultModel: '',
+            defaultRatio: '1:1',
+        };
+        const RATIO_OPTIONS = ['1:1', '16:9', '9:16', '4:3', '3:4'];
+        const REGEN_MODELS = [
+            { value: '', label: 'Auto Routing', icon: 'sparkles' },
+            { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', icon: 'zap' },
+            { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', icon: 'star' },
+            { value: 'thinking', label: 'Thinking Mode', icon: 'brain-circuit' },
+            { value: 'gemini-universal', label: 'Gemini Universal', icon: 'cloud' },
+        ];
 
         const state = {
             sessionId: '',
@@ -429,6 +736,9 @@
             controller: null,
             attachment: null,
             providers: [],
+            settings: { ...DEFAULT_SETTINGS },
+            messages: [], // raw structured messages for current session (id, role, text, images, attachments, provider, model, intent)
+            regenContext: null,
         };
 
         function $(id) { return document.getElementById(id); }
@@ -449,7 +759,19 @@
             const codeBlocks = [];
             let withCode = safe.replace(/```([a-zA-Z0-9_+-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
                 const idx = codeBlocks.length;
-                codeBlocks.push(`<pre><code data-lang="${lang || 'text'}">${code.replace(/\n$/, '')}</code></pre>`);
+                const cleaned = code.replace(/\n$/, '');
+                const langLabel = (lang || 'text').toLowerCase();
+                codeBlocks.push(`
+                    <div class="codeblock-wrap">
+                        <div class="codeblock-head">
+                            <span>${escapeHtml(langLabel)}</span>
+                            <button type="button" class="codeblock-copy" data-copy-code="${idx}" title="Salin kode">
+                                <i data-lucide="copy" class="w-3 h-3"></i><span>Salin</span>
+                            </button>
+                        </div>
+                        <pre><code data-lang="${escapeHtml(langLabel)}" data-code-id="${idx}">${cleaned}</code></pre>
+                    </div>
+                `);
                 return `\u0000CB${idx}\u0000`;
             });
             withCode = withCode.replace(/`([^`\n]+)`/g, '<code>$1</code>');
@@ -555,23 +877,105 @@
             try {
                 state.sessionId = localStorage.getItem(STORAGE_KEYS.session) || uid();
                 localStorage.setItem(STORAGE_KEYS.session, state.sessionId);
-                state.history = JSON.parse(localStorage.getItem(STORAGE_KEYS.history) || '[]');
                 state.historyList = JSON.parse(localStorage.getItem(STORAGE_KEYS.list) || '[]');
                 state.mode = localStorage.getItem(STORAGE_KEYS.mode) || 'auto';
                 state.model = localStorage.getItem(STORAGE_KEYS.model) || '';
                 state.ratio = localStorage.getItem(STORAGE_KEYS.ratio) || '1:1';
+                try {
+                    const rawSettings = localStorage.getItem(STORAGE_KEYS.settings);
+                    state.settings = rawSettings ? { ...DEFAULT_SETTINGS, ...JSON.parse(rawSettings) } : { ...DEFAULT_SETTINGS };
+                } catch { state.settings = { ...DEFAULT_SETTINGS }; }
+
+                // Load messages for the active session, with fallback to legacy `history` key
+                state.messages = loadSessionMessages(state.sessionId);
+                if (!state.messages.length) {
+                    try {
+                        const legacy = JSON.parse(localStorage.getItem(STORAGE_KEYS.history) || '[]');
+                        if (Array.isArray(legacy) && legacy.length) {
+                            state.messages = legacy.map((m) => ({
+                                id: 'legacy_' + Math.random().toString(36).slice(2, 8),
+                                role: m.role === 'assistant' ? 'assistant' : 'user',
+                                text: String(m.text || ''),
+                                images: Array.isArray(m.images) ? m.images : [],
+                                attachments: [],
+                                provider: '',
+                                model: '',
+                                intent: '',
+                                ts: nowIso(),
+                            }));
+                            saveSessionMessages(state.sessionId, state.messages);
+                        }
+                    } catch {}
+                }
+                state.history = compactMessagesForBackend(state.messages);
             } catch (err) {
                 console.warn('loadState failed', err);
                 state.sessionId = uid();
                 state.history = [];
                 state.historyList = [];
+                state.messages = [];
+                state.settings = { ...DEFAULT_SETTINGS };
             }
         }
-        function persistHistory() {
+
+        function persistHistoryList() {
             try {
-                localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.history.slice(-32)));
                 localStorage.setItem(STORAGE_KEYS.list, JSON.stringify(state.historyList.slice(-30)));
-            } catch (err) { console.warn('persistHistory failed', err); }
+            } catch (err) { console.warn('persistHistoryList failed', err); }
+        }
+
+        function loadSessionMessages(sessionId) {
+            if (!sessionId) return [];
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.sessionPrefix + sessionId);
+                const arr = raw ? JSON.parse(raw) : [];
+                return Array.isArray(arr) ? arr : [];
+            } catch { return []; }
+        }
+
+        function saveSessionMessages(sessionId, messages) {
+            if (!sessionId) return;
+            try {
+                const trimmed = (messages || []).slice(-60);
+                localStorage.setItem(STORAGE_KEYS.sessionPrefix + sessionId, JSON.stringify(trimmed));
+            } catch (err) { console.warn('saveSessionMessages failed', err); }
+        }
+
+        function deleteSessionMessages(sessionId) {
+            if (!sessionId) return;
+            try { localStorage.removeItem(STORAGE_KEYS.sessionPrefix + sessionId); } catch {}
+        }
+
+        function compactMessagesForBackend(messages = []) {
+            return (messages || []).map((m) => ({
+                role: m.role === 'assistant' ? 'assistant' : 'user',
+                text: String(m.text || '').slice(0, 4000),
+                images: Array.isArray(m.images) ? m.images.filter((u) => typeof u === 'string').slice(0, 2) : [],
+            }));
+        }
+
+        function persistMessages() {
+            saveSessionMessages(state.sessionId, state.messages);
+            state.history = compactMessagesForBackend(state.messages);
+        }
+
+        function persistSettings() {
+            try { localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(state.settings)); } catch {}
+        }
+
+        function upsertHistoryListEntry(label) {
+            if (!label) return;
+            const trimmed = String(label).trim().slice(0, 80);
+            if (!trimmed) return;
+            const idx = state.historyList.findIndex((it) => it.id === state.sessionId);
+            if (idx >= 0) {
+                state.historyList[idx].label = trimmed;
+                state.historyList[idx].ts = nowIso();
+            } else {
+                state.historyList.push({ id: state.sessionId, label: trimmed, ts: nowIso() });
+            }
+            persistHistoryList();
+            renderHistoryList();
         }
 
         const chatBox = $('chatBox');
@@ -601,44 +1005,108 @@
             chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
         }
 
-        function appendUserMessage(text, attachment) {
+        function buildAttachmentMarkup(attachment, side = 'user') {
+            if (!attachment) return '';
+            if (attachment.kind === 'image') {
+                const src = attachment.dataUrl || attachment.thumb || '';
+                if (src) {
+                    return `<div class="mt-2 rounded-xl overflow-hidden max-w-[200px] border border-white/15">
+                                <img src="${escapeHtml(src)}" alt="${escapeHtml(attachment.name || 'Gambar')}" class="block w-full h-auto" loading="lazy" />
+                            </div>`;
+                }
+                return `<div class="mt-2 flex items-center gap-2 text-[11.5px] ${side === 'user' ? 'text-blue-100 dark:text-slate-300/80' : 'text-slate-500 dark:text-gray-400'}">
+                            <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                            <span>${escapeHtml(attachment.name || 'Gambar')}</span>
+                        </div>`;
+            }
+            const sizeText = attachment.bytes ? humanBytes(attachment.bytes) : (attachment.text ? humanBytes(attachment.text.length) : '');
+            return `<div class="mt-2 filecard">
+                        <div class="icon"><i data-lucide="file-text" class="w-4 h-4"></i></div>
+                        <div class="meta">
+                            <div class="name truncate">${escapeHtml(attachment.name || 'Dokumen')}</div>
+                            <div class="sub">${escapeHtml(attachment.mime || 'text/plain')}${sizeText ? ' · ' + sizeText : ''}</div>
+                        </div>
+                    </div>`;
+        }
+
+        function humanBytes(n) {
+            const num = Number(n) || 0;
+            if (num < 1024) return `${num} B`;
+            if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
+            return `${(num / (1024 * 1024)).toFixed(1)} MB`;
+        }
+
+        function buildMessageActions(role, msgId) {
+            // role: 'user' or 'assistant'
+            if (role === 'user') {
+                return `
+                    <div class="msg-actions">
+                        <button class="msg-action-btn" data-action="copy" data-id="${escapeHtml(msgId)}" title="Salin">
+                            <i data-lucide="copy" class="w-3 h-3"></i><span>Salin</span>
+                        </button>
+                        <button class="msg-action-btn" data-action="edit" data-id="${escapeHtml(msgId)}" title="Edit pesan">
+                            <i data-lucide="pencil" class="w-3 h-3"></i><span>Edit</span>
+                        </button>
+                    </div>
+                `;
+            }
+            return `
+                <div class="msg-actions">
+                    <button class="msg-action-btn" data-action="copy" data-id="${escapeHtml(msgId)}" title="Salin balasan">
+                        <i data-lucide="copy" class="w-3 h-3"></i><span>Salin</span>
+                    </button>
+                    <button class="msg-action-btn" data-action="regenerate" data-id="${escapeHtml(msgId)}" title="Generate ulang">
+                        <i data-lucide="refresh-cw" class="w-3 h-3"></i><span>Ulang</span>
+                    </button>
+                    <button class="msg-action-btn" data-action="regenerate-pick" data-id="${escapeHtml(msgId)}" title="Pilih model untuk regenerate">
+                        <i data-lucide="cpu" class="w-3 h-3"></i><span>Model…</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        function appendUserMessage(text, attachment, msgId) {
             ensureEmptyHidden();
             const wrap = document.createElement('div');
-            wrap.className = 'flex justify-end animate-fade-in-up';
+            wrap.className = 'msg-row flex justify-end animate-fade-in-up';
+            wrap.dataset.role = 'user';
+            wrap.dataset.id = msgId || '';
             const safeText = escapeHtml(String(text || '').trim());
-            const attachmentBlock = attachment
-                ? `<div class="mt-2 flex items-center gap-2 text-[11.5px] text-blue-100 dark:text-slate-300/80">
-                       <i data-lucide="${attachment.kind === 'image' ? 'image' : 'file'}" class="w-3.5 h-3.5"></i>
-                       <span>${escapeHtml(attachment.name || (attachment.kind === 'image' ? 'Gambar' : 'Dokumen'))}</span>
-                   </div>`
-                : '';
             wrap.innerHTML = `
-                <div class="max-w-[85%] md:max-w-[70%] rounded-2xl rounded-br-md bg-blue-600 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 shadow-sm">
-                    <div class="text-[14.5px] whitespace-pre-wrap leading-relaxed">${safeText || (attachment ? '<em>Lampiran terlampir</em>' : '')}</div>
-                    ${attachmentBlock}
+                <div class="max-w-[85%] md:max-w-[70%] flex flex-col items-end">
+                    <div class="rounded-2xl rounded-br-md bg-blue-600 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 shadow-sm">
+                        <div class="text-[14.5px] whitespace-pre-wrap leading-relaxed" data-text>${safeText || (attachment ? '<em>Lampiran terlampir</em>' : '')}</div>
+                        ${buildAttachmentMarkup(attachment, 'user')}
+                    </div>
+                    ${buildMessageActions('user', msgId || '')}
                 </div>
             `;
             chatBox.appendChild(wrap);
             try { lucide.createIcons(); } catch {}
             scrollToBottom();
+            return wrap;
         }
 
-        function appendAssistantShell() {
+        function appendAssistantShell(msgId) {
             ensureEmptyHidden();
             const wrap = document.createElement('div');
-            wrap.className = 'flex justify-start animate-fade-in-up';
+            wrap.className = 'msg-row flex justify-start animate-fade-in-up';
+            wrap.dataset.role = 'assistant';
+            wrap.dataset.id = msgId || '';
             wrap.innerHTML = `
                 <div class="flex gap-2.5 max-w-[92%] md:max-w-[80%]">
                     <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-white/5 dark:to-white/5 border border-blue-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-slate-200 mt-0.5">
                         <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
                     </div>
-                    <div class="space-y-2 min-w-0">
+                    <div class="space-y-2 min-w-0 flex-1">
                         <div class="rounded-2xl rounded-tl-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-4 py-2.5 prose-msg text-[14.5px]" data-content>
                             <span class="text-slate-400 dark:text-gray-500 typing-dot"></span>
                             <span class="text-slate-400 dark:text-gray-500 typing-dot"></span>
                             <span class="text-slate-400 dark:text-gray-500 typing-dot"></span>
                         </div>
                         <div data-extras class="space-y-2"></div>
+                        <div data-meta class="hidden"></div>
+                        ${buildMessageActions('assistant', msgId || '')}
                     </div>
                 </div>
             `;
@@ -646,9 +1114,102 @@
             try { lucide.createIcons(); } catch {}
             scrollToBottom();
             return {
+                wrap,
                 content: wrap.querySelector('[data-content]'),
                 extras: wrap.querySelector('[data-extras]'),
+                meta: wrap.querySelector('[data-meta]'),
             };
+        }
+
+        function setProviderBadge(metaEl, provider, intent) {
+            if (!metaEl) return;
+            const provLabel = provider ? prettyProvider(provider) : '';
+            const intentLabel = intent ? prettyIntent(intent) : '';
+            if (!provLabel && !intentLabel) {
+                metaEl.classList.add('hidden');
+                metaEl.innerHTML = '';
+                return;
+            }
+            metaEl.classList.remove('hidden');
+            const intentChip = intentLabel ? `<span class="provider-chip"><i data-lucide="route" class="w-3 h-3"></i><span>${escapeHtml(intentLabel)}</span></span>` : '';
+            const provChip = provLabel ? `<span class="provider-chip"><span class="dot"></span><span>${escapeHtml(provLabel)}</span></span>` : '';
+            metaEl.innerHTML = `<div class="flex flex-wrap gap-1.5 items-center">${intentChip}${provChip}</div>`;
+            try { lucide.createIcons(); } catch {}
+        }
+
+        function prettyProvider(p) {
+            const raw = String(p || '').toLowerCase();
+            if (!raw) return '';
+            if (raw.startsWith('gemini:')) return raw.replace('gemini:', 'Gemini ');
+            if (raw === 'gemini-universal') return 'Gemini Universal';
+            if (raw === 'gemini-universal-fallback') return 'Gemini Universal (fallback)';
+            if (raw === 'pollinations') return 'Pollinations';
+            if (raw.startsWith('pollinations:')) return 'Pollinations · ' + raw.split(':')[1];
+            if (raw === 'perplexity') return 'TurboSeek Search';
+            if (raw === 'nanobanana') return 'Nanobanana';
+            if (raw.startsWith('dauns:')) return 'Endpoint · ' + raw.split(':')[1];
+            return raw.charAt(0).toUpperCase() + raw.slice(1);
+        }
+
+        function prettyIntent(i) {
+            const map = {
+                'chat': 'Chat',
+                'chat-identity': 'Tentang Web',
+                'image-generate': 'Generate Gambar',
+                'image-edit': 'Edit Gambar',
+                'search': 'Web Search',
+            };
+            return map[String(i || '').toLowerCase()] || '';
+        }
+
+        function wireCodeCopyButtons(scopeEl) {
+            if (!scopeEl) return;
+            scopeEl.querySelectorAll('[data-copy-code]').forEach((btn) => {
+                if (btn.dataset.wired === '1') return;
+                btn.dataset.wired = '1';
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-copy-code');
+                    const codeEl = scopeEl.querySelector(`code[data-code-id="${id}"]`);
+                    if (!codeEl) return;
+                    const txt = codeEl.textContent || '';
+                    copyToClipboard(txt).then((ok) => {
+                        if (!ok) return;
+                        btn.classList.add('done');
+                        const labelSpan = btn.querySelector('span');
+                        const prev = labelSpan ? labelSpan.textContent : '';
+                        if (labelSpan) labelSpan.textContent = 'Disalin';
+                        setTimeout(() => {
+                            btn.classList.remove('done');
+                            if (labelSpan) labelSpan.textContent = prev || 'Salin';
+                        }, 1400);
+                    });
+                });
+            });
+        }
+
+        async function copyToClipboard(text) {
+            const value = String(text == null ? '' : text);
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(value);
+                    return true;
+                }
+                throw new Error('clipboard not available');
+            } catch {
+                try {
+                    const ta = document.createElement('textarea');
+                    ta.value = value;
+                    ta.style.position = 'fixed';
+                    ta.style.left = '-9999px';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    return true;
+                } catch {
+                    return false;
+                }
+            }
         }
 
         async function streamText(target, fullText) {
@@ -668,7 +1229,18 @@
                 }
             }
             target.innerHTML = renderMarkdown(text);
+            try { lucide.createIcons(); } catch {}
+            wireCodeCopyButtons(target);
             scrollToBottom();
+        }
+
+        function appendImageSkeleton(extras) {
+            const sk = document.createElement('div');
+            sk.className = 'imggen-skeleton';
+            sk.dataset.role = 'image-skeleton';
+            extras.appendChild(sk);
+            scrollToBottom();
+            return sk;
         }
 
         function appendImage(extras, imageUrl) {
@@ -691,6 +1263,41 @@
             scrollToBottom();
         }
 
+        function hydrateChatViewFromMessages() {
+            chatBox.innerHTML = '';
+            if (!state.messages.length) {
+                chatBox.appendChild(emptyState);
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+            for (const msg of state.messages) {
+                const attachment = pickPrimaryAttachment(msg);
+                if (msg.role === 'user') {
+                    appendUserMessage(msg.text || '', attachment, msg.id);
+                } else {
+                    const shell = appendAssistantShell(msg.id);
+                    shell.content.innerHTML = renderMarkdown(msg.text || '');
+                    wireCodeCopyButtons(shell.content);
+                    if (Array.isArray(msg.images) && msg.images.length) {
+                        msg.images.forEach((u) => appendImage(shell.extras, u));
+                    }
+                    setProviderBadge(shell.meta, msg.provider, msg.intent);
+                }
+            }
+            try { lucide.createIcons(); } catch {}
+            scrollToBottom();
+        }
+
+        function pickPrimaryAttachment(msg) {
+            if (!msg) return null;
+            if (Array.isArray(msg.attachments) && msg.attachments.length) return msg.attachments[0];
+            if (Array.isArray(msg.images) && msg.images.length && msg.role === 'user') {
+                return { kind: 'image', name: 'gambar.png', dataUrl: msg.images[0] };
+            }
+            return null;
+        }
+
         function renderHistoryList() {
             const list = $('historyList');
             list.innerHTML = '';
@@ -703,26 +1310,66 @@
                 return;
             }
             for (const item of [...state.historyList].reverse()) {
+                const itemId = item.id || '';
+                const isActive = itemId && itemId === state.sessionId;
+                const row = document.createElement('div');
+                row.className = `flex items-center gap-1 group rounded-lg ${isActive ? 'bg-blue-50 dark:bg-white/10' : 'hover:bg-slate-50 dark:hover:bg-white/5'} transition-colors`;
                 const btn = document.createElement('button');
-                btn.className = 'w-full text-left px-3 py-2 rounded-lg text-[12.5px] text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors truncate';
+                btn.className = `flex-1 min-w-0 text-left px-3 py-2 rounded-lg text-[12.5px] ${isActive ? 'text-blue-700 dark:text-white font-semibold' : 'text-slate-700 dark:text-gray-200'} truncate`;
                 btn.title = item.label || '';
-                btn.textContent = item.label || 'Sesi tanpa judul';
+                btn.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="${isActive ? 'message-square-text' : 'message-square'}" class="w-3.5 h-3.5 flex-shrink-0 opacity-70"></i>
+                        <span class="truncate">${escapeHtml(item.label || 'Sesi tanpa judul')}</span>
+                    </div>
+                `;
                 btn.addEventListener('click', () => {
-                    showToast('Riwayat ini tidak dapat di-resume di sesi ini.');
+                    if (!itemId) {
+                        showToast('Sesi lama tidak dapat dibuka kembali.');
+                        return;
+                    }
+                    if (state.isGenerating) {
+                        showToast('Tunggu balasan selesai sebelum berpindah sesi.');
+                        return;
+                    }
+                    loadSession(itemId);
                 });
-                list.appendChild(btn);
+                const del = document.createElement('button');
+                del.className = 'opacity-0 group-hover:opacity-100 flex-shrink-0 p-1.5 rounded text-slate-400 hover:text-rose-500 dark:text-gray-500 dark:hover:text-rose-400 transition-opacity';
+                del.title = 'Hapus sesi';
+                del.innerHTML = '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>';
+                del.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    if (!itemId) return;
+                    state.historyList = state.historyList.filter((h) => h.id !== itemId);
+                    persistHistoryList();
+                    deleteSessionMessages(itemId);
+                    if (itemId === state.sessionId) {
+                        resetSession();
+                    } else {
+                        renderHistoryList();
+                    }
+                });
+                row.appendChild(btn);
+                row.appendChild(del);
+                list.appendChild(row);
             }
+            try { lucide.createIcons(); } catch {}
         }
 
-        function pushHistoryListEntry(label) {
-            if (!label) return;
-            const trimmed = String(label).trim().slice(0, 80);
-            if (!trimmed) return;
-            const last = state.historyList[state.historyList.length - 1];
-            if (last && last.label === trimmed) return;
-            state.historyList.push({ label: trimmed, ts: nowIso() });
-            persistHistory();
+        function loadSession(sessionId) {
+            if (!sessionId || sessionId === state.sessionId) {
+                hydrateChatViewFromMessages();
+                closeSidebar();
+                return;
+            }
+            state.sessionId = sessionId;
+            localStorage.setItem(STORAGE_KEYS.session, sessionId);
+            state.messages = loadSessionMessages(sessionId);
+            state.history = compactMessagesForBackend(state.messages);
+            hydrateChatViewFromMessages();
             renderHistoryList();
+            closeSidebar();
         }
 
         function setMode(mode) {
@@ -732,13 +1379,17 @@
                 auto: { btn: 'modeAutoCheck', label: 'Auto Routing', icon: 'sparkles' },
                 search: { btn: 'modeSearchCheck', label: 'Web Search', icon: 'globe' },
                 image: { btn: 'modeImageCheck', label: 'Image Studio', icon: 'image' },
+                thinking: { btn: 'modeThinkingCheck', label: 'Thinking Mode', icon: 'brain-circuit' },
             };
-            ['modeAutoCheck', 'modeSearchCheck', 'modeImageCheck'].forEach((id) => {
-                $(id).classList.add('hidden');
+            ['modeAutoCheck', 'modeSearchCheck', 'modeImageCheck', 'modeThinkingCheck'].forEach((id) => {
+                const el = $(id);
+                if (el) el.classList.add('hidden');
             });
             const cfg = map[mode] || map.auto;
-            $(cfg.btn).classList.remove('hidden');
-            $('activeModelLabel').textContent = state.model && state.mode === 'auto' ? state.modelLabel : cfg.label;
+            const checkEl = $(cfg.btn);
+            if (checkEl) checkEl.classList.remove('hidden');
+            const activeLabel = (state.model && state.mode === 'auto') ? state.modelLabel : cfg.label;
+            $('activeModelLabel').textContent = activeLabel;
             const ratioBtn = $('ratioToggleBtn');
             ratioBtn.classList.toggle('hidden', mode !== 'image');
             const badge = $('modeBadge');
@@ -750,6 +1401,8 @@
         $('modeAutoBtn').addEventListener('click', () => setMode('auto'));
         $('modeSearchBtn').addEventListener('click', () => setMode('search'));
         $('modeImageBtn').addEventListener('click', () => setMode('image'));
+        const thinkingBtnEl = $('modeThinkingBtn');
+        if (thinkingBtnEl) thinkingBtnEl.addEventListener('click', () => setMode('thinking'));
 
         function setRatio(ratio) {
             state.ratio = ratio;
@@ -958,12 +1611,14 @@
         function resetSession() {
             state.sessionId = uid();
             state.history = [];
+            state.messages = [];
             localStorage.setItem(STORAGE_KEYS.session, state.sessionId);
-            persistHistory();
+            saveSessionMessages(state.sessionId, []);
             clearChatView();
             chatInput.value = '';
             state.attachment = null;
             showAttachmentPreview();
+            renderHistoryList();
             closeSidebar();
         }
 
@@ -975,29 +1630,73 @@
             try { lucide.createIcons(); } catch {}
         }
 
-        function detectIntent(prompt, hasImage) {
-            const lower = String(prompt || '').toLowerCase();
-            const editPattern = /(edit|ubah|ganti|tambahkan|hapus|hilangkan|jadikan|tukar|kasih|kasi)\b/;
-            const generatePattern = /(buat|generate|create|bikin|gambar(kan)?|render|draw|ilustrasi(kan)?|poster|wallpaper|design(kan)?)\b/;
-            const searchPattern = /(cari|search|berita|terbaru|harga|update|news|kapan|siapa|dimana|when|who|where)\b/;
+        const CODE_KEYWORDS = [
+            'script', 'kode', 'code', 'codingan', 'coding', 'function', 'fungsi',
+            'html', 'css', 'javascript', 'js ', 'python', 'java ', 'typescript',
+            'react', 'vue', 'angular', 'node', 'fastapi', 'django', 'flask',
+            'sql', 'query', 'database', 'api', 'endpoint', 'class ', 'method',
+            'algorithm', 'algoritma', 'regex', 'json', 'xml', 'yaml',
+            'bug', 'error', 'debug', 'fix', 'refactor', 'optimize',
+            'tampilkan kode', 'beri code', 'bikin script', 'tulis script',
+            'tulis kode', 'buatkan script', 'buatkan kode', 'buat script',
+            'buat kode', 'contoh kode', 'contoh script', 'contoh code',
+            'snippet', 'syntax', 'sintaks', 'logic', 'logika', 'pseudocode',
+        ];
+
+        const IDENTITY_KEYWORDS = [
+            'siapa developer', 'siapa dev', 'siapa yang buat', 'siapa pemilik', 'siapa yang bikin',
+            'siapa pembuat', 'pemilik web', 'pemilik website', 'tentang web', 'tentang situs',
+            'about web', 'about this', 'about this site', 'about this web', 'about you', 'who built',
+            'who made', 'who created', 'who is the developer', 'kontak developer', 'kontak dev',
+            'sosmed developer', 'sosial media', 'instagram', 'tiktok', 'github developer',
+            'whatsapp developer', 'whatsapp channel', 'saluran whatsapp', 'saluran channel',
+            'rhmt', 'r_hmt', 'rhteaster', 'explore lab', 'tujuan web', 'visi misi',
+            'kenapa dibuat', 'kenapa dibikin',
+        ];
+
+        function detectIntent(prompt, hasImage, history = []) {
+            const lower = String(prompt || '').toLowerCase().trim();
+            const recentText = (history || []).slice(-3)
+                .map((m) => String(m?.text || '').toLowerCase()).join(' ');
+
+            // Identity question
+            if (IDENTITY_KEYWORDS.some((k) => lower.includes(k))) return 'chat-identity';
+
+            // Code request always wins over image-gen
+            const isCode = CODE_KEYWORDS.some((kw) => lower.includes(kw));
+            if (isCode) return 'chat';
+
+            const editPattern = /\b(edit|ubah|ganti|tambahkan|hapus|hilangkan|jadikan|tukar|ubahlah|kasih warna|jadikan latar)\b/;
+            const generatePattern = /\b(generate gambar|bikin gambar|buatkan gambar|buat gambar|gambarkan|render(kan)? gambar|ilustrasi(kan)?|poster|wallpaper|draw|design(kan)? gambar|buatkan ilustrasi)\b/;
+            const standaloneImageHint = /\b(gambar|image|foto)\b/.test(lower) && /\b(buat|bikin|generate|render|draw|create)\b/.test(lower);
+            const searchPattern = /\b(cari|search|berita|terbaru|harga sekarang|update|news|trending|kurs|saham hari)\b/;
+
             if (hasImage && editPattern.test(lower)) return 'image-edit';
-            if (!hasImage && generatePattern.test(lower)) return 'image-generate';
-            if (!hasImage && searchPattern.test(lower)) return 'search';
+            if (!hasImage && (generatePattern.test(lower) || standaloneImageHint)) return 'image-generate';
+            if (!hasImage && searchPattern.test(`${recentText} ${lower}`)) return 'search';
+
             return 'chat';
         }
 
-        function buildBackendBody({ prompt, attachment, intent }) {
+        function buildBackendBody({ prompt, attachment, intent, modelOverride }) {
+            const effectiveModel = (modelOverride !== undefined ? modelOverride : (state.model || state.settings.defaultModel || ''));
             const body = {
                 prompt,
-                model: state.model || undefined,
+                question: prompt,
+                model: effectiveModel || undefined,
                 sessionId: state.sessionId,
-                history: state.history.slice(-12),
+                history: state.history.slice(-16),
             };
+            const sysOverride = (state.settings.systemPrompt || '').trim();
+            if (sysOverride) body.system = sysOverride;
+            if (effectiveModel === 'thinking' || state.mode === 'thinking' || intent === 'thinking') {
+                body.thinking = true;
+            }
             if (attachment?.kind === 'image' && attachment.dataUrl) {
                 body.image_url = attachment.dataUrl;
             }
             if (intent === 'image-generate' || intent === 'image-edit' || state.mode === 'image') {
-                body.ratio = state.ratio || '1:1';
+                body.ratio = state.ratio || state.settings.defaultRatio || '1:1';
             }
             return body;
         }
@@ -1007,6 +1706,7 @@
                 return state.attachment?.kind === 'image' ? '/v1/image-edit' : '/v1/image-generate';
             }
             if (state.mode === 'search') return '/v1/perplexity';
+            if (state.mode === 'thinking') return '/v1/auto';
             if (state.mode === 'auto') {
                 if (intent === 'image-edit') return '/v1/image-edit';
                 if (intent === 'image-generate') return '/v1/image-generate';
@@ -1026,7 +1726,9 @@
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
                 const msg = data?.error || `HTTP ${res.status}`;
-                throw new Error(msg);
+                const e = new Error(msg);
+                e.payload = data;
+                throw e;
             }
             return data;
         }
@@ -1038,62 +1740,147 @@
             return header + (prompt || 'Tolong ringkas / analisa dokumen di atas.');
         }
 
-        async function handleSend() {
+        async function handleSend(opts = {}) {
             if (state.isGenerating) {
                 if (state.controller) state.controller.abort();
                 return;
             }
 
-            const prompt = chatInput.value.trim();
-            const attachment = state.attachment;
+            const overridePrompt = typeof opts.prompt === 'string' ? opts.prompt : null;
+            const overrideAttachment = opts.attachment || null;
+            const modelOverride = opts.modelOverride !== undefined ? opts.modelOverride : undefined;
+            const replaceMessageId = opts.replaceMessageId || null;
+
+            const prompt = overridePrompt !== null ? overridePrompt.trim() : chatInput.value.trim();
+            const attachment = overrideAttachment !== null ? overrideAttachment : state.attachment;
             if (!prompt && !attachment) return;
 
             const userVisible = prompt || (attachment?.kind === 'image' ? 'Analisa gambar ini' : 'Analisa dokumen ini');
-            appendUserMessage(userVisible, attachment);
-            pushHistoryListEntry(userVisible);
 
-            chatInput.value = '';
-            autoResize();
+            // For new sends (not regenerate), append user message + entry
+            if (!opts.skipUserMessage) {
+                const userId = 'm_' + uid();
+                const userMsg = {
+                    id: userId,
+                    role: 'user',
+                    text: userVisible,
+                    images: attachment?.kind === 'image' && attachment.dataUrl ? [attachment.dataUrl] : [],
+                    attachments: attachment ? [{ ...attachment, dataUrl: attachment.kind === 'image' ? attachment.dataUrl : '' }] : [],
+                    ts: nowIso(),
+                };
+                state.messages.push(userMsg);
+                appendUserMessage(userVisible, attachment, userId);
+                upsertHistoryListEntry(userVisible);
+            }
+
+            // Clear input/attachment if from main send
+            if (overridePrompt === null) {
+                chatInput.value = '';
+                autoResize();
+            }
             const sentAttachment = attachment;
-            state.attachment = null;
-            showAttachmentPreview();
+            if (overrideAttachment === null) {
+                state.attachment = null;
+                showAttachmentPreview();
+            }
 
             state.isGenerating = true;
             state.controller = new AbortController();
             setSendButtonState(true);
 
-            const shell = appendAssistantShell();
+            // If replacing a message (regenerate), reuse its DOM shell
+            let shell;
+            const assistantId = replaceMessageId || ('m_' + uid());
+            if (replaceMessageId) {
+                const existing = chatBox.querySelector(`[data-role="assistant"][data-id="${replaceMessageId}"]`);
+                if (existing) {
+                    existing.querySelector('[data-content]').innerHTML = `<span class="text-slate-400 dark:text-gray-500 typing-dot"></span><span class="text-slate-400 dark:text-gray-500 typing-dot"></span><span class="text-slate-400 dark:text-gray-500 typing-dot"></span>`;
+                    existing.querySelector('[data-extras]').innerHTML = '';
+                    const m = existing.querySelector('[data-meta]');
+                    if (m) { m.classList.add('hidden'); m.innerHTML = ''; }
+                    shell = {
+                        wrap: existing,
+                        content: existing.querySelector('[data-content]'),
+                        extras: existing.querySelector('[data-extras]'),
+                        meta: existing.querySelector('[data-meta]'),
+                    };
+                } else {
+                    shell = appendAssistantShell(assistantId);
+                }
+            } else {
+                shell = appendAssistantShell(assistantId);
+            }
 
-            const intent = detectIntent(prompt, sentAttachment?.kind === 'image');
-            const path = pickPath(intent);
+            // Compute intent + path
+            const intent = detectIntent(prompt, sentAttachment?.kind === 'image', state.history);
+            const effectiveMode = state.mode;
+            let path;
+            if (effectiveMode === 'thinking' || modelOverride === 'thinking') {
+                path = '/v1/auto';
+            } else {
+                path = pickPath(intent);
+            }
             const promptForBackend = buildPromptWithDocument(prompt, sentAttachment);
-            const body = buildBackendBody({ prompt: promptForBackend, attachment: sentAttachment, intent });
+            const body = buildBackendBody({ prompt: promptForBackend, attachment: sentAttachment, intent, modelOverride });
+
+            // Show image skeleton if image-gen path
+            let skeleton = null;
+            if (path === '/v1/image-generate' || path === '/v1/image-edit') {
+                shell.content.innerHTML = renderMarkdown(path === '/v1/image-edit' ? 'Sedang mengedit gambar…' : 'Sedang menyiapkan gambar dari prompt…');
+                skeleton = appendImageSkeleton(shell.extras);
+            }
 
             try {
                 const data = await callBackend({ path, body, signal: state.controller.signal });
                 const reply = String(data.reply || data.answer || data.result || '').trim();
                 const imageUrl = String(data.imageUrl || data.image || '').trim();
-                const provider = data.provider ? `\n\n_via ${data.provider}_` : '';
+                const provider = String(data.provider || '').trim();
+                const usedIntent = String(data.intent || intent || '').trim();
+
+                if (skeleton) skeleton.remove();
 
                 if (!reply && !imageUrl) {
                     await streamText(shell.content, 'Balasan model kosong. Coba ulangi prompt dengan lebih spesifik.');
                 } else if (!reply && imageUrl) {
-                    await streamText(shell.content, `Hasil gambar siap di bawah ini.${provider}`);
+                    await streamText(shell.content, 'Hasil gambar siap di bawah ini.');
                     appendImage(shell.extras, imageUrl);
                 } else {
-                    await streamText(shell.content, `${reply}${provider}`);
+                    await streamText(shell.content, reply);
                     if (imageUrl) appendImage(shell.extras, imageUrl);
                 }
+                setProviderBadge(shell.meta, provider, usedIntent);
 
-                state.history.push({ role: 'user', text: userVisible, images: sentAttachment?.kind === 'image' && sentAttachment.dataUrl ? [sentAttachment.dataUrl] : [] });
-                state.history.push({ role: 'assistant', text: reply || (imageUrl ? '[gambar]' : ''), images: imageUrl ? [imageUrl] : [] });
-                state.history = state.history.slice(-32);
-                persistHistory();
+                // Persist assistant message
+                const assistantMsg = {
+                    id: assistantId,
+                    role: 'assistant',
+                    text: reply || (imageUrl ? '[gambar]' : ''),
+                    images: imageUrl ? [imageUrl] : [],
+                    attachments: [],
+                    provider,
+                    intent: usedIntent,
+                    model: body.model || '',
+                    ts: nowIso(),
+                };
+                if (replaceMessageId) {
+                    const idx = state.messages.findIndex((m) => m.id === replaceMessageId);
+                    if (idx >= 0) state.messages[idx] = assistantMsg;
+                    else state.messages.push(assistantMsg);
+                } else {
+                    state.messages.push(assistantMsg);
+                }
+                state.messages = state.messages.slice(-60);
+                persistMessages();
             } catch (err) {
+                if (skeleton) skeleton.remove();
+                const isCooldown = err?.payload?.cooldown === true;
                 const message = err?.name === 'AbortError'
                     ? 'Permintaan dihentikan manual.'
-                    : `Maaf, terjadi kesalahan: ${err?.message || err}`;
+                    : isCooldown
+                        ? `${err.message}`
+                        : `Maaf, terjadi kesalahan: ${err?.message || err}`;
                 await streamText(shell.content, message);
+                setProviderBadge(shell.meta, '', '');
             } finally {
                 state.controller = null;
                 state.isGenerating = false;
@@ -1101,7 +1888,161 @@
             }
         }
 
-        sendBtn.addEventListener('click', handleSend);
+        // Per-message action delegation (copy / edit / regenerate)
+        chatBox.addEventListener('click', async (ev) => {
+            const btn = ev.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.getAttribute('data-action');
+            const id = btn.getAttribute('data-id') || '';
+            const msg = state.messages.find((m) => m.id === id);
+            if (!msg) return;
+
+            if (action === 'copy') {
+                const ok = await copyToClipboard(msg.text || '');
+                showToast(ok ? 'Tersalin ke clipboard.' : 'Gagal menyalin.');
+                return;
+            }
+            if (action === 'edit') {
+                if (state.isGenerating) { showToast('Tunggu balasan selesai dulu.'); return; }
+                if (msg.role !== 'user') return;
+                chatInput.value = msg.text || '';
+                autoResize();
+                chatInput.focus();
+                showToast('Pesan dimuat di kolom input. Tekan Enter untuk kirim ulang.');
+                return;
+            }
+            if (action === 'regenerate') {
+                if (state.isGenerating) { showToast('Tunggu balasan selesai dulu.'); return; }
+                regenerateAssistantMessage(msg);
+                return;
+            }
+            if (action === 'regenerate-pick') {
+                if (state.isGenerating) { showToast('Tunggu balasan selesai dulu.'); return; }
+                openRegenPicker(msg);
+                return;
+            }
+        });
+
+        function regenerateAssistantMessage(assistantMsg, modelOverride) {
+            // Find the user message immediately preceding this assistant message
+            const idx = state.messages.findIndex((m) => m.id === assistantMsg.id);
+            if (idx <= 0) { showToast('Tidak ada pesan user sebelumnya.'); return; }
+            let userMsg = null;
+            for (let i = idx - 1; i >= 0; i--) {
+                if (state.messages[i].role === 'user') { userMsg = state.messages[i]; break; }
+            }
+            if (!userMsg) { showToast('Tidak ada pesan user sebelumnya.'); return; }
+
+            // Reuse attachment if it was an image with a stored dataUrl
+            let att = null;
+            if (Array.isArray(userMsg.attachments) && userMsg.attachments.length) {
+                const a0 = userMsg.attachments[0];
+                if (a0 && a0.kind === 'text' && a0.text) att = a0;
+                else if (a0 && a0.kind === 'image' && a0.dataUrl) att = a0;
+                else if (a0 && a0.kind === 'image' && Array.isArray(userMsg.images) && userMsg.images[0]) att = { kind: 'image', name: a0.name || 'gambar.png', dataUrl: userMsg.images[0] };
+            }
+
+            handleSend({
+                prompt: userMsg.text || '',
+                attachment: att,
+                modelOverride,
+                replaceMessageId: assistantMsg.id,
+                skipUserMessage: true,
+            });
+        }
+
+        // Regen picker modal
+        const regenPickerBackdrop = $('regenPickerBackdrop');
+        function openRegenPicker(assistantMsg) {
+            state.regenContext = { assistantId: assistantMsg.id };
+            const list = $('regenList');
+            list.innerHTML = '';
+            for (const opt of REGEN_MODELS) {
+                const b = document.createElement('button');
+                b.className = 'w-full flex items-center gap-3 p-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-blue-300 dark:hover:border-white/30 transition-colors text-left';
+                b.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-white/5 dark:to-white/5 border border-blue-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-slate-200">
+                        <i data-lucide="${opt.icon}" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-[13px] font-bold">${escapeHtml(opt.label)}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-gray-400">${escapeHtml(opt.value || 'Default routing — biarkan AI memilih')}</div>
+                    </div>
+                `;
+                b.addEventListener('click', () => {
+                    closeRegenPicker();
+                    const target = state.messages.find((m) => m.id === assistantMsg.id);
+                    if (!target) return;
+                    regenerateAssistantMessage(target, opt.value);
+                });
+                list.appendChild(b);
+            }
+            try { lucide.createIcons(); } catch {}
+            regenPickerBackdrop.classList.add('visible');
+        }
+        function closeRegenPicker() { regenPickerBackdrop.classList.remove('visible'); state.regenContext = null; }
+        $('closeRegenPickerBtn').addEventListener('click', closeRegenPicker);
+        regenPickerBackdrop.addEventListener('click', (e) => { if (e.target === regenPickerBackdrop) closeRegenPicker(); });
+
+        // Settings modal
+        const settingsBackdrop = $('settingsBackdrop');
+        function renderSettingsRatioGroup() {
+            const wrap = $('settingRatioGroup');
+            if (!wrap) return;
+            wrap.innerHTML = '';
+            for (const r of RATIO_OPTIONS) {
+                const b = document.createElement('button');
+                const active = (state.settings.defaultRatio || '1:1') === r;
+                b.className = `chip ${active ? 'border-blue-400 dark:border-white/40 bg-blue-50 dark:bg-white/10 text-blue-700 dark:text-white' : ''}`;
+                b.textContent = r;
+                b.addEventListener('click', () => {
+                    state.settings.defaultRatio = r;
+                    renderSettingsRatioGroup();
+                });
+                wrap.appendChild(b);
+            }
+        }
+        function openSettings() {
+            $('settingSystemPrompt').value = state.settings.systemPrompt || '';
+            $('settingDefaultModel').value = state.settings.defaultModel || '';
+            renderSettingsRatioGroup();
+            settingsBackdrop.classList.add('visible');
+        }
+        function closeSettings() { settingsBackdrop.classList.remove('visible'); }
+        $('settingsBtn').addEventListener('click', openSettings);
+        $('closeSettingsBtn').addEventListener('click', closeSettings);
+        settingsBackdrop.addEventListener('click', (e) => { if (e.target === settingsBackdrop) closeSettings(); });
+
+        $('saveSettingsBtn').addEventListener('click', () => {
+            const sp = String($('settingSystemPrompt').value || '').slice(0, 1500);
+            const dm = String($('settingDefaultModel').value || '');
+            state.settings.systemPrompt = sp;
+            state.settings.defaultModel = dm;
+            persistSettings();
+
+            // Apply defaultModel to active model if user hasn't picked one manually
+            if (dm) {
+                state.model = dm === 'thinking' ? '' : dm;
+                state.modelLabel = dm === 'thinking' ? 'Thinking Mode' : (dm || DEFAULT_AUTO_LABEL);
+                localStorage.setItem(STORAGE_KEYS.model, state.model);
+                if (dm === 'thinking') setMode('thinking');
+                else setMode('auto');
+            }
+            setRatio(state.settings.defaultRatio || state.ratio || '1:1');
+            closeSettings();
+            showToast('Pengaturan tersimpan.');
+        });
+
+        $('resetSettingsBtn').addEventListener('click', () => {
+            state.settings = { ...DEFAULT_SETTINGS };
+            persistSettings();
+            $('settingSystemPrompt').value = '';
+            $('settingDefaultModel').value = '';
+            renderSettingsRatioGroup();
+            showToast('Pengaturan dikembalikan ke default.');
+        });
+
+        sendBtn.addEventListener('click', () => handleSend());
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -1111,40 +2052,31 @@
 
         const params = new URLSearchParams(window.location.search);
         const initialMode = params.get('mode');
-        const validModes = new Set(['auto', 'search', 'image']);
+        const validModes = new Set(['auto', 'search', 'image', 'thinking']);
 
         function init() {
             initTheme();
             syncAppHeight();
             loadState();
+
+            // Apply default model from settings if user hasn't picked one
+            if (!state.model && state.settings.defaultModel && state.settings.defaultModel !== 'thinking') {
+                state.model = state.settings.defaultModel;
+            }
             if (state.model) state.modelLabel = state.model;
+
             if (validModes.has(initialMode)) {
                 state.mode = initialMode;
                 localStorage.setItem(STORAGE_KEYS.mode, initialMode);
+            } else if (state.settings.defaultModel === 'thinking' && !localStorage.getItem(STORAGE_KEYS.mode)) {
+                state.mode = 'thinking';
             }
             setMode(state.mode || 'auto');
             if (state.model) $('activeModelLabel').textContent = state.model;
-            setRatio(state.ratio || '1:1');
+            setRatio(state.ratio || state.settings.defaultRatio || '1:1');
             renderHistoryList();
             loadProviders();
-
-            if (state.history.length) {
-                clearChatView();
-                emptyState.classList.add('hidden');
-                for (const entry of state.history) {
-                    if (entry.role === 'user') {
-                        appendUserMessage(entry.text, entry.images?.length ? { kind: 'image', name: 'gambar.png' } : null);
-                    } else {
-                        const shell = appendAssistantShell();
-                        shell.content.innerHTML = renderMarkdown(entry.text || '');
-                        if (entry.images && entry.images.length) {
-                            entry.images.forEach((url) => appendImage(shell.extras, url));
-                        }
-                    }
-                }
-            } else {
-                clearChatView();
-            }
+            hydrateChatViewFromMessages();
 
             try { lucide.createIcons(); } catch {}
             chatInput.focus();
