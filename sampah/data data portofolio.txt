@@ -1,0 +1,227 @@
+ganti data data diatas ke data ttg saya dibawah.
+logo & profile (foto saya) : https://j.top4top.io/p_376952pby0.png
+nama profile : R_hmt ofc
+
+Tentang Saya
+
+Saya adalah seorang pengembang web mandiri (self-taught) yang berfokus pada pembuatan web app, PWA, dan website statis interaktif dengan pendekatan efisien, ringan, dan fungsional, terutama untuk perangkat dengan spesifikasi rendah.
+
+Saya memulai perjalanan di dunia teknologi secara otodidak, tanpa mentor langsung dan dengan keterbatasan perangkat. Dalam proses tersebut, saya mengembangkan kemampuan untuk mendesain, membangun, mengoptimalkan, dan mendeploy aplikasi web menggunakan bantuan AI sebagai productivity tool, bukan sekadar generator kode.
+
+Fokus utama saya bukan hanya “membuat website terlihat keren”, tetapi memastikan web benar-benar berguna, mudah dipahami, dan stabil digunakan oleh pengguna umum. semua itu dilakukan full device only. 
+
+
+---
+
+Pengalaman & Pencapaian
+
+Telah menyelesaikan 50+ proyek web (statis dan web app
+
+Mengembangkan web app skala besar secara bertahap hingga ribuan baris kode
+
+Membuat dan mengelola Progressive Web App (PWA)
+
+Berpengalaman melakukan:
+
+Debugging
+
+Refactoring
+
+Optimisasi performa
+
+Penyesuaian UI/UX untuk mobile & low-end device
+
+
+Aktif berbagi dan berdiskusi di komunitas teknologi & coding
+
+
+
+---
+
+teknologi 
+
+HTML
+
+CSS
+
+JavaScript
+
+UI/UX Design (mobile-first & responsive)
+
+Animasi ringan & interaksi pengguna
+
+vue
+
+react
+
+tailwind 
+
+FastApi
+
+typescript
+
+uptash redist
+
+
+
+
+Backend & Integrasi
+
+REST API (konsumsi & integrasi)
+
+API 
+
+
+
+
+Web & Deployment
+
+GitHub
+
+Vercel
+
+Netlify
+
+PWA (manifest, service worker)
+
+Optimisasi performa web
+
+
+
+
+
+---
+
+Gaya Kerja
+
+Fokus pada fungsi & stabilitas
+
+Mengutamakan kesederhanaan yang efektif
+
+Iteratif: membangun, menguji, memperbaiki
+
+Terbiasa bekerja dengan kode besar & kompleks
+
+Adaptif terhadap keterbatasan perangkat
+
+
+
+---
+
+Minat & Arah Pengembangan
+
+Web App produktivitas
+
+AI tools yang benar-benar berguna (bukan sekadar chatbot)
+
+Sistem otomatis berbasis input pengguna
+
+Web ringan untuk semua kalangan
+
+Eksplorasi lebih lanjut ke sistem AI terintegrasi
+
+
+
+
+
+Saluran WhatsApp join
+https://whatsapp.com/channel/0029VbBjyjlJ93wa6hwSWa0p
+Nama  WhatsApp chanel: ✧･ﾟ: [𝙍]𝙝𝙢𝙏 | 𝘾𝙤𝙙𝙚⚙️𝘼𝙄 𝙡 :･ﾟ✧
+profil saluran : https://e.top4top.io/p_37695nh3v0.png
+---------------------------------------
+Ig
+https://www.instagram.com/rahmt_nhw?igsh=MWQwcnB3bTA2ZnVidg==
+TikTok 
+https://www.tiktok.com/@r_hmtofc?_r=1&_t=ZS-94KRfWQjeUu
+Github 
+https://github.com/rahmat-369
+Tele
+t.me/rAi_engine
+fb : https://www.instagram.com/rahmt_nhw?igsh=MWQwcnB3bTA2ZnVidg==
+X : -
+============
+PENEGASAN, JANGAN GUNAKAN EMOJI SEBAGAI ICON PADA ICON2 WEB NYA, GUNAKAN GAMBAR YG SELAIN DARI EMOJI.
+=====
+Buatkan sebuah website portfolio developer yang modern, clean, dan premium dengan aesthetic dingin, tenang, dan minimal.
+
+Arah desain:
+- Gunakan warna dasar monochrome (hitam pekat, abu gelap, putih lembut)
+- Gunakan satu warna aksen: biru dingin tidak wajib karena terlalu umum, ganti warna cool lainnya
+- Mood keseluruhan: dingin, tenang, elegan, sedikit futuristik tapi tidak berlebihan
+- Tampilan harus terasa mahal, dan percaya diri
+
+Background:
+- Gunakan background gradient berlapis (bukan warna flat)
+- Kombinasikan 2–3 warna dingin: biru (boleh bukan wajib) gelap, putih lembut, abu tua
+- Tambahkan radial gradient atau efek cahaya blur untuk memberi kedalaman (seolah 3D)
+- Opsional: tambahkan noise/grain halus
+- Background harus terasa hidup tapi tetap lembut dan tidak mengganggu
+
+Elemen UI:
+- Gunakan gaya glassmorphism (efek kaca buram)
+  - card semi-transparan
+  - efek blur di belakang (backdrop blur)
+  - border tipis dengan opacity rendah
+- Sudut elemen rounded (sedang)
+- Shadow lembut (hindari shadow keras)
+- Divider garis tipis dan halus
+
+Typography:
+- Gunakan font modern dan clean (seperti Inter)
+- Hierarki teks jelas
+- Gunakan teks minimal tapi tetap jelas
+- Beri sedikit jarak antar huruf pada heading
+
+Layout:
+- Banyak whitespace (jangan padat)
+- Gunakan grid layout
+- Struktur section:
+  1. Hero (nama + tagline singkat)
+  2. About (deskripsi singkat dalam glass card)
+  3. Projects (grid card dengan efek hover)
+  4. Tech stack (ikon minimal)
+  5. Contact (sederhana dan clean)
+
+Animasi:
+- Gunakan animasi halus dan pelan
+- Fade + sedikit gerakan ke atas
+- Efek blur menjadi jelas
+- Hindari animasi cepat atau memantul
+
+Interaksi:
+- Hover dengan glow biru tipis
+- Scale sangat kecil (subtle)
+- Opsional: efek cursor glow
+
+Teknis:
+- Gunakan stack modern (TypeScript + Tailwind CSS)
+- Harus responsive (mobile tetap ringan dengan efek disederhanakan)
+- Optimalkan performa (hindari 3D berat di mobile)
+
+Catatan penting:
+- Hindari tampilan ramai
+- Hindari banyak warna
+- Hindari efek berlebihan
+- Fokus pada kesan tenang, premium, dan clean
+Buat background dengan efek gradient berlapis yang terasa seperti memiliki kedalaman (semi 3D).
+
+Detail:
+- Gunakan beberapa layer gradient (bukan satu gradient saja)
+- Kombinasikan hitam pekat dengan biru gelap dan ungu lembut
+- Tambahkan radial gradient untuk efek cahaya
+- Gunakan blur pada beberapa area agar terlihat seperti glow
+- Bisa tambahkan bentuk abstrak (blob) yang sangat halus
+- Animasi sangat pelan (opsional)
+
+Karakter background:
+- Dalam (deep)
+- Atmosferik
+- Dingin
+- Modern
+- Premium
+
+Hindari:
+- Warna terang mencolok
+- Kontras terlalu tinggi
+- Animasi cepat
+Buat desain terasa seperti produk teknologi kelas atas (seperti Apple atau SaaS modern), namun dengan karakter yang lebih dingin dan minimal. gambar foto jangan model bulat, buat animasi sebagus mungkin. untuk Ui nya saya revisi saya mau yg clean modern dan profesional. website tampil dengan rapi, animasi icon tech 3d jalan dan lain lain. teks atau informasi portofolio tidak wajib pakai teks diatas, bisa modif dan menyesuaikan  asal jangan mengubah total. teks diatas hanya sebagai referensi. website harus terasa hidup dgn efek modern dan 3d
