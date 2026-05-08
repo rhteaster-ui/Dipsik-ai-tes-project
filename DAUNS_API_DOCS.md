@@ -1,74 +1,126 @@
-# Dokumentasi Explore Lab API (Proxy Daunscode)
+# Dokumentasi API Explore Lab
 
-Dokumentasi ini berisi daftar endpoint Daunscode REST API yang didukung dan cara mengaksesnya melalui Universal Proxy kita (`/api/backend`).
+Frontend hanya bicara ke **`/api/backend`** dengan method `POST`. Backend gateway
+menentukan upstream sebenarnya berdasarkan field `path`. Tidak ada API key yang
+diekspos ke browser.
 
-## CARA MENGAKSES PROXY (FRONTEND TO BACKEND)
-Semua request dari frontend harus diarahkan ke `/api/backend` dengan method `POST`.
-**Format Payload Wajib:**
+## Format payload
+
 ```json
 {
-  "path": "/v1/ai/nama_model",
+  "path": "/v1/auto",
   "method": "POST",
   "body": {
-    "prompt": "Isi prompt disini",
-    "parameter_lain": "value"
+    "prompt": "Isi prompt di sini",
+    "model": "gemini-2.5-flash",
+    "image_url": "data:image/png;base64,...",
+    "ratio": "16:9",
+    "history": [{ "role": "user", "text": "..." }],
+    "sessionId": "sess_xxx"
   }
 }
 ```
 
----
+Semua field selain `prompt` opsional. Untuk text-to-image cukup kirim `prompt`
+(plus `ratio` jika ingin selain `1:1`). Untuk image-edit kirim `prompt` + `image_url`.
 
-## DAFTAR ENDPOINT DAUNSCODE TARGET
+## Path yang didukung
 
-### 1. ChatGPT
-- **Path Target:** `/v1/ai/chatgpt`
-- **Fungsi:** Model chat AI standar untuk tanya jawab teks.
-- **Body Payload Asli:** 
-  ```json
-  { "prompt": "Apa itu hologram? jawab singkat maksimal 2 kalimat." }
-  ```
+| Path                  | Tujuan                                                                                  |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| `GET /api/backend`    | Daftar provider/model + default                                                          |
+| `/v1/models`          | Idem (POST)                                                                              |
+| `/v1/auto`            | Auto-routing pintar berdasarkan prompt + lampiran (rekomendasi default frontend)         |
+| `/v1/chat`            | Gemini official (`api/chat.js`); fallback Daunscode chat jika Gemini gagal               |
+| `/v1/perplexity`      | Web search via TurboSeek/Sonar (`api/perplexity.js`)                                     |
+| `/v1/dauns`           | Daunscode AI proxy. Pilih `model: chatgpt|notegpt|grok|deepai|nanobanana`               |
+| `/v1/image-generate`  | Text-to-image (Pollinations.ai, gratis, no-key)                                          |
+| `/v1/image-edit`      | Image-to-image (Daunscode `/v1/ai/nanobanana`)                                           |
+| `/v1/ai/{model}`      | Direct Daunscode (legacy alias). Setara `/v1/dauns` dengan `body.model = {model}`        |
 
-### 2. Nanobanana (Vision & Image Edit)
-- **Path Target:** `/v1/ai/nanobanana`
-- **Fungsi:** Model yang mendukung input teks dan URL gambar.
-- **Body Payload Asli:**
-  ```json
-  {
+## Keamanan & rate limit
+
+- Setiap path POST melewati rate-limit per IP: 60 req/menit untuk gateway umum,
+  20 req/menit khusus image generation.
+- Header `X-RateLimit-Limit` dan `X-RateLimit-Remaining` selalu disertakan.
+- Saat melebihi batas, response = HTTP 429 dengan `Retry-After` (detik).
+- Validasi panjang prompt: max 8000 karakter di gateway, 2000 di image-gen.
+- Validasi ukuran lampiran di frontend: gambar ≤ 5 MB, dokumen teks ≤ 200 KB.
+
+## Contoh penggunaan
+
+### 1) Chat auto-routing (paling umum)
+
+```json
+{
+  "path": "/v1/auto",
+  "method": "POST",
+  "body": { "prompt": "Apa itu hologram? jawab singkat." }
+}
+```
+
+### 2) Generate gambar dari teks
+
+```json
+{
+  "path": "/v1/image-generate",
+  "method": "POST",
+  "body": { "prompt": "girl, witch hat, night sky, anime key visual", "ratio": "16:9" }
+}
+```
+
+Response:
+
+```json
+{
+  "reply": "Gambar dibuat dari prompt: \"...\".",
+  "imageUrl": "https://image.pollinations.ai/prompt/...",
+  "provider": "pollinations"
+}
+```
+
+### 3) Edit gambar dengan instruksi
+
+```json
+{
+  "path": "/v1/image-edit",
+  "method": "POST",
+  "body": {
     "prompt": "make him wear glasses",
-    "image_url": "https://url-gambar-lu.com/gambar.png"
+    "image_url": "https://example.com/foto.png"
   }
-  ```
+}
+```
 
-### 3. NoteGPT
-- **Path Target:** `/v1/ai/notegpt`
-- **Fungsi:** Mengirim prompt ke NoteGPT dan mengembalikan jawaban chat berbentuk teks.
-- **Body Payload Asli:**
-  ```json
-  { "prompt": "halo notegpt" }
-  ```
+### 4) Web search
 
-### 4. Grok
-- **Path Target:** `/v1/ai/grok`
-- **Fungsi:** Mengirim prompt ke API Toolbaz dengan gaya/style Grok AI.
-- **Body Payload Asli:**
-  ```json
-  { "prompt": "Teks prompt lu disini" }
-  ```
+```json
+{
+  "path": "/v1/perplexity",
+  "method": "POST",
+  "body": { "prompt": "berita AI generatif minggu ini" }
+}
+```
 
-### 5. DeepAI
-- **Path Target:** `/v1/ai/deepai`
-- **Fungsi:** Interaksi chat berbasis DeepAI.
-- **Body Payload Asli:**
-  ```json
-  { "prompt": "halo daunscode api" }
-  ```
+### 5) Pilih model Daunscode tertentu
 
-### 6. Image Generation (Anime Key Visual / Text-to-Image)
-- **Fungsi:** Membuat gambar dari teks dengan dukungan aspek rasio.
-- **Body Payload Asli:**
-  ```json
-  {
-    "prompt": "girl, witch hat, night sky, anime key visual",
-    "ratio": "16:9"
-  }
-  ```
+```json
+{
+  "path": "/v1/dauns",
+  "method": "POST",
+  "body": { "prompt": "halo grok", "model": "grok" }
+}
+```
+
+## Auto-routing (`/v1/auto`)
+
+Heuristik di gateway memilih jalur berdasarkan isi prompt + apakah ada
+lampiran gambar:
+
+1. Punya gambar + kata kerja edit (`edit/ubah/ganti/tambahkan/...`) → `image-edit`.
+2. Tidak punya gambar + kata kerja generate (`buat/generate/bikin/render/...`) → `image-generate`.
+3. Tidak punya gambar + kata kunci pencarian (`cari/search/berita/terbaru/harga/news/...`) → `perplexity`.
+4. Default → Gemini → Daunscode chain → Perplexity (cascade fallback).
+
+Frontend juga bisa memaksa mode lewat sidebar (Auto / Web Search / Image Studio)
+atau memilih model spesifik via tombol "Auto Routing" di header.

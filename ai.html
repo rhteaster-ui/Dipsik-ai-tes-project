@@ -2,21 +2,19 @@
 <html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExploreAi | AI Workspace</title>
-    
-    <!-- Google Fonts -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Explore Lab Workspace — chat AI multi-model, image studio, dan web search dalam satu interface ringan." />
+    <title>Explore Lab — Workspace AI</title>
+
+    <link rel="icon" href="https://l.top4top.io/p_3774ypjwm0.png" type="image/png">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Tailwind Config -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -24,37 +22,41 @@
                 extend: {
                     fontFamily: { sans: ['"Inter"', 'sans-serif'] },
                     colors: {
-                        darkbg: '#030712', 
+                        darkbg: '#030712',
                         darkcard: '#0B0F19',
                         darkborder: 'rgba(255, 255, 255, 0.08)',
                     },
                     animation: {
                         'fade-in-up': 'fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-soft': 'pulseSoft 1.6s ease-in-out infinite',
                     },
                     keyframes: {
                         fadeInUp: {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '0%': { opacity: '0', transform: 'translateY(8px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
-                        }
-                    }
-                }
-            }
-        }
+                        },
+                        pulseSoft: {
+                            '0%, 100%': { opacity: '0.6' },
+                            '50%': { opacity: '1' },
+                        },
+                    },
+                },
+            },
+        };
     </script>
 
     <style>
-        html, body {
-            height: 100%;
+        :root { --app-height: 100dvh; }
+
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.25s ease, color 0.25s ease;
+            min-height: 100dvh;
+            height: var(--app-height, 100dvh);
             overflow: hidden;
         }
 
-        body {
-            transition: background-color 0.3s ease, color 0.3s ease;
-            min-height: 100dvh;
-            height: var(--app-height, 100dvh);
-        }
-        
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -62,1773 +64,1093 @@
         .dark ::-webkit-scrollbar-thumb { background: #334155; }
         .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
-        /* Glass Input & Sidebar */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
         }
         .dark .glass-panel {
-            background: rgba(11, 15, 25, 0.7);
+            background: rgba(11, 15, 25, 0.78);
         }
 
-        /* Hilangkan outline default textarea */
-        textarea:focus { outline: none; box-shadow: none; }
-        
-        /* Animasi Recording */
-        .recording {
-            color: #ef4444 !important;
-            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .gradient-text {
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        
-        @keyframes pulse-ring {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
-        }
-
-        /* Animasi Wipe Reveal untuk AI */
-        @keyframes wipe-reveal {
-            0% {
-                clip-path: inset(0 0 100% 0);
-                transform: translateY(-5px);
-            }
-            100% {
-                clip-path: inset(0 0 0 0);
-                transform: translateY(0);
-            }
-        }
-        .animate-wipe-reveal {
-            animation: wipe-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            will-change: clip-path, transform;
+        .dark .gradient-text {
+            background: linear-gradient(135deg, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .message-content pre {
-            overflow-x: auto;
-            white-space: pre;
-            max-width: 100%;
-            width: 100%;
-            background: rgba(15, 23, 42, 0.9);
-            color: #e2e8f0;
-            border-radius: 0.75rem;
-            padding: 0.85rem 1rem;
-            margin: 0.9rem 0;
-            border: 1px solid rgba(148, 163, 184, 0.25);
+        .typing-dot {
+            display: inline-block;
+            width: 6px; height: 6px;
+            border-radius: 999px;
+            margin-right: 4px;
+            background: currentColor;
+            animation: pulseSoft 1.2s ease-in-out infinite;
         }
-        .message-content {
-            max-width: 100%;
-            overflow-x: hidden;
-            overflow-wrap: anywhere;
-            word-break: break-word;
-        }
-        .message-content .code-block {
-            border-radius: 0.85rem;
-            overflow: hidden;
-            border: 1px solid rgba(148, 163, 184, 0.25);
-            background: rgba(15, 23, 42, 0.92);
-            margin: 0.9rem 0;
-        }
-        .message-content .code-toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.5rem;
-            padding: 0.45rem 0.65rem;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.22);
-            color: #cbd5e1;
-            font-size: 0.72rem;
-            letter-spacing: 0.04em;
-        }
-        .message-content .code-toolbar button {
-            border-radius: 0.45rem;
-            padding: 0.25rem;
-            color: #cbd5e1;
-            transition: all 0.2s ease;
-        }
-        .message-content .code-toolbar button:hover {
-            background: rgba(148, 163, 184, 0.18);
-            color: #fff;
-        }
-        .message-content .code-scroll {
-            overflow-x: auto;
-            max-width: 100%;
-            -webkit-overflow-scrolling: touch;
-        }
-        .message-content .code-scroll pre {
-            margin: 0;
-            border: 0;
-            border-radius: 0;
-            background: transparent;
-            min-width: max-content;
-            width: max-content;
-        }
-        .message-content code {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: 0.9em;
-        }
+        .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
         .typing-cursor {
             display: inline-block;
-            width: 0.5ch;
-            animation: pulse-ring 1s ease-in-out infinite;
-            opacity: 0.7;
+            width: 6px; height: 1em;
+            background: currentColor;
+            margin-left: 2px;
+            vertical-align: -2px;
+            animation: pulseSoft 1s ease-in-out infinite;
+        }
+
+        .prose-msg { line-height: 1.65; }
+        .prose-msg p { margin: 0 0 0.6em 0; }
+        .prose-msg p:last-child { margin-bottom: 0; }
+        .prose-msg ul, .prose-msg ol { margin: 0.4em 0 0.6em 1.25em; padding-left: 0.5em; }
+        .prose-msg ul { list-style: disc; }
+        .prose-msg ol { list-style: decimal; }
+        .prose-msg li { margin-bottom: 0.2em; }
+        .prose-msg strong { font-weight: 700; }
+        .prose-msg em { font-style: italic; }
+        .prose-msg code:not(pre code) {
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 0.88em;
+            background: rgba(15, 23, 42, 0.06);
+            color: #be123c;
+            padding: 1px 6px;
+            border-radius: 6px;
+        }
+        .dark .prose-msg code:not(pre code) {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fda4af;
+        }
+        .prose-msg pre {
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85em;
+            border-radius: 12px;
+            padding: 14px 16px;
+            overflow-x: auto;
+            margin: 0.6em 0;
+        }
+        .prose-msg pre code { background: transparent; padding: 0; color: inherit; }
+        .prose-msg a { color: #2563eb; text-decoration: underline; text-underline-offset: 3px; }
+        .dark .prose-msg a { color: #60a5fa; }
+        .prose-msg blockquote {
+            border-left: 3px solid #cbd5e1;
+            padding-left: 0.9em;
+            margin: 0.5em 0;
+            color: #475569;
+        }
+        .dark .prose-msg blockquote {
+            border-color: #334155;
+            color: #94a3b8;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 11.5px;
+            font-weight: 600;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            background: rgba(15, 23, 42, 0.04);
+            color: #334155;
+        }
+        .dark .chip {
+            border-color: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: #cbd5e1;
+        }
+        .chip.active {
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            color: #fff;
+            border-color: transparent;
+        }
+        .dark .chip.active {
+            background: linear-gradient(135deg, #ffffff, #cbd5e1);
+            color: #0f172a;
+        }
+
+        .suggest-card {
+            transition: transform 0.18s ease, border-color 0.18s ease;
+        }
+        .suggest-card:hover { transform: translateY(-2px); }
+
+        .toast {
+            transform: translateY(20px);
+            opacity: 0;
+            transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+        .toast.visible { transform: translateY(0); opacity: 1; }
+
+        .modal-backdrop {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .modal-backdrop.visible {
+            opacity: 1;
+            pointer-events: auto;
         }
     </style>
-    <link rel="icon" href="https://l.top4top.io/p_3774ypjwm0.png" type="image/png">
 </head>
-<body class="bg-slate-50 dark:bg-darkbg text-slate-900 dark:text-gray-100 antialiased overflow-hidden flex min-h-0">
+<body class="bg-slate-50 dark:bg-darkbg text-slate-900 dark:text-gray-100 antialiased">
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-slate-900/80 dark:bg-white/80 backdrop-blur-md text-white dark:text-slate-900 px-3.5 py-1.5 rounded-full text-xs font-medium shadow-md transition-all duration-300 opacity-0 pointer-events-none z-[200] transform translate-y-4">
-        Pesan Notifikasi
-    </div>
+    <div id="app" class="flex flex-col h-full w-full">
 
-    <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-72 h-full shrink-0 min-h-0 border-r border-slate-200 dark:border-darkborder glass-panel flex flex-col transition-transform duration-300 absolute md:relative z-40 -translate-x-full md:translate-x-0">
-        <!-- Logo & New Chat -->
-        <div class="p-4 border-b border-slate-200 dark:border-darkborder">
-            <a href="index.html" class="flex items-center gap-3 group mb-6 px-2">
-                <div class="w-8 h-8 rounded-lg overflow-hidden border border-blue-200 dark:border-white/10">
-                    <img src="https://l.top4top.io/p_3774ypjwm0.png" alt="Explore AI Icon" class="w-full h-full object-cover">
-                </div>
-                <span class="font-bold text-lg tracking-tight">Explore<span class="font-normal text-slate-500 dark:text-gray-500">Ai</span></span>
-            </a>
-            
-            <button onclick="clearChat()" class="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 text-white py-2.5 rounded-xl font-semibold transition-all shadow-sm">
-                <i data-lucide="plus" class="w-4 h-4"></i> Percakapan Baru
-            </button>
-        </div>
-
-        <!-- History List (Sudah dibersihkan dari histori dummy) -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-1">
-            <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3 px-2 uppercase tracking-wider">Histori Obrolan</div>
-            <!-- Container Dinamis Histori -->
-            <div id="todayHistoryContainer" class="space-y-1 mb-6">
-                <!-- Obrolan yang baru dibuat akan muncul di sini secara dinamis -->
-            </div>
-        </div>
-
-        <!-- Footer Sidebar (Pengaturan & Beranda) -->
-        <div class="p-4 border-t border-slate-200 dark:border-darkborder flex flex-col gap-1.5">
-            <button onclick="openSettingsPopup()" class="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-sm font-medium text-slate-600 dark:text-gray-400 transition-colors">
-                <i data-lucide="settings" class="w-4 h-4"></i>
-                Pengaturan
-            </button>
-            <a href="index.html" class="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-sm font-medium text-slate-600 dark:text-gray-400 transition-colors">
-                <i data-lucide="home" class="w-4 h-4"></i>
-                Kembali ke Halaman Utama
-            </a>
-        </div>
-    </aside>
-
-    <!-- MAIN CHAT AREA -->
-    <main class="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative w-full">
-        <!-- Header -->
-        <header class="h-16 px-4 md:px-8 border-b border-slate-200 dark:border-darkborder glass-panel flex items-center justify-between sticky top-0 z-30">
-            <button id="mobileMenuBtn" class="md:hidden p-2 -ml-2 text-slate-600 dark:text-gray-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5">
-                <i data-lucide="menu" class="w-5 h-5"></i>
-            </button>
-
-            <!-- Model Selector Dropdown Header -->
-            <div class="flex-1 flex justify-center md:justify-start">
-                <button id="modelTriggerBtn" onclick="openProviderPopup(event)" class="flex items-center gap-2 px-3 py-1 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-darkcard hover:bg-slate-50 dark:hover:bg-white/5 text-xs font-semibold text-slate-700 dark:text-gray-200 transition-colors shadow-sm">
-                    <i data-lucide="sparkles" class="w-4 h-4 text-blue-500"></i>
-                    <span id="currentModelDisplay" class="text-xs md:text-sm">ExploreAi • Perplexity Search</span>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+        <header class="flex-shrink-0 border-b border-slate-200 dark:border-white/5 glass-panel z-30">
+            <div class="flex items-center gap-3 px-4 md:px-6 h-14">
+                <button id="sidebarToggle" class="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors" aria-label="Buka sidebar">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
-            </div>
 
-            <!-- Tombol Akun di Header (Dengan Dropdown) -->
-            <div class="relative">
-                <button id="userDropdownBtn" onclick="toggleUserDropdown()" class="p-1 rounded-full bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 hover:ring-2 hover:ring-blue-500/50 transition-all shadow-sm flex items-center justify-center" title="Menu Pengguna">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm">EL</div>
+                <a href="index.html" class="flex items-center gap-2.5 group" aria-label="Kembali ke landing">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-white/5 dark:to-white/5 border border-blue-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-gray-300 group-hover:scale-105 transition-transform shadow-sm">
+                        <i data-lucide="layers" class="w-4 h-4"></i>
+                    </div>
+                    <span class="font-bold text-[15px] tracking-tight">Explore<span class="font-normal text-slate-500 dark:text-gray-500">Lab</span></span>
+                </a>
+
+                <span class="hidden md:inline-flex items-center gap-1.5 ml-3 px-2.5 py-1 rounded-full text-[11px] font-semibold border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-gray-300">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Workspace Online
+                </span>
+
+                <div class="flex-1"></div>
+
+                <button id="modelPickerBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[12px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors shadow-sm">
+                    <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                    <span id="activeModelLabel">Auto Routing</span>
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-60"></i>
                 </button>
-                
-                <!-- Menu Dropdown -->
-                <div id="userDropdown" class="absolute right-0 mt-3 w-60 bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-xl shadow-2xl hidden flex-col overflow-hidden z-50 transition-all origin-top-right">
-                    <!-- Info Akun -->
-                    <div class="p-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-3 bg-slate-50 dark:bg-white/5">
-                        <div class="flex flex-col">
-                            <span class="text-sm font-bold text-slate-800 dark:text-white leading-none mb-1">Pengguna Demo</span>
-                            <span class="text-xs text-slate-500">demo@explorelab.com</span>
-                        </div>
-                    </div>
-                    <!-- Daftar Aksi -->
-                    <div class="p-2 flex flex-col gap-1">
-                        <button onclick="clearChat(); toggleUserDropdown()" class="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors text-left font-medium">
-                            <i data-lucide="message-square-plus" class="w-4 h-4 text-blue-500"></i> Mulai Obrolan Baru
-                        </button>
-                        <button onclick="openSettingsPopup(); toggleUserDropdown()" class="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors text-left font-medium">
-                            <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i> Pengaturan
-                        </button>
-                        <a href="index.html" class="flex items-center gap-3 px-3 py-2 text-sm text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors font-medium">
-                            <i data-lucide="home" class="w-4 h-4 text-slate-400"></i> Kembali ke Halaman Utama
-                        </a>
-                        <div class="h-px w-full bg-slate-100 dark:bg-white/5 my-1"></div>
-                        <button onclick="clearChat(); toggleUserDropdown()" class="flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors text-left font-medium">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus Obrolan
-                        </button>
-                    </div>
-                </div>
+
+                <button id="newChatHeaderBtn" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-semibold hover:bg-blue-600 dark:hover:bg-slate-200 transition-colors shadow-sm" title="Mulai sesi baru">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    Sesi baru
+                </button>
+
+                <button id="themeToggle" class="p-2 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-gray-300 transition-colors shadow-sm" aria-label="Toggle Theme">
+                    <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
+                    <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-yellow-400"></i>
+                </button>
             </div>
         </header>
 
-        <!-- Chat Container -->
-        <div id="chatBox" class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 md:p-6 pt-20 md:pt-6 pb-44">
-            <div id="chatMessages" class="max-w-3xl mx-auto space-y-8">
-                
-                <!-- AI Welcome Message -->
-                <div class="flex gap-4">
-                    <div class="w-8 h-8 md:w-10 md:h-10 shrink-0 rounded-full bg-slate-800 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 shadow-sm mt-1 animate-fade-in-up">
-                        <i data-lucide="bot" class="w-5 h-5"></i>
-                    </div>
-                    <div class="flex-1 min-w-0 pt-1.5 animate-wipe-reveal">
-                        <div class="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-gray-300 leading-relaxed text-[15px] message-content">
-                            <p>Halo! Selamat datang di ruang kerja AI. Sistem ini sekarang sudah ditenagai oleh <b>Gemini AI</b>.</p>
-                            <p>Ada yang bisa saya bantu hari ini? Anda juga bisa mengunggah file untuk saya analisis.</p>
+        <div class="flex flex-1 min-h-0">
+
+            <aside id="sidebar" class="hidden md:flex flex-col w-72 flex-shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-darkcard">
+                <div class="p-4 border-b border-slate-200 dark:border-white/5">
+                    <button id="newChatBtn" class="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[13px] font-semibold hover:bg-blue-600 dark:hover:bg-slate-200 transition-colors shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Mulai sesi baru
+                    </button>
+                </div>
+
+                <div class="px-4 pt-4 pb-2 text-[10.5px] font-bold tracking-[0.18em] uppercase text-slate-400 dark:text-gray-500">Riwayat</div>
+                <div id="historyList" class="flex-1 min-h-0 overflow-y-auto px-3 pb-4 space-y-1 text-[13px]"></div>
+
+                <div class="border-t border-slate-200 dark:border-white/5 p-3 space-y-1">
+                    <div class="px-2 pt-1 pb-2 text-[10.5px] font-bold tracking-[0.18em] uppercase text-slate-400 dark:text-gray-500">Mode</div>
+                    <button id="modeAutoBtn" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        <span class="flex-1 text-left">Auto Routing</span>
+                        <span id="modeAutoCheck" class="text-blue-500 dark:text-white"><i data-lucide="check" class="w-4 h-4"></i></span>
+                    </button>
+                    <button id="modeSearchBtn" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        <i data-lucide="globe" class="w-4 h-4"></i>
+                        <span class="flex-1 text-left">Web Search</span>
+                        <span id="modeSearchCheck" class="hidden text-blue-500 dark:text-white"><i data-lucide="check" class="w-4 h-4"></i></span>
+                    </button>
+                    <button id="modeImageBtn" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        <i data-lucide="image" class="w-4 h-4"></i>
+                        <span class="flex-1 text-left">Image Studio</span>
+                        <span id="modeImageCheck" class="hidden text-blue-500 dark:text-white"><i data-lucide="check" class="w-4 h-4"></i></span>
+                    </button>
+                </div>
+            </aside>
+
+            <div id="sidebarOverlay" class="md:hidden fixed inset-0 bg-black/40 z-30 hidden"></div>
+
+            <main class="flex-1 min-w-0 flex flex-col bg-white dark:bg-darkbg">
+
+                <div id="chatBox" class="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-6 space-y-5">
+                    <div id="emptyState" class="max-w-2xl mx-auto text-center pt-8 md:pt-16 animate-fade-in-up">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-white/5 dark:to-white/5 border border-blue-100 dark:border-white/10 text-blue-600 dark:text-slate-200 mb-5 shadow-sm">
+                            <i data-lucide="sparkles" class="w-7 h-7"></i>
                         </div>
-                        <!-- Action Bar for Welcome Message -->
-                        <div class="flex items-center gap-1 mt-3 pt-2 text-slate-400 dark:text-slate-500">
-                            <button onclick="copyMessage(this)" class="p-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-white/5" title="Salin">
-                                <i data-lucide="copy" class="w-4 h-4"></i>
+                        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+                            Halo, mau eksplorasi <span class="gradient-text">apa hari ini?</span>
+                        </h1>
+                        <p class="text-sm md:text-base text-slate-500 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
+                            Tanya apa saja, lampirkan dokumen atau gambar, atau buat ilustrasi langsung dari prompt teks. Sistem akan memilih model terbaik secara otomatis.
+                        </p>
+
+                        <div class="mt-8 grid sm:grid-cols-2 gap-3 text-left">
+                            <button class="suggest-card p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-darkcard hover:border-blue-300 dark:hover:border-white/20" data-suggest="Buat ilustrasi cyberpunk kota Jakarta saat hujan, gaya semi-realistic 16:9.">
+                                <div class="text-blue-600 dark:text-slate-200 mb-2"><i data-lucide="image" class="w-4 h-4"></i></div>
+                                <div class="font-semibold text-sm">Buat ilustrasi</div>
+                                <div class="text-[12px] text-slate-500 dark:text-gray-400 mt-1">"Cyberpunk Jakarta saat hujan, 16:9"</div>
                             </button>
-                            <button onclick="regenerateResponse(this)" class="p-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-white/5" title="Generate Ulang">
-                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            <button class="suggest-card p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-darkcard hover:border-blue-300 dark:hover:border-white/20" data-suggest="Ringkas dokumen yang aku lampirkan ini menjadi 5 poin penting.">
+                                <div class="text-cyan-600 dark:text-slate-200 mb-2"><i data-lucide="file-text" class="w-4 h-4"></i></div>
+                                <div class="font-semibold text-sm">Ringkas dokumen</div>
+                                <div class="text-[12px] text-slate-500 dark:text-gray-400 mt-1">Lampirkan .txt / .md / .html lalu minta ringkasan</div>
                             </button>
-                            <button onclick="openVersionPopup(event, 'response', this)" class="p-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-white/5" title="Ganti Versi">
-                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                            <button class="suggest-card p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-darkcard hover:border-blue-300 dark:hover:border-white/20" data-suggest="Tambahkan kacamata ray-ban hitam di gambar ini dan ubah background jadi pantai senja.">
+                                <div class="text-indigo-600 dark:text-slate-200 mb-2"><i data-lucide="wand-2" class="w-4 h-4"></i></div>
+                                <div class="font-semibold text-sm">Edit gambar</div>
+                                <div class="text-[12px] text-slate-500 dark:text-gray-400 mt-1">Lampirkan foto + instruksi edit</div>
+                            </button>
+                            <button class="suggest-card p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-darkcard hover:border-blue-300 dark:hover:border-white/20" data-suggest="Cari berita teknologi terbaru tentang AI generatif minggu ini.">
+                                <div class="text-emerald-600 dark:text-slate-200 mb-2"><i data-lucide="search" class="w-4 h-4"></i></div>
+                                <div class="font-semibold text-sm">Cari berita</div>
+                                <div class="text-[12px] text-slate-500 dark:text-gray-400 mt-1">"Teknologi AI minggu ini"</div>
                             </button>
                         </div>
                     </div>
                 </div>
 
-            </div>
+                <div class="flex-shrink-0 border-t border-slate-200 dark:border-white/5 glass-panel">
+                    <div class="max-w-3xl mx-auto px-3 md:px-6 pt-3 pb-3 md:pb-4">
+
+                        <div id="attachmentPreview" class="hidden mb-2 flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                            <div id="attachmentIcon" class="w-9 h-9 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-gray-300">
+                                <i data-lucide="file" class="w-4 h-4"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div id="attachmentName" class="text-[12.5px] font-semibold text-slate-800 dark:text-gray-100 truncate">file.txt</div>
+                                <div id="attachmentMeta" class="text-[11px] text-slate-500 dark:text-gray-400">Routing otomatis</div>
+                            </div>
+                            <button id="removeAttachmentBtn" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-gray-400" aria-label="Hapus lampiran">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+
+                        <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-darkcard shadow-sm focus-within:border-blue-300 dark:focus-within:border-white/20 transition-colors">
+                            <textarea
+                                id="chatInput"
+                                rows="1"
+                                placeholder="Tulis pesan, lampirkan file, atau jelaskan gambar yang ingin dibuat..."
+                                class="w-full bg-transparent resize-none px-4 pt-3 pb-1 outline-none text-[14.5px] placeholder-slate-400 dark:placeholder-gray-500 leading-relaxed max-h-44"
+                            ></textarea>
+
+                            <div class="flex items-center gap-1 px-2 pb-2">
+                                <button id="attachImageBtn" class="p-2 rounded-lg text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5" title="Lampirkan gambar">
+                                    <i data-lucide="image" class="w-4 h-4"></i>
+                                </button>
+                                <button id="attachFileBtn" class="p-2 rounded-lg text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5" title="Lampirkan dokumen">
+                                    <i data-lucide="paperclip" class="w-4 h-4"></i>
+                                </button>
+
+                                <div class="hidden md:flex items-center gap-1 ml-1">
+                                    <button id="ratioToggleBtn" class="hidden chip" title="Aspek rasio gambar">
+                                        <i data-lucide="ratio" class="w-3 h-3"></i>
+                                        <span id="ratioLabel">1:1</span>
+                                    </button>
+                                </div>
+
+                                <div class="flex-1"></div>
+
+                                <span id="modeBadge" class="hidden md:inline-flex chip">
+                                    <i data-lucide="sparkles" class="w-3 h-3"></i>
+                                    Auto
+                                </span>
+
+                                <button id="sendBtn" class="ml-1 inline-flex items-center justify-center w-9 h-9 rounded-xl bg-blue-600 dark:bg-white text-white dark:text-slate-900 hover:bg-blue-700 dark:hover:bg-slate-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors" aria-label="Kirim">
+                                    <i data-lucide="arrow-up" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="text-center text-[10.5px] text-slate-400 dark:text-gray-500 mt-2">Explore Lab dapat keliru — verifikasi info penting. Tanpa login & tanpa biaya.</p>
+                    </div>
+                </div>
+
+                <input id="hiddenImageInput" type="file" accept="image/*" class="hidden" />
+                <input id="hiddenFileInput" type="file" accept=".txt,.md,.html,.htm,.json,.csv,.log,.xml,.css,.js,.ts,.yaml,.yml,.ini,.env,.tsv,text/*" class="hidden" />
+            </main>
         </div>
-
-        <!-- Input Area -->
-        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-slate-50 via-slate-50 to-transparent dark:from-darkbg dark:via-darkbg dark:to-transparent pt-12 pb-6 px-4 md:px-8 z-20">
-            <div class="max-w-3xl mx-auto relative">
-                
-                <!-- Menu Pilihan Attachment (Kamera, Galeri, File) -->
-                <div id="attachmentMenu" class="absolute bottom-[4.5rem] left-0 bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-2xl shadow-xl hidden flex-col w-56 p-2 z-50 transform transition-all duration-200 scale-95 opacity-0 origin-bottom-left">
-                    <button onclick="triggerFileInput('camera')" class="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors text-left font-medium">
-                        <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400"><i data-lucide="camera" class="w-4 h-4"></i></div>
-                        Kamera
-                    </button>
-                    <button onclick="triggerFileInput('gallery')" class="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors text-left font-medium">
-                        <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400"><i data-lucide="image" class="w-4 h-4"></i></div>
-                        Galeri
-                    </button>
-                    <button onclick="triggerFileInput('document')" class="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors text-left font-medium">
-                        <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400"><i data-lucide="folder-archive" class="w-4 h-4"></i></div>
-                        Dokumen / ZArchiver
-                    </button>
-                </div>
-
-                <!-- Wrapper Input Box -->
-                <div class="bg-white dark:bg-darkcard border border-slate-300 dark:border-darkborder rounded-2xl shadow-xl focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:border-blue-400 transition-all flex flex-col relative">
-                    
-                    <!-- File Preview Tag -->
-                    <div id="filePreviewContainer" class="hidden px-4 pt-3 pb-0">
-                        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-white/10 rounded-lg border border-slate-200 dark:border-white/10">
-                            <i data-lucide="file" class="w-4 h-4 text-blue-500"></i>
-                            <span id="filePreviewName" class="text-sm font-medium text-slate-700 dark:text-gray-300 max-w-[200px] md:max-w-xs truncate">nama_file.pdf</span>
-                            <button id="removeFileBtn" class="ml-1 text-slate-400 hover:text-red-500 transition-colors p-0.5" title="Hapus file">
-                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Textarea dengan placeholder baru dan height disesuaikan -->
-                    <textarea 
-                        id="chatInput"
-                        rows="1"
-                        placeholder="Mulai obrolan..." 
-                        class="w-full max-h-32 bg-transparent text-slate-800 dark:text-gray-100 py-2.5 px-4 resize-none leading-relaxed text-[15px] focus:outline-none placeholder-slate-400 dark:placeholder-slate-500"
-                        oninput="this.style.height = ''; this.style.height = Math.min(this.scrollHeight, 120) + 'px';"
-                    ></textarea>
-
-                    <!-- Bottom Toolbar -->
-                    <div class="flex items-center justify-between px-3 pb-2 pt-1">
-                        <div class="flex items-center gap-1">
-                            <!-- Hidden input -->
-                            <input type="file" id="fileInput" class="hidden" />
-                            
-                            <button id="uploadBtn" class="p-2 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-white/5" title="Unggah File / Kamera">
-                                <i data-lucide="paperclip" class="w-5 h-5"></i>
-                            </button>
-                            <button id="modelPickerBtn" onclick="openVersionPopup(event)" class="p-2 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-white/5" title="Pilih Versi Model">
-                                <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>
-                            </button>
-                            <button id="voiceBtn" class="p-2 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-white/5" title="Input Suara">
-                                <i data-lucide="mic" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                        
-                        <button id="sendBtn" class="px-3 py-2 text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center">
-                            <i data-lucide="arrow-up" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="text-center mt-4">
-                    <p class="text-xs text-slate-500 dark:text-slate-500">
-                        ExploreAi dapat membuat kesalahan. Harap periksa kembali informasi penting.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Popup Pilihan Provider -->
-    <div id="providerSelectModal" class="fixed z-[100] hidden w-48 bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-xl shadow-2xl p-1.5">
-        <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-2 py-1">Pilih Provider</div>
-        <div id="providerOptionsContainer" class="space-y-0.5"></div>
     </div>
 
-    <!-- Popup Pilihan Versi + Mode -->
-    <div id="versionSelectModal" class="fixed z-[100] hidden w-64 bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-xl shadow-2xl p-1.5">
-        <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-2 py-1">Pilih Versi Model</div>
-        <div id="versionOptionsContainer" class="space-y-0.5 mb-2"></div>
-        <div class="h-px bg-slate-200 dark:bg-white/10 my-1"></div>
-        <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-2 py-1">Pilih Mode</div>
-        <div id="modeOptionsContainer" class="space-y-0.5"></div>
-    </div>
-
-    <!-- Modal Pengaturan & Profil Lengkap -->
-    <div id="settingsModal" class="fixed inset-0 bg-slate-900/50 dark:bg-black/50 backdrop-blur-sm z-[100] hidden items-center justify-center opacity-0 transition-opacity duration-300">
-        <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden scale-95 transition-transform duration-300 flex flex-col" id="settingsContent">
-            
-            <!-- Header Settings -->
-            <div class="p-4 border-b border-slate-200 dark:border-darkborder flex justify-between items-center bg-slate-50 dark:bg-white/5 shrink-0">
-                <h3 class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                    <i data-lucide="settings" class="w-5 h-5 text-blue-500"></i> Pengaturan
-                </h3>
-                <button onclick="closeSettingsPopup()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+    <div id="modelPickerBackdrop" class="modal-backdrop fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-0 md:p-6">
+        <div class="w-full md:max-w-md bg-white dark:bg-darkcard rounded-t-3xl md:rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl p-5 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <div class="text-[10.5px] font-bold tracking-[0.18em] uppercase text-slate-400 dark:text-gray-500">Pilih model</div>
+                    <h3 class="text-base font-bold mt-0.5">Routing & Provider</h3>
+                </div>
+                <button id="closeModelPickerBtn" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5">
+                    <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
-            
-            <!-- Body Settings (Scrollable) -->
-            <div class="p-5 overflow-y-auto flex-1 flex flex-col gap-6">
-                <!-- Info Profil (Demo) -->
-                <div class="flex items-center gap-4 p-4 rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-sm">
-                        EL
-                    </div>
-                    <div class="flex-1">
-                        <h4 class="font-bold text-slate-800 dark:text-white leading-tight">Pengguna Demo</h4>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">demo@explorelab.com</p>
-                    </div>
-                    <button class="px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors">Edit</button>
-                </div>
-
-                <!-- Daftar Fitur 1-5 -->
-                <div class="space-y-4">
-                    <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Preferensi & Kontrol</h5>
-                    
-                    <!-- Fitur 1: Tema Tampilan -->
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
-                        <div class="flex flex-col">
-                            <span class="text-sm font-semibold text-slate-700 dark:text-gray-200">Mode Tampilan</span>
-                            <span class="text-xs text-slate-500">Pilih mode gelap atau terang</span>
-                        </div>
-                        <button id="themeToggleModal" class="p-2 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors shadow-sm">
-                            <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
-                            <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-yellow-400"></i>
-                        </button>
-                    </div>
-
-                    <!-- Fitur 2: Ekspor Percakapan -->
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
-                        <div class="flex flex-col">
-                            <span class="text-sm font-semibold text-slate-700 dark:text-gray-200">Ekspor Obrolan</span>
-                            <span class="text-xs text-slate-500">Unduh riwayat percakapan Anda</span>
-                        </div>
-                        <button onclick="showToast('Memproses unduhan data Anda...')" class="p-2 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors shadow-sm">
-                            <i data-lucide="download" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-
-                    <!-- Fitur 3: Auto Scroll -->
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
-                        <div class="flex flex-col">
-                            <span class="text-sm font-semibold text-slate-700 dark:text-gray-200">Gulir Otomatis</span>
-                            <span class="text-xs text-slate-500">Otomatis ke bawah saat AI merespon</span>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" checked class="sr-only peer">
-                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-500"></div>
-                        </label>
-                    </div>
-
-                    <!-- Fitur 4: Enter untuk kirim -->
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5">
-                        <div class="flex flex-col">
-                            <span class="text-sm font-semibold text-slate-700 dark:text-gray-200">Tekan Enter untuk Kirim</span>
-                            <span class="text-xs text-slate-500">Gunakan Shift+Enter untuk baris baru</span>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" checked class="sr-only peer">
-                            <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-500"></div>
-                        </label>
-                    </div>
-
-                    <!-- Fitur 5: Bahasa -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex flex-col">
-                            <span class="text-sm font-semibold text-slate-700 dark:text-gray-200">Bahasa Utama</span>
-                            <span class="text-xs text-slate-500">Bahasa instruksi tersembunyi AI</span>
-                        </div>
-                        <select class="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium">
-                            <option>Indonesia</option>
-                            <option>English</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer Settings -->
-            <div class="p-4 border-t border-slate-200 dark:border-darkborder shrink-0">
-                <button onclick="closeSettingsPopup()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-slate-900 rounded-xl font-semibold transition-all">
-                    Tutup Pengaturan
-                </button>
-            </div>
+            <p class="text-[12px] text-slate-500 dark:text-gray-400 mb-3">Default <strong>Auto</strong> akan memilih model paling cocok berdasarkan prompt dan lampiran. Pilih manual jika ingin model spesifik.</p>
+            <div id="providerList" class="space-y-3"></div>
         </div>
     </div>
 
-    <!-- Modal Image Preview (Lightbox) -->
-    <div id="imagePreviewModal" class="fixed inset-0 bg-slate-900/95 dark:bg-black/95 backdrop-blur-sm z-[100] hidden items-center justify-center opacity-0 transition-opacity duration-300">
-        <button id="closeModalBtn" class="absolute top-4 right-4 md:top-6 md:right-6 p-2 text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full shadow-lg">
-            <i data-lucide="x" class="w-6 h-6"></i>
-        </button>
-        <img id="modalImg" src="" alt="Full Preview" class="max-w-[95%] max-h-[90vh] object-contain rounded-xl shadow-2xl scale-95 transition-transform duration-300">
-    </div>
+    <div id="toast" class="toast fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-slate-900 text-white text-[12.5px] font-medium shadow-lg">Toast</div>
 
-    <!-- Overlay Mobile Sidebar -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/50 dark:bg-black/50 backdrop-blur-sm z-30 hidden md:hidden"></div>
-
-    <!-- Scripts -->
     <script>
-        lucide.createIcons();
-
-        // Variabel Status untuk Regenerate
-        let lastPrompt = "";
-        let lastImageBase64 = null;
-        let lastMimeType = null;
-        let deepseekSessionId = null;
-        let isGenerating = false;
-        let historyAddedThisSession = false; // Memastikan histori hanya dicatat sekali per sesi obrolan bersih
-        const CHAT_STATE_STORAGE_KEY = 'exploreai-chat-state-v3';
-        const CHAT_SESSION_ID_STORAGE_KEY = 'exploreai-chat-session-id-v1';
-        const CHAT_HISTORY_LIST_STORAGE_KEY = 'exploreai-history-list-v1';
-        const DEFAULT_CHAT_PROVIDER = 'gemini';
-        const DEFAULT_CHAT_MODEL = 'gemini-2.5-flash';
-        const DEFAULT_FILE_MODEL = 'gemini-2.5-flash';
-        function createSessionId() {
-            return `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-        }
-        let persistedSessionId = localStorage.getItem(CHAT_SESSION_ID_STORAGE_KEY) || createSessionId();
-        localStorage.setItem(CHAT_SESSION_ID_STORAGE_KEY, persistedSessionId);
-
-        // ----------------------------------------------------
-        // LOGIKA TOAST NOTIFICATION
-        // ----------------------------------------------------
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.remove('opacity-0', 'translate-y-4');
-            
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-4');
-            }, 3000);
-        }
-
-        // ----------------------------------------------------
-        // LOGIKA THEME TOGGLE (Di dalam Modal Pengaturan)
-        // ----------------------------------------------------
-        const themeToggleModal = document.getElementById('themeToggleModal');
-        const htmlElement = document.documentElement;
-
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            htmlElement.classList.add('dark');
-        } else {
-            htmlElement.classList.remove('dark');
-        }
-
-        themeToggleModal.addEventListener('click', () => {
-            htmlElement.classList.toggle('dark');
-            localStorage.setItem('theme', htmlElement.classList.contains('dark') ? 'dark' : 'light');
-        });
-
-        // ----------------------------------------------------
-        // LOGIKA SIDEBAR & UI MODALS
-        // ----------------------------------------------------
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-        function toggleSidebar() {
-            sidebar.classList.toggle('-translate-x-full');
-            sidebarOverlay.classList.toggle('hidden');
-        }
-
-        mobileMenuBtn.addEventListener('click', toggleSidebar);
-        sidebarOverlay.addEventListener('click', toggleSidebar);
-
-        // ----------------------------------------------------
-        // LOGIKA DROPDOWN USER HEADER
-        // ----------------------------------------------------
-        const userDropdown = document.getElementById('userDropdown');
-        const userDropdownBtn = document.getElementById('userDropdownBtn');
-        
-        function toggleUserDropdown() {
-            userDropdown.classList.toggle('hidden');
-            userDropdown.classList.toggle('flex');
-        }
-
-        document.addEventListener('click', function(event) {
-            if (!userDropdownBtn.contains(event.target) && !userDropdown.contains(event.target)) {
-                userDropdown.classList.add('hidden');
-                userDropdown.classList.remove('flex');
-            }
-        });
-
-        // ----------------------------------------------------
-        // LOGIKA MODAL PENGATURAN (SETTINGS)
-        // ----------------------------------------------------
-        const settingsModal = document.getElementById('settingsModal');
-        const settingsContent = document.getElementById('settingsContent');
-
-        window.openSettingsPopup = function() {
-            if (!sidebar.classList.contains('-translate-x-full')) {
-                toggleSidebar();
-            }
-            settingsModal.classList.remove('hidden');
-            void settingsModal.offsetWidth; 
-            settingsModal.classList.remove('opacity-0');
-            settingsContent.classList.remove('scale-95');
-            settingsContent.classList.add('scale-100');
+        const api = {
+            backend: '/api/backend',
+            chat: '/api/chat',
+            imagegen: '/api/imagegen',
+            perplexity: '/api/perplexity',
         };
 
-        window.closeSettingsPopup = function() {
-            settingsModal.classList.add('opacity-0');
-            settingsContent.classList.remove('scale-100');
-            settingsContent.classList.add('scale-95');
-            setTimeout(() => {
-                settingsModal.classList.add('hidden');
-            }, 300);
+        const STORAGE_KEYS = {
+            session: 'exploreLab.sessionId',
+            history: 'exploreLab.history',
+            list: 'exploreLab.historyList',
+            theme: 'exploreLab.theme',
+            mode: 'exploreLab.mode',
+            model: 'exploreLab.model',
+            ratio: 'exploreLab.ratio',
         };
 
-        settingsModal.addEventListener('click', (e) => {
-            if (e.target === settingsModal) closeSettingsPopup();
-        });
+        const DEFAULT_AUTO_LABEL = 'Auto Routing';
 
-        // ----------------------------------------------------
-        // LOGIKA VOICE MIC
-        // ----------------------------------------------------
-        const voiceBtn = document.getElementById('voiceBtn');
-        let isVoiceRecording = false;
-        voiceBtn?.addEventListener('click', () => {
-            isVoiceRecording = !isVoiceRecording;
-            voiceBtn.classList.toggle('recording', isVoiceRecording);
-            showToast(isVoiceRecording ? 'Mode suara aktif (demo).' : 'Mode suara dihentikan.');
-        });
+        const state = {
+            sessionId: '',
+            history: [],
+            historyList: [],
+            mode: 'auto',
+            model: '',
+            modelLabel: DEFAULT_AUTO_LABEL,
+            ratio: '1:1',
+            isGenerating: false,
+            controller: null,
+            attachment: null,
+            providers: [],
+        };
 
-        // ----------------------------------------------------
-        // LOGIKA HISTORI DINAMIS
-        // ----------------------------------------------------
-        function loadHistoryList() {
-            try {
-                const raw = localStorage.getItem(CHAT_HISTORY_LIST_STORAGE_KEY);
-                const parsed = raw ? JSON.parse(raw) : [];
-                return Array.isArray(parsed) ? parsed : [];
-            } catch (_) {
-                return [];
-            }
+        function $(id) { return document.getElementById(id); }
+        function nowIso() { return new Date().toISOString(); }
+        function uid() { return 'sess_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
+        function escapeHtml(s = '') {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
-        function saveHistoryList(items) {
-            localStorage.setItem(CHAT_HISTORY_LIST_STORAGE_KEY, JSON.stringify(items.slice(0, 30)));
-        }
-
-        function renderHistoryList() {
-            const container = document.getElementById('todayHistoryContainer');
-            const historyItems = loadHistoryList();
-            container.innerHTML = historyItems.map((item, index) => {
-                const safeTitle = String(item?.title || 'Obrolan baru');
-                return `
-                    <button class="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg ${index === 0 ? 'bg-slate-200/60 dark:bg-white/10' : 'hover:bg-slate-100 dark:hover:bg-white/5'} text-sm font-medium text-slate-900 dark:text-white transition-colors animate-fade-in-up">
-                        <i data-lucide="message-square" class="w-4 h-4 shrink-0 opacity-70"></i>
-                        <span class="truncate">${safeTitle}</span>
-                    </button>`;
-            }).join('');
-            lucide.createIcons();
-        }
-
-        function addHistoryItem(text) {
-            if (!text || historyAddedThisSession) return;
-            const truncatedText = text.length > 25 ? text.substring(0, 25) + '...' : text;
-            const historyItems = loadHistoryList().filter((item) => item?.sessionId !== persistedSessionId);
-            historyItems.unshift({
-                sessionId: persistedSessionId,
-                title: truncatedText,
-                createdAt: Date.now(),
+        function renderMarkdown(text = '') {
+            const safe = escapeHtml(String(text || ''));
+            const codeBlocks = [];
+            let withCode = safe.replace(/```([a-zA-Z0-9_+-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
+                const idx = codeBlocks.length;
+                codeBlocks.push(`<pre><code data-lang="${lang || 'text'}">${code.replace(/\n$/, '')}</code></pre>`);
+                return `\u0000CB${idx}\u0000`;
             });
-            saveHistoryList(historyItems);
-            renderHistoryList();
-            historyAddedThisSession = true;
-        }
+            withCode = withCode.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+            withCode = withCode.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+            withCode = withCode.replace(/(^|\s)\*([^*\n]+)\*(?=\s|$)/g, '$1<em>$2</em>');
+            withCode = withCode.replace(/\[([^\]]+)\]\((https?:[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 
-        // ----------------------------------------------------
-        // LOGIKA HAPUS / RESET PERCAKAPAN
-        // ----------------------------------------------------
-        window.clearChat = function() {
-            const chatMessages = document.getElementById('chatMessages');
-            chatMessages.innerHTML = `
-                <!-- AI Welcome Message -->
-                <div class="flex gap-4">
-                    <div class="w-8 h-8 md:w-10 md:h-10 shrink-0 rounded-full bg-slate-800 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 shadow-sm mt-1 animate-fade-in-up">
-                        <i data-lucide="bot" class="w-5 h-5"></i>
-                    </div>
-                    <div class="flex-1 min-w-0 pt-1.5 animate-wipe-reveal">
-                        <div class="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-gray-300 leading-relaxed text-[15px] message-content">
-                            <p>Halo! Selamat datang di ruang kerja AI. Sistem ini sekarang sudah ditenagai oleh <b>Gemini AI</b>.</p>
-                            <p>Ada yang bisa saya bantu hari ini? Anda juga bisa mengunggah file untuk saya analisis.</p>
-                        </div>
-                        <div class="flex items-center gap-1 mt-3 pt-2 text-slate-400 dark:text-slate-500">
-                            <button onclick="copyMessage(this)" class="p-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-white/5" title="Salin">
-                                <i data-lucide="copy" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="regenerateResponse(this)" class="p-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-white/5" title="Generate Ulang">
-                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="openVersionPopup(event, 'response', this)" class="p-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-white/5" title="Ganti Versi">
-                                <i data-lucide="sparkles" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            lucide.createIcons();
-            
-            // Reset state
-            lastPrompt = "";
-            lastImageBase64 = null;
-            lastMimeType = null;
-            historyAddedThisSession = false;
-            conversationHistory.length = 0;
-            renderedMessages.length = 0;
-            deepseekSessionId = null;
-            persistedSessionId = createSessionId();
-            localStorage.setItem(CHAT_SESSION_ID_STORAGE_KEY, persistedSessionId);
-            localStorage.removeItem(CHAT_STATE_STORAGE_KEY);
+            const lines = withCode.split('\n');
+            const html = [];
+            let listType = null;
+            const flushList = () => { if (listType) { html.push(`</${listType}>`); listType = null; } };
 
-            showToast("Obrolan berhasil dibersihkan & dimulai ulang.");
-            
-            if (!sidebar.classList.contains('-translate-x-full')) {
-                toggleSidebar();
-            }
-        };
-
-        // ----------------------------------------------------
-        // LOGIKA MODEL POPUP (Provider + Versi)
-        // ----------------------------------------------------
-        const providerSelectModal = document.getElementById('providerSelectModal');
-        const versionSelectModal = document.getElementById('versionSelectModal');
-        const currentModelDisplay = document.getElementById('currentModelDisplay');
-        const versionOptionsContainer = document.getElementById('versionOptionsContainer');
-        const modeOptionsContainer = document.getElementById('modeOptionsContainer');
-        const providerOptionsContainer = document.getElementById('providerOptionsContainer');
-        const providerLabelMap = { gemini: 'Gemini', perplexity: 'Perplexity Search', dauns: 'Model Endpoint' };
-        const providerVersions = { gemini: ['gemini-2.5-flash','gemini-2.5-pro'], perplexity: ['sonar','sonar-pro'], dauns: ['chatgpt','notegpt','grok','deepai','nanobanana'] };
-        const modelToProviderMap = {};
-        Object.keys(providerVersions).forEach((providerKey) => {
-            (providerVersions[providerKey] || []).forEach((modelName) => {
-                modelToProviderMap[String(modelName || '').trim()] = providerKey;
-            });
-        });
-
-        const modelModes = [
-            { key: 'isWebSearchMode', label: 'Web Search' },
-            { key: 'isDeepResearchMode', label: 'Deep Think / Research' },
-            { key: 'isImageGenerationMode', label: 'Image Generation' },
-        ];
-        let activeProvider = DEFAULT_CHAT_PROVIDER;
-        let activeModelLabel = DEFAULT_CHAT_MODEL;
-        let activeModes = {
-            isWebSearchMode: false,
-            isDeepResearchMode: false,
-            isImageGenerationMode: false,
-        };
-        let modelPopupContext = { source: 'input', targetBtn: null };
-
-        async function syncModelsFromBackend() {
-            try {
-                const response = await fetch('/api/backend');
-                const data = await response.json();
-                if (!response.ok) throw new Error(data?.error || `HTTP ${response.status}`);
-
-                const providers = Array.isArray(data?.providers) ? data.providers : [];
-                providers.forEach((p) => {
-                    providerLabelMap[p.key] = p.label || p.key;
-                    providerVersions[p.key] = Array.isArray(p.models) && p.models.length ? p.models : [DEFAULT_CHAT_MODEL];
-                    providerVersions[p.key].forEach((modelName) => {
-                        modelToProviderMap[String(modelName || '').trim()] = p.key;
-                    });
-                });
-
-                providerOptionsContainer.innerHTML = providers.map((p) => `<button onclick="selectProvider('${p.key}')" data-provider-option="${p.key}" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">${p.label || p.key}</button>`).join('');
-                activeProvider = data?.defaultProvider || activeProvider;
-                const versions = providerVersions[activeProvider] || [DEFAULT_CHAT_MODEL];
-                activeModelLabel = versions.includes(activeModelLabel) ? activeModelLabel : (data?.defaultModel || versions[0]);
-                updateModelDisplay();
-                renderVersionOptions();
-            } catch (error) {
-                showToast(`Gagal sinkron model backend: ${error?.message || error}`);
-                const fallbackProviders = Object.keys(providerVersions);
-                fallbackProviders.forEach((providerKey) => {
-                    (providerVersions[providerKey] || []).forEach((modelName) => {
-                        modelToProviderMap[String(modelName || '').trim()] = providerKey;
-                    });
-                });
-                providerOptionsContainer.innerHTML = fallbackProviders.map((key) => `<button onclick="selectProvider('${key}')" data-provider-option="${key}" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">${providerLabelMap[key] || key}</button>`).join('');
-            }
-        }
-
-        function positionPopup(anchor, modalEl, placeAbove = false) {
-            const rect = anchor.getBoundingClientRect();
-            const modalWidth = modalEl.offsetWidth || parseInt(getComputedStyle(modalEl).width, 10) || 220;
-            const modalHeight = modalEl.offsetHeight || 180;
-            const margin = 8;
-            const maxLeft = window.innerWidth - modalWidth - margin;
-            const left = Math.min(Math.max(rect.left, margin), maxLeft);
-            const top = placeAbove
-                ? (rect.top + window.scrollY - modalHeight - 8)
-                : (rect.bottom + window.scrollY + 8);
-
-            modalEl.style.left = `${left}px`;
-            modalEl.style.top = `${Math.max(window.scrollY + margin, top)}px`;
-        }
-
-        function updateModelDisplay() {
-            currentModelDisplay.textContent = `ExploreAi (${providerLabelMap[activeProvider]} • ${activeModelLabel})`;
-        }
-
-        function highlightProviderOption() {
-            document.querySelectorAll('[data-provider-option]').forEach((option) => {
-                const isActive = option.dataset.providerOption === activeProvider;
-                option.classList.toggle('bg-slate-100', isActive);
-                option.classList.toggle('dark:bg-white/10', isActive);
-            });
-        }
-
-        function renderVersionOptions() {
-            const allModels = Object.entries(providerVersions).flatMap(([providerKey, versions]) =>
-                (Array.isArray(versions) ? versions : []).map((version) => ({ providerKey, version }))
-            );
-            versionOptionsContainer.innerHTML = allModels.map(({ providerKey, version }) => `
-                <button onclick="selectVersion('${version}')" data-version-option="${version}" class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium flex items-center justify-between gap-2">
-                    <span>${version}</span><span class="text-[11px] text-slate-400">${providerLabelMap[providerKey] || providerKey}</span>
-                </button>
-            `).join('');
-            highlightVersionOption();
-            renderModeOptions();
-        }
-        function renderModeOptions() {
-            modeOptionsContainer.innerHTML = modelModes.map((mode) => `
-                <button onclick="toggleMode('${mode.key}')" data-mode-option="${mode.key}" class="w-full flex items-center justify-between text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-gray-300 text-sm font-medium">
-                    <span>${mode.label}</span>
-                    <i data-lucide="${activeModes[mode.key] ? 'check' : 'circle'}" class="w-4 h-4 ${activeModes[mode.key] ? 'text-blue-500' : 'text-slate-400'}"></i>
-                </button>
-            `).join('');
-            lucide.createIcons();
-            highlightModeOption();
-        }
-
-        function highlightVersionOption() {
-            document.querySelectorAll('[data-version-option]').forEach((option) => {
-                const isActive = option.dataset.versionOption === activeModelLabel;
-                option.classList.toggle('bg-slate-100', isActive);
-                option.classList.toggle('dark:bg-white/10', isActive);
-            });
-        }
-        function highlightModeOption() {
-            document.querySelectorAll('[data-mode-option]').forEach((option) => {
-                const modeKey = option.dataset.modeOption;
-                const isActive = Boolean(activeModes[modeKey]);
-                option.classList.toggle('bg-slate-100', isActive);
-                option.classList.toggle('dark:bg-white/10', isActive);
-            });
-        }
-
-        window.openProviderPopup = function(event) {
-            event?.stopPropagation();
-            const anchor = event?.currentTarget;
-            if (!anchor) return;
-            closeVersionPopup();
-            providerSelectModal.classList.remove('hidden');
-            positionPopup(anchor, providerSelectModal, false);
-            highlightProviderOption();
-        };
-
-        window.openVersionPopup = function(event, source = 'input', targetBtn = null) {
-            event?.stopPropagation();
-            const anchor = event?.currentTarget || targetBtn;
-            if (!anchor) return;
-            modelPopupContext = { source, targetBtn };
-            closeProviderPopup();
-            renderVersionOptions();
-            versionSelectModal.classList.remove('hidden');
-            positionPopup(anchor, versionSelectModal, true);
-        };
-
-        window.closeProviderPopup = function() {
-            providerSelectModal.classList.add('hidden');
-        };
-
-        window.closeVersionPopup = function() {
-            versionSelectModal.classList.add('hidden');
-        };
-
-        window.selectProvider = function(providerName) {
-            activeProvider = providerName;
-            const versions = providerVersions[activeProvider] || [];
-            activeModelLabel = versions[0] || activeModelLabel;
-            updateModelDisplay();
-            saveChatState();
-            showToast(`Provider aktif: ${providerLabelMap[activeProvider]}`);
-            closeProviderPopup();
-        };
-
-        window.selectVersion = function(versionName) {
-            const selectedModel = String(versionName || '').trim();
-            if (!selectedModel) return;
-            activeModelLabel = selectedModel;
-            const mappedProvider = modelToProviderMap[selectedModel];
-            if (mappedProvider) activeProvider = mappedProvider;
-            saveChatState();
-            updateModelDisplay();
-            if (modelPopupContext.source === 'response' && modelPopupContext.targetBtn) {
-                regenerateResponse(modelPopupContext.targetBtn, { forceModelLabel: versionName });
-            } else {
-                showToast(`Versi aktif: ${versionName}`);
-            }
-            closeVersionPopup();
-        };
-        window.toggleMode = function(modeKey) {
-            if (!(modeKey in activeModes)) return;
-            activeModes[modeKey] = !activeModes[modeKey];
-            saveChatState();
-            renderModeOptions();
-            showToast(`${activeModes[modeKey] ? 'Aktif' : 'Nonaktif'}: ${modelModes.find((m) => m.key === modeKey)?.label || modeKey}`);
-        };
-
-        document.addEventListener('click', (e) => {
-            if (!providerSelectModal.contains(e.target) && !e.target.closest('#modelTriggerBtn')) {
-                closeProviderPopup();
-            }
-            if (!versionSelectModal.contains(e.target) && !e.target.closest('#modelPickerBtn') && !e.target.closest('[title="Ganti Versi"]')) {
-                closeVersionPopup();
-            }
-        });
-
-        // ----------------------------------------------------
-        // LOGIKA SALIN TEKS (Fallback Anti Error)
-        // ----------------------------------------------------
-        window.copyMessage = async function(btn) {
-            // Traverse DOM dengan aman untuk AI bubble atau User bubble
-            const messageWrapper = btn.closest('.group') || btn.closest('.flex.gap-4');
-            const contentDiv = messageWrapper?.querySelector('.message-content, .user-message-content');
-            if (!contentDiv) {
-                showToast("Konten tidak ditemukan untuk disalin.");
-                return;
-            }
-
-            const textToCopy = (contentDiv.innerText || contentDiv.textContent || '').trim();
-            if (!textToCopy) {
-                showToast("Teks kosong, tidak ada yang disalin.");
-                return;
-            }
-            
-            try {
-                await navigator.clipboard.writeText(textToCopy);
-            } catch (_) {
-                const textArea = document.createElement("textarea");
-                textArea.value = textToCopy;
-                textArea.style.position = "fixed";
-                textArea.style.top = "-9999px";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-            }
-
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-green-500"></i>';
-            lucide.createIcons();
-            showToast("Teks berhasil disalin!");
-            setTimeout(() => {
-                btn.innerHTML = originalHTML;
-                lucide.createIcons();
-            }, 1200);
-        };
-
-        window.copyCodeBlock = async function(btn) {
-            const wrapper = btn.closest('.code-block');
-            const codeEl = wrapper?.querySelector('code');
-            const textToCopy = codeEl?.textContent?.trim();
-            if (!textToCopy) {
-                showToast("Kode tidak ditemukan.");
-                return;
-            }
-
-            try {
-                await navigator.clipboard.writeText(textToCopy);
-            } catch (_) {
-                const textArea = document.createElement("textarea");
-                textArea.value = textToCopy;
-                textArea.style.position = "fixed";
-                textArea.style.top = "-9999px";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-            }
-
-            btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-green-400"></i>';
-            lucide.createIcons();
-            setTimeout(() => {
-                btn.innerHTML = '<i data-lucide="copy" class="w-3.5 h-3.5"></i>';
-                lucide.createIcons();
-            }, 900);
-
-            showToast("Kode berhasil disalin.");
-        };
-
-        // ----------------------------------------------------
-        // LOGIKA EDIT TEKS PENGGUNA
-        // ----------------------------------------------------
-        window.editUserMessage = function(btn) {
-            const container = btn.closest('.flex-col');
-            const contentDiv = container.querySelector('.user-message-content');
-            if (!contentDiv) return;
-            
-            const text = contentDiv.innerText || contentDiv.textContent;
-            
-            // Populasikan input text dengan pesan user
-            chatInput.value = text;
-            chatInput.style.height = ''; 
-            chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
-            chatInput.focus();
-            
-            showToast("Pesan dimuat ke kolom pengetikan.");
-        };
-
-        // ----------------------------------------------------
-        // LOGIKA GENERATE ULANG AI
-        // ----------------------------------------------------
-        window.regenerateResponse = async function(btn, options = {}) {
-            if (isGenerating) return;
-            
-            // Jika memencet tombol generate ulang di pesan selamat datang
-            if (!lastPrompt && !lastImageBase64) {
-                showToast("Kirim pesan terlebih dahulu sebelum men-generate ulang.");
-                return;
-            }
-
-            // Hapus Bubble AI yang sedang ditekan
-            const aiBubble = btn.closest('.flex.gap-4');
-            if (aiBubble) {
-                aiBubble.remove();
-            }
-
-            // Panggil loading indikator
-            isGenerating = true;
-            activeRequestController = new AbortController();
-            setSendButtonState(true);
-
-            const aiShell = createAIMessageShell();
-            if (isLikelyImagePrompt(lastPrompt)) {
-                renderImageGenerationPlaceholder(aiShell);
-            }
-            const responsePayload = await fetchAIResponse(lastPrompt, lastImageBase64, lastMimeType, activeRequestController.signal);
-            const renderedText = typeof responsePayload === 'string' ? responsePayload : responsePayload.text;
-            
-            aiShell.innerHTML = renderMarkdown(renderedText);
-            if (responsePayload?.imageUrl) appendGeneratedImage(aiShell, responsePayload.imageUrl);
-            conversationHistory.push({ role: 'user', text: lastPrompt || 'Analisa lampiran', images: lastImageBase64 ? [`data:${lastMimeType || 'image/jpeg'};base64,${lastImageBase64}`] : [] });
-            conversationHistory.push({ role: 'assistant', text: renderedText, images: [] });
-            renderedMessages.push({ role: 'user', text: lastPrompt || 'Analisa lampiran' });
-            renderedMessages.push({ role: 'assistant', text: renderedText });
-            saveChatState();
-            activeRequestController = null;
-            isGenerating = false;
-            setSendButtonState(false);
-            if (options.forceModelLabel) {
-                showToast(`Jawaban dibuat ulang dalam tampilan ${options.forceModelLabel}.`);
-            }
-        };
-
-
-        // ----------------------------------------------------
-        // LOGIKA ATTACHMENT MENU & FILE PREVIEW
-        // ----------------------------------------------------
-        const attachmentMenu = document.getElementById('attachmentMenu');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const fileInput = document.getElementById('fileInput');
-        const filePreviewContainer = document.getElementById('filePreviewContainer');
-        const filePreviewName = document.getElementById('filePreviewName');
-        const removeFileBtn = document.getElementById('removeFileBtn');
-
-        let attachedFile = null;
-        let base64Image = null;
-
-        // Buka/Tutup menu attachment
-        uploadBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (attachmentMenu.classList.contains('hidden')) {
-                attachmentMenu.classList.remove('hidden');
-                void attachmentMenu.offsetWidth;
-                attachmentMenu.classList.remove('scale-95', 'opacity-0');
-                attachmentMenu.classList.add('scale-100', 'opacity-100');
-            } else {
-                closeAttachmentMenu();
-            }
-        });
-
-        function closeAttachmentMenu() {
-            attachmentMenu.classList.remove('scale-100', 'opacity-100');
-            attachmentMenu.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                attachmentMenu.classList.add('hidden');
-            }, 200);
-        }
-
-        document.addEventListener('click', (e) => {
-            if (!attachmentMenu.contains(e.target) && !uploadBtn.contains(e.target)) {
-                closeAttachmentMenu();
-            }
-        });
-
-        // Trigger input file berdasarkan pilihan (Kamera/Galeri/ZArchiver)
-        window.triggerFileInput = function(type) {
-            closeAttachmentMenu();
-            
-            if (type === 'camera') {
-                // Di browser mobile, ini akan mengarahkan ke kamera langsung
-                fileInput.setAttribute('accept', 'image/*,video/*');
-                fileInput.setAttribute('capture', 'environment');
-            } else if (type === 'gallery') {
-                fileInput.setAttribute('accept', 'image/*,video/*');
-                fileInput.removeAttribute('capture');
-            } else {
-                // Dokumen umum / file manager (ZArchiver)
-                fileInput.setAttribute('accept', '*/*');
-                fileInput.removeAttribute('capture');
-            }
-            
-            fileInput.click();
-        }
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                attachedFile = e.target.files[0];
-                if (activeProvider === 'gemini') {
-                    activeModelLabel = DEFAULT_FILE_MODEL;
-                    updateModelDisplay();
-                    saveChatState();
-                    showToast(`File terdeteksi. Model otomatis ke ${DEFAULT_FILE_MODEL}.`);
+            for (const raw of lines) {
+                const line = raw.trimEnd();
+                const ulMatch = line.match(/^\s*[-*]\s+(.*)$/);
+                const olMatch = line.match(/^\s*\d+\.\s+(.*)$/);
+                if (ulMatch) {
+                    if (listType !== 'ul') { flushList(); html.push('<ul>'); listType = 'ul'; }
+                    html.push(`<li>${ulMatch[1]}</li>`);
+                    continue;
                 }
-                
-                filePreviewName.textContent = attachedFile.name;
-                filePreviewContainer.classList.remove('hidden');
-                
-                if (attachedFile.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        base64Image = reader.result.split(',')[1];
-                    };
-                    reader.readAsDataURL(attachedFile);
+                if (olMatch) {
+                    if (listType !== 'ol') { flushList(); html.push('<ol>'); listType = 'ol'; }
+                    html.push(`<li>${olMatch[1]}</li>`);
+                    continue;
                 }
-                chatInput.focus();
+                if (!line.trim()) {
+                    flushList();
+                    html.push('');
+                    continue;
+                }
+                if (/^\u0000CB\d+\u0000$/.test(line.trim())) {
+                    flushList();
+                    html.push(line);
+                    continue;
+                }
+                flushList();
+                html.push(`<p>${line}</p>`);
             }
-        });
+            flushList();
 
-        removeFileBtn.addEventListener('click', () => {
-            attachedFile = null;
-            base64Image = null;
-            fileInput.value = '';
-            filePreviewContainer.classList.add('hidden');
-            if (activeProvider === 'gemini') {
-                activeModelLabel = DEFAULT_CHAT_MODEL;
-                updateModelDisplay();
-                saveChatState();
-            }
-        });
-
-        // ----------------------------------------------------
-        // LOGIKA CHAT & LLM INTEGRATION
-        // ----------------------------------------------------
-        const chatInput = document.getElementById('chatInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const chatMessages = document.getElementById('chatMessages');
-        const chatBox = document.getElementById('chatBox');
-        const conversationHistory = [];
-        const renderedMessages = [];
-        let lastRequestAt = 0;
-        let activeRequestController = null;
-
-        function saveChatState() {
-            const payload = {
-                activeProvider,
-                activeModelLabel,
-                activeModes,
-                deepseekSessionId,
-                historyAddedThisSession,
-                renderedMessages: renderedMessages.slice(-40),
-                conversationHistory: conversationHistory.slice(-24),
-                updatedAt: Date.now(),
-            };
-            localStorage.setItem(CHAT_STATE_STORAGE_KEY, JSON.stringify(payload));
+            let joined = html.join('\n');
+            joined = joined.replace(/\u0000CB(\d+)\u0000/g, (_, i) => codeBlocks[Number(i)] || '');
+            return joined;
         }
 
-        function loadChatState() {
-            const raw = localStorage.getItem(CHAT_STATE_STORAGE_KEY);
-            if (!raw) return null;
+        const themeToggle = $('themeToggle');
+        function applyTheme(value) {
+            if (value === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            localStorage.setItem(STORAGE_KEYS.theme, value);
+        }
+        function initTheme() {
+            const saved = localStorage.getItem(STORAGE_KEYS.theme);
+            if (saved === 'dark' || saved === 'light') return applyTheme(saved);
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(prefersDark ? 'dark' : 'light');
+        }
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            applyTheme(isDark ? 'light' : 'dark');
+            try { lucide.createIcons(); } catch {}
+        });
+
+        function syncAppHeight() {
+            const root = document.documentElement;
+            const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            root.style.setProperty('--app-height', `${h}px`);
+        }
+        window.addEventListener('resize', syncAppHeight);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', syncAppHeight);
+            window.visualViewport.addEventListener('scroll', syncAppHeight);
+        }
+
+        function showToast(msg, ms = 2400) {
+            const el = $('toast');
+            el.textContent = String(msg || '');
+            el.classList.add('visible');
+            clearTimeout(showToast._t);
+            showToast._t = setTimeout(() => el.classList.remove('visible'), ms);
+        }
+
+        const sidebar = $('sidebar');
+        const sidebarOverlay = $('sidebarOverlay');
+        function openSidebar() {
+            sidebar.classList.remove('hidden');
+            sidebar.classList.add('flex', 'fixed', 'inset-y-0', 'left-0', 'z-40', 'shadow-xl');
+            sidebarOverlay.classList.remove('hidden');
+        }
+        function closeSidebar() {
+            sidebar.classList.add('hidden');
+            sidebar.classList.remove('flex', 'fixed', 'inset-y-0', 'left-0', 'z-40', 'shadow-xl');
+            sidebarOverlay.classList.add('hidden');
+        }
+        $('sidebarToggle').addEventListener('click', openSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        function loadState() {
             try {
-                return JSON.parse(raw);
-            } catch (_) {
-                return null;
+                state.sessionId = localStorage.getItem(STORAGE_KEYS.session) || uid();
+                localStorage.setItem(STORAGE_KEYS.session, state.sessionId);
+                state.history = JSON.parse(localStorage.getItem(STORAGE_KEYS.history) || '[]');
+                state.historyList = JSON.parse(localStorage.getItem(STORAGE_KEYS.list) || '[]');
+                state.mode = localStorage.getItem(STORAGE_KEYS.mode) || 'auto';
+                state.model = localStorage.getItem(STORAGE_KEYS.model) || '';
+                state.ratio = localStorage.getItem(STORAGE_KEYS.ratio) || '1:1';
+            } catch (err) {
+                console.warn('loadState failed', err);
+                state.sessionId = uid();
+                state.history = [];
+                state.historyList = [];
             }
         }
-
-        function appendHistoryFromState(firstUserText) {
-            if (!firstUserText) return;
-            historyAddedThisSession = false;
-            addHistoryItem(firstUserText);
+        function persistHistory() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.history.slice(-32)));
+                localStorage.setItem(STORAGE_KEYS.list, JSON.stringify(state.historyList.slice(-30)));
+            } catch (err) { console.warn('persistHistory failed', err); }
         }
 
-        function restoreChatFromState() {
-            const state = loadChatState();
-            if (!state || !Array.isArray(state.renderedMessages) || !state.renderedMessages.length) return;
+        const chatBox = $('chatBox');
+        const emptyState = $('emptyState');
+        const chatInput = $('chatInput');
+        const sendBtn = $('sendBtn');
 
-            if (state.activeProvider && providerLabelMap[state.activeProvider]) {
-                activeProvider = state.activeProvider;
+        function autoResize() {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 176) + 'px';
+        }
+        chatInput.addEventListener('input', autoResize);
+
+        function clearChatView() {
+            chatBox.innerHTML = '';
+            chatBox.appendChild(emptyState);
+            emptyState.classList.remove('hidden');
+        }
+
+        function ensureEmptyHidden() {
+            if (emptyState && !emptyState.classList.contains('hidden')) {
+                emptyState.classList.add('hidden');
             }
-            if (typeof state.activeModelLabel === 'string' && state.activeModelLabel.trim()) {
-                activeModelLabel = state.activeModelLabel.trim();
-            }
-            if (state.activeModes && typeof state.activeModes === 'object') {
-                activeModes = {
-                    isWebSearchMode: Boolean(state.activeModes.isWebSearchMode),
-                    isDeepResearchMode: Boolean(state.activeModes.isDeepResearchMode),
-                    isImageGenerationMode: Boolean(state.activeModes.isImageGenerationMode),
-                };
-            }
-            if (typeof state.deepseekSessionId === 'string' && state.deepseekSessionId.trim()) {
-                deepseekSessionId = state.deepseekSessionId.trim();
-            }
-            historyAddedThisSession = Boolean(state.historyAddedThisSession);
-            updateModelDisplay();
-
-            chatMessages.innerHTML = '';
-            renderedMessages.length = 0;
-            conversationHistory.length = 0;
-
-            const safeRenderedMessages = state.renderedMessages
-                .filter((item) => item && (item.role === 'user' || item.role === 'assistant'))
-                .slice(-40);
-
-            for (const item of safeRenderedMessages) {
-                const safeText = String(item.text || '');
-                if (item.role === 'user') {
-                    appendUserMessage(safeText, null);
-                } else {
-                    appendAIMessage(safeText);
-                }
-                renderedMessages.push({ role: item.role, text: safeText });
-            }
-
-            const restoredConversation = Array.isArray(state.conversationHistory)
-                ? state.conversationHistory
-                    .filter((m) => m && typeof m === 'object' && (m.text || (Array.isArray(m.images) && m.images.length)))
-                    .slice(-24)
-                : [];
-            conversationHistory.push(...restoredConversation);
-
-            const firstUser = safeRenderedMessages.find((m) => m.role === 'user');
-            if (firstUser?.text) {
-                appendHistoryFromState(firstUser.text);
-            }
-
-            scrollToBottom();
         }
 
         function scrollToBottom() {
-            setTimeout(() => {
-                chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
-            }, 100);
+            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
         }
 
-        const imagePreviewModal = document.getElementById('imagePreviewModal');
-        const modalImg = document.getElementById('modalImg');
-        const closeModalBtn = document.getElementById('closeModalBtn');
-
-        window.openImagePreview = function(url) {
-            modalImg.src = url;
-            imagePreviewModal.classList.remove('hidden');
-            void imagePreviewModal.offsetWidth;
-            imagePreviewModal.classList.remove('opacity-0');
-            modalImg.classList.remove('scale-95');
-            modalImg.classList.add('scale-100');
-        }
-
-        function closeImagePreview() {
-            imagePreviewModal.classList.add('opacity-0');
-            modalImg.classList.remove('scale-100');
-            modalImg.classList.add('scale-95');
-            setTimeout(() => {
-                imagePreviewModal.classList.add('hidden');
-                modalImg.src = '';
-            }, 300);
-        }
-
-        closeModalBtn.addEventListener('click', closeImagePreview);
-        imagePreviewModal.addEventListener('click', (e) => {
-            if (e.target === imagePreviewModal) closeImagePreview();
-        });
-
-        function appendUserMessage(text, file) {
-            let fileHTML = '';
-            if (file) {
-                const isImage = file.type.startsWith('image/');
-                const fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-                
-                if (isImage) {
-                    const fileUrl = URL.createObjectURL(file);
-                    fileHTML = `
-                    <div class="mb-2 relative cursor-pointer rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-darkborder inline-block group/img" onclick="openImagePreview('${fileUrl}')">
-                        <img src="${fileUrl}" alt="Uploaded image" class="max-w-[200px] md:max-w-xs max-h-48 object-cover">
-                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                            <i data-lucide="zoom-in" class="w-8 h-8 text-white drop-shadow-md"></i>
-                        </div>
-                    </div>`;
-                } else {
-                    fileHTML = `
-                    <div class="mb-2 flex items-center gap-3 p-2.5 pr-4 rounded-xl bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder shadow-sm">
-                        <div class="w-8 h-8 rounded bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                            <i data-lucide="file-text" class="w-4 h-4"></i>
-                        </div>
-                        <div class="flex flex-col text-left">
-                            <span class="font-medium text-sm text-slate-800 dark:text-gray-200 line-clamp-1">${file.name}</span>
-                            <span class="text-xs text-slate-500">${fileSize}</span>
-                        </div>
-                    </div>`;
-                }
-            }
-
-            const msgHTML = `
-            <div class="flex justify-end opacity-0 animate-fade-in-up">
-                <div class="flex flex-col items-end max-w-[90%] md:max-w-[75%] min-w-0 group">
-                    ${fileHTML}
-                    ${text ? `
-                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm leading-relaxed text-[15px] shadow-sm text-left user-message-content">
-                        ${text}
-                    </div>` : ''}
-                    
-                    <!-- Aksi Gelembung Pengguna -->
-                    <div class="flex items-center gap-1 mt-1 justify-end text-slate-400 dark:text-slate-500 opacity-50 hover:opacity-100 transition-opacity">
-                        ${text ? `
-                        <button onclick="editUserMessage(this)" class="p-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-white/5" title="Edit Pesan">
-                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                        </button>
-                        ` : ''}
-                        <button onclick="copyMessage(this)" class="p-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-white/5" title="Salin">
-                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                        </button>
-                    </div>
+        function appendUserMessage(text, attachment) {
+            ensureEmptyHidden();
+            const wrap = document.createElement('div');
+            wrap.className = 'flex justify-end animate-fade-in-up';
+            const safeText = escapeHtml(String(text || '').trim());
+            const attachmentBlock = attachment
+                ? `<div class="mt-2 flex items-center gap-2 text-[11.5px] text-blue-100 dark:text-slate-300/80">
+                       <i data-lucide="${attachment.kind === 'image' ? 'image' : 'file'}" class="w-3.5 h-3.5"></i>
+                       <span>${escapeHtml(attachment.name || (attachment.kind === 'image' ? 'Gambar' : 'Dokumen'))}</span>
+                   </div>`
+                : '';
+            wrap.innerHTML = `
+                <div class="max-w-[85%] md:max-w-[70%] rounded-2xl rounded-br-md bg-blue-600 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 shadow-sm">
+                    <div class="text-[14.5px] whitespace-pre-wrap leading-relaxed">${safeText || (attachment ? '<em>Lampiran terlampir</em>' : '')}</div>
+                    ${attachmentBlock}
                 </div>
-            </div>`;
-            
-            chatMessages.insertAdjacentHTML('beforeend', msgHTML);
-            lucide.createIcons();
+            `;
+            chatBox.appendChild(wrap);
+            try { lucide.createIcons(); } catch {}
             scrollToBottom();
         }
 
-        function appendTypingIndicator() {
-            const typingId = 'typing-' + Date.now();
-            const typingHTML = `
-            <div id="${typingId}" class="flex gap-4 opacity-0 animate-fade-in-up">
-                <div class="w-8 h-8 md:w-10 md:h-10 shrink-0 rounded-full bg-slate-800 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 shadow-sm mt-1">
-                    <i data-lucide="bot" class="w-5 h-5"></i>
-                </div>
-                <div class="flex-1 flex items-center pt-3">
-                    <div class="flex gap-1.5">
-                        <div class="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 animate-bounce" style="animation-delay: 0ms;"></div>
-                        <div class="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 animate-bounce" style="animation-delay: 150ms;"></div>
-                        <div class="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 animate-bounce" style="animation-delay: 300ms;"></div>
+        function appendAssistantShell() {
+            ensureEmptyHidden();
+            const wrap = document.createElement('div');
+            wrap.className = 'flex justify-start animate-fade-in-up';
+            wrap.innerHTML = `
+                <div class="flex gap-2.5 max-w-[92%] md:max-w-[80%]">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-white/5 dark:to-white/5 border border-blue-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-slate-200 mt-0.5">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    </div>
+                    <div class="space-y-2 min-w-0">
+                        <div class="rounded-2xl rounded-tl-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-4 py-2.5 prose-msg text-[14.5px]" data-content>
+                            <span class="text-slate-400 dark:text-gray-500 typing-dot"></span>
+                            <span class="text-slate-400 dark:text-gray-500 typing-dot"></span>
+                            <span class="text-slate-400 dark:text-gray-500 typing-dot"></span>
+                        </div>
+                        <div data-extras class="space-y-2"></div>
                     </div>
                 </div>
-            </div>`;
-            chatMessages.insertAdjacentHTML('beforeend', typingHTML);
-            lucide.createIcons();
+            `;
+            chatBox.appendChild(wrap);
+            try { lucide.createIcons(); } catch {}
             scrollToBottom();
-            return typingId;
-        }
-
-        function escapeHtml(text) {
-            return text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-        }
-
-        function applyInlineFormatting(text) {
-            return text
-                .replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-[0.92em]">$1</code>')
-                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
-        }
-
-        function renderBasicMarkdown(safeText) {
-            const lines = safeText.split('\n');
-            const htmlParts = [];
-            let inUl = false;
-            let inOl = false;
-
-            const closeLists = () => {
-                if (inUl) {
-                    htmlParts.push('</ul>');
-                    inUl = false;
-                }
-                if (inOl) {
-                    htmlParts.push('</ol>');
-                    inOl = false;
-                }
+            return {
+                content: wrap.querySelector('[data-content]'),
+                extras: wrap.querySelector('[data-extras]'),
             };
-
-            for (const rawLine of lines) {
-                const line = rawLine.trim();
-
-                if (!line) {
-                    closeLists();
-                    continue;
-                }
-
-                if (/^###\s+/.test(line)) {
-                    closeLists();
-                    htmlParts.push(`<h3 class="text-lg font-bold mt-5 mb-2">${applyInlineFormatting(line.replace(/^###\s+/, ''))}</h3>`);
-                    continue;
-                }
-
-                if (/^##\s+/.test(line)) {
-                    closeLists();
-                    htmlParts.push(`<h2 class="text-xl font-bold mt-5 mb-2">${applyInlineFormatting(line.replace(/^##\s+/, ''))}</h2>`);
-                    continue;
-                }
-
-                if (/^#\s+/.test(line)) {
-                    closeLists();
-                    htmlParts.push(`<h1 class="text-2xl font-bold mt-5 mb-2">${applyInlineFormatting(line.replace(/^#\s+/, ''))}</h1>`);
-                    continue;
-                }
-
-                if (/^\d+\.\s+/.test(line)) {
-                    if (inUl) {
-                        htmlParts.push('</ul>');
-                        inUl = false;
-                    }
-                    if (!inOl) {
-                        htmlParts.push('<ol class="list-decimal pl-5 space-y-1 my-3">');
-                        inOl = true;
-                    }
-                    htmlParts.push(`<li>${applyInlineFormatting(line.replace(/^\d+\.\s+/, ''))}</li>`);
-                    continue;
-                }
-
-                if (/^[-*]\s+/.test(line)) {
-                    if (inOl) {
-                        htmlParts.push('</ol>');
-                        inOl = false;
-                    }
-                    if (!inUl) {
-                        htmlParts.push('<ul class="list-disc pl-5 space-y-1 my-3">');
-                        inUl = true;
-                    }
-                    htmlParts.push(`<li>${applyInlineFormatting(line.replace(/^[-*]\s+/, ''))}</li>`);
-                    continue;
-                }
-
-                closeLists();
-                htmlParts.push(`<p class="my-2">${applyInlineFormatting(line)}</p>`);
-            }
-
-            closeLists();
-            return htmlParts.join('');
         }
 
-        function renderMarkdown(text) {
-            const safeText = escapeHtml((text || '').replace(/\r\n/g, '\n'));
-            const segments = [];
-            const codeRegex = /```([\w-]+)?\n?([\s\S]*?)```/g;
-            let lastIndex = 0;
-            let match;
-
-            while ((match = codeRegex.exec(safeText)) !== null) {
-                const [fullMatch, language = '', codeBody = ''] = match;
-                const start = match.index;
-                if (start > lastIndex) {
-                    segments.push({ type: 'markdown', value: safeText.slice(lastIndex, start) });
-                }
-                segments.push({ type: 'code', language: language.trim(), value: codeBody.replace(/\n$/, '') });
-                lastIndex = start + fullMatch.length;
-            }
-
-            if (lastIndex < safeText.length) {
-                segments.push({ type: 'markdown', value: safeText.slice(lastIndex) });
-            }
-
-            return segments.map((segment) => {
-                if (segment.type === 'code') {
-                    const languageLabel = segment.language || 'code';
-                    return `
-                        <div class="code-block">
-                            <div class="code-toolbar">
-                                <span>${languageLabel}</span>
-                                <button onclick="copyCodeBlock(this)" title="Salin kode">
-                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                                </button>
-                            </div>
-                            <div class="code-scroll">
-                                <pre><code>${segment.value}</code></pre>
-                            </div>
-                        </div>
-                    `;
-                }
-                return renderBasicMarkdown(segment.value);
-            }).join('');
-        }
-
-        function createAIMessageShell() {
-            const msgHTML = `
-            <div class="flex gap-4">
-                <div class="w-8 h-8 md:w-10 md:h-10 shrink-0 rounded-full bg-slate-800 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 shadow-sm mt-1 animate-fade-in-up">
-                    <i data-lucide="bot" class="w-5 h-5"></i>
-                </div>
-                <div class="flex-1 min-w-0 pt-1.5 animate-wipe-reveal">
-                    <div class="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-gray-300 leading-relaxed text-[15px] message-content" data-ai-content></div>
-                    <!-- Action Bar AI -->
-                    <div class="flex items-center gap-1 mt-3 pt-2 text-slate-400 dark:text-slate-500">
-                        <button onclick="copyMessage(this)" class="p-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-white/5" title="Salin">
-                            <i data-lucide="copy" class="w-4 h-4"></i>
-                        </button>
-                        <button onclick="regenerateResponse(this)" class="p-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-white/5" title="Generate Ulang">
-                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                        </button>
-                        <button onclick="openVersionPopup(event, 'response', this)" class="p-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-white/5" title="Ganti Versi">
-                            <i data-lucide="sparkles" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>`;
-            chatMessages.insertAdjacentHTML('beforeend', msgHTML);
-            lucide.createIcons();
-            scrollToBottom();
-            return chatMessages.lastElementChild.querySelector('[data-ai-content]');
-        }
-
-        function appendAIMessage(text) {
-            const contentEl = createAIMessageShell();
-            contentEl.innerHTML = renderMarkdown(text);
-            scrollToBottom();
-        }
-
-        function isLikelyImagePrompt(prompt = '') {
-            const normalized = String(prompt || '').toLowerCase();
-            return /(buat|generate|create|gambar|image|ilustrasi|poster|render)/.test(normalized);
-        }
-
-        function renderImageGenerationPlaceholder(contentEl) {
-            if (!contentEl) return;
-            contentEl.innerHTML = `
-                <div class="rounded-2xl border border-blue-300/40 dark:border-blue-400/30 bg-gradient-to-br from-blue-100/50 to-indigo-100/40 dark:from-blue-500/10 dark:to-indigo-500/10 p-4 animate-pulse">
-                    <div class="h-5 w-44 bg-blue-200/70 dark:bg-blue-400/30 rounded mb-4"></div>
-                    <div class="aspect-square max-w-sm w-full rounded-xl border border-dashed border-blue-400/70 dark:border-blue-300/40 flex items-center justify-center overflow-hidden">
-                        <div class="w-24 h-24 rounded-full border-4 border-blue-300/50 border-t-blue-600 dark:border-blue-400/40 dark:border-t-blue-200 animate-spin"></div>
-                    </div>
-                    <p class="text-xs mt-3 text-blue-700 dark:text-blue-300">Sedang membuat gambar, mohon tunggu...</p>
-                </div>
-            `;
-            scrollToBottom();
-        }
-
-        
-
-        function renderTextLoadingState(contentEl) {
-            if (!contentEl) return;
-            contentEl.innerHTML = `
-                <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 p-4">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-                        <span class="text-sm font-medium text-slate-600 dark:text-slate-300">AI sedang menyusun jawaban...</span>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="h-3 rounded bg-slate-200/80 dark:bg-slate-700/70 animate-pulse"></div>
-                        <div class="h-3 rounded bg-slate-200/80 dark:bg-slate-700/70 animate-pulse w-11/12"></div>
-                        <div class="h-3 rounded bg-slate-200/80 dark:bg-slate-700/70 animate-pulse w-9/12"></div>
-                    </div>
-                </div>
-            `;
-            scrollToBottom();
-        }
-
-        function appendGeneratedImage(contentEl, imageUrl) {
-            if (!contentEl || !imageUrl) return;
-            const safeUrl = escapeHtml(imageUrl);
-            const imageBlock = `
-                <div class="mt-4">
-                    <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/5">
-                        <img src="${safeUrl}" alt="Generated image" loading="lazy" class="w-full h-auto object-cover">
-                    </div>
-                    <div class="mt-2">
-                        <a href="${safeUrl}" download="generated-image.png" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors">
-                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                            Download Gambar
-                        </a>
-                    </div>
-                </div>
-            `;
-            contentEl.insertAdjacentHTML('beforeend', imageBlock);
-            lucide.createIcons();
-            scrollToBottom();
-        }
-
-        async function appendAIMessageSmooth(text) {
-            const contentEl = createAIMessageShell();
-            const normalized = text || '';
-            const step = normalized.length > 1600 ? 28 : 16;
-            let i = 0;
-
-            while (i < normalized.length) {
-                i = Math.min(i + step, normalized.length);
-                const partial = normalized.slice(0, i);
-                contentEl.innerHTML = `${renderMarkdown(partial)}<span class="typing-cursor">▍</span>`;
-                scrollToBottom();
-                await new Promise((resolve) => setTimeout(resolve, 20));
-            }
-
-            contentEl.innerHTML = renderMarkdown(normalized);
-            scrollToBottom();
-        }
-
-        async function appendAIMessageSmoothToShell(contentEl, text) {
-            if (!contentEl) return;
-            const normalized = String(text || '');
-            if (!normalized) {
-                contentEl.innerHTML = renderMarkdown('');
+        async function streamText(target, fullText) {
+            const text = String(fullText || '');
+            if (!text) {
+                target.innerHTML = '';
                 return;
             }
-            const step = normalized.length > 1600 ? 28 : 16;
+            const step = text.length > 1500 ? 28 : 14;
             let i = 0;
-            while (i < normalized.length) {
-                i = Math.min(i + step, normalized.length);
-                const partial = normalized.slice(0, i);
-                contentEl.innerHTML = `${renderMarkdown(partial)}<span class="typing-cursor">▍</span>`;
-                scrollToBottom();
-                await new Promise((resolve) => setTimeout(resolve, 18));
+            while (i < text.length) {
+                i = Math.min(i + step, text.length);
+                target.innerHTML = `${renderMarkdown(text.slice(0, i))}<span class="typing-cursor"></span>`;
+                if (i < text.length) {
+                    await new Promise((r) => setTimeout(r, 16));
+                    scrollToBottom();
+                }
             }
-            contentEl.innerHTML = renderMarkdown(normalized);
+            target.innerHTML = renderMarkdown(text);
             scrollToBottom();
         }
 
-        function getActiveBackend() {
-            const providerRoutes = { gemini: '/v1/chat', perplexity: '/v1/perplexity', dauns: '/v1/dauns' };
-            return {
-                endpoint: providerRoutes[activeProvider] || '/v1/chat',
-                model: activeModelLabel || DEFAULT_CHAT_MODEL,
-                provider: activeProvider,
-            };
+        function appendImage(extras, imageUrl) {
+            const wrap = document.createElement('div');
+            wrap.className = 'rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-darkcard';
+            const url = String(imageUrl || '');
+            wrap.innerHTML = `
+                <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
+                    <img src="${escapeHtml(url)}" alt="Hasil generate" class="w-full max-w-md object-cover" loading="lazy" />
+                </a>
+                <div class="px-3 py-2 flex items-center justify-between text-[11.5px] text-slate-500 dark:text-gray-400">
+                    <span class="inline-flex items-center gap-1.5"><i data-lucide="image" class="w-3.5 h-3.5"></i> Hasil gambar</span>
+                    <a href="${escapeHtml(url)}" download class="inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-white">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> Unduh
+                    </a>
+                </div>
+            `;
+            extras.appendChild(wrap);
+            try { lucide.createIcons(); } catch {}
+            scrollToBottom();
         }
 
-        async function fetchAIResponse(prompt, imageBase64, mimeType, signal) {
-            const { endpoint, model, provider } = getActiveBackend();
-            try {
-                const images = imageBase64
-                    ? [`data:${mimeType || 'image/jpeg'};base64,${imageBase64}`]
-                    : [];
-
-                const requestBody = {
-                    prompt,
-                    model,
-                    sessionId: persistedSessionId,
-                    history: conversationHistory.slice(-16),
-                };
-                if (images.length > 0) requestBody.image_url = images[0];
-                if (activeModes?.imageRatio) requestBody.ratio = activeModes.imageRatio;
-
-                const response = await fetch('/api/backend', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        path: endpoint,
-                        method: 'POST',
-                        body: requestBody
-                    }),
-                    signal
+        function renderHistoryList() {
+            const list = $('historyList');
+            list.innerHTML = '';
+            if (!state.historyList.length) {
+                list.innerHTML = `
+                    <div class="px-2 py-6 text-[12px] text-slate-400 dark:text-gray-500 text-center">
+                        Belum ada riwayat.<br>Mulai prompt untuk melihat sesi di sini.
+                    </div>
+                `;
+                return;
+            }
+            for (const item of [...state.historyList].reverse()) {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left px-3 py-2 rounded-lg text-[12.5px] text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors truncate';
+                btn.title = item.label || '';
+                btn.textContent = item.label || 'Sesi tanpa judul';
+                btn.addEventListener('click', () => {
+                    showToast('Riwayat ini tidak dapat di-resume di sesi ini.');
                 });
-
-                const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data?.error || `Network error ${response.status}`);
-                }
-
-                const reply = typeof data.reply === 'string' ? data.reply.trim() : (typeof data?.data?.reply === 'string' ? data.data.reply.trim() : '');
-                const imageUrl =
-                    (typeof data.imageUrl === 'string' && data.imageUrl.trim()) ? data.imageUrl.trim() :
-                    (typeof data.image === 'string' && data.image.trim()) ? data.image.trim() :
-                    (typeof data?.result?.image === 'string' && data.result.image.trim()) ? data.result.image.trim() :
-                    (typeof data?.data?.image === 'string' && data.data.image.trim()) ? data.data.image.trim() :
-                    (typeof data?.data?.imageUrl === 'string' && data.data.imageUrl.trim()) ? data.data.imageUrl.trim() : '';
-                if (reply) return { text: reply, imageUrl };
-
-                const answer = typeof data.answer === 'string' ? data.answer.trim() : (typeof data?.data?.answer === 'string' ? data.data.answer.trim() : '');
-                if (answer) return { text: answer, imageUrl };
-
-                const result = typeof data.result === 'string' ? data.result.trim() : (typeof data?.data?.result === 'string' ? data.data.result.trim() : '');
-                if (result) return { text: result, imageUrl };
-
-                const fallback = typeof data.msg === 'string' ? data.msg.trim() : '';
-                if (fallback) return { text: fallback, imageUrl };
-
-                if (typeof data.error === 'string' && data.error.trim()) {
-                    return { text: `Maaf, terjadi kesalahan: ${data.error.trim()}`, imageUrl: '' };
-                }
-
-                return { text: 'Balasan model kosong. Coba ulangi pertanyaan dengan lebih spesifik.', imageUrl };
-            } catch (error) {
-                if (error?.name === 'AbortError') {
-                    return { text: 'Permintaan dihentikan manual. Anda bisa kirim ulang kapan saja.', imageUrl: '' };
-                }
-                const safeMessage = typeof error?.message === 'string'
-                    ? error.message
-                    : (typeof error === 'string' ? error : JSON.stringify(error));
-                return { text: `Maaf, terjadi kesalahan: ${safeMessage || 'jaringan bermasalah.'}`, imageUrl: '' };
+                list.appendChild(btn);
             }
         }
 
-
-        function setSendButtonState(isGeneratingState) {
-            sendBtn.disabled = false;
-            sendBtn.dataset.mode = isGeneratingState ? 'stop' : 'send';
-            sendBtn.innerHTML = isGeneratingState
-                ? '<span class="w-3.5 h-3.5 bg-white/95 rounded-[3px] block"></span>'
-                : '<i data-lucide="arrow-up" class="w-4 h-4"></i>';
-            lucide.createIcons();
+        function pushHistoryListEntry(label) {
+            if (!label) return;
+            const trimmed = String(label).trim().slice(0, 80);
+            if (!trimmed) return;
+            const last = state.historyList[state.historyList.length - 1];
+            if (last && last.label === trimmed) return;
+            state.historyList.push({ label: trimmed, ts: nowIso() });
+            persistHistory();
+            renderHistoryList();
         }
 
-        function cancelActiveGeneration(reason = 'Dihentikan manual.') {
-            if (!isGenerating || !activeRequestController) return;
-            activeRequestController.abort();
-            showToast(reason);
+        function setMode(mode) {
+            state.mode = mode;
+            localStorage.setItem(STORAGE_KEYS.mode, mode);
+            const map = {
+                auto: { btn: 'modeAutoCheck', label: 'Auto Routing', icon: 'sparkles' },
+                search: { btn: 'modeSearchCheck', label: 'Web Search', icon: 'globe' },
+                image: { btn: 'modeImageCheck', label: 'Image Studio', icon: 'image' },
+            };
+            ['modeAutoCheck', 'modeSearchCheck', 'modeImageCheck'].forEach((id) => {
+                $(id).classList.add('hidden');
+            });
+            const cfg = map[mode] || map.auto;
+            $(cfg.btn).classList.remove('hidden');
+            $('activeModelLabel').textContent = state.model && state.mode === 'auto' ? state.modelLabel : cfg.label;
+            const ratioBtn = $('ratioToggleBtn');
+            ratioBtn.classList.toggle('hidden', mode !== 'image');
+            const badge = $('modeBadge');
+            badge.classList.remove('hidden');
+            badge.innerHTML = `<i data-lucide="${cfg.icon}" class="w-3 h-3"></i><span>${cfg.label}</span>`;
+            try { lucide.createIcons(); } catch {}
+        }
+
+        $('modeAutoBtn').addEventListener('click', () => setMode('auto'));
+        $('modeSearchBtn').addEventListener('click', () => setMode('search'));
+        $('modeImageBtn').addEventListener('click', () => setMode('image'));
+
+        function setRatio(ratio) {
+            state.ratio = ratio;
+            localStorage.setItem(STORAGE_KEYS.ratio, ratio);
+            $('ratioLabel').textContent = ratio;
+        }
+        $('ratioToggleBtn').addEventListener('click', () => {
+            const order = ['1:1', '16:9', '9:16', '4:3', '3:4'];
+            const idx = order.indexOf(state.ratio);
+            const next = order[(idx + 1) % order.length];
+            setRatio(next);
+        });
+
+        async function loadProviders() {
+            try {
+                const res = await fetch(api.backend, { method: 'GET' });
+                const data = await res.json();
+                const providers = Array.isArray(data?.providers) ? data.providers : [];
+                state.providers = providers;
+                renderProviderList();
+            } catch (err) {
+                console.warn('loadProviders failed', err);
+                state.providers = [
+                    { key: 'gemini', label: 'Gemini', models: ['gemini-2.5-flash', 'gemini-2.5-pro'] },
+                    { key: 'perplexity', label: 'Web Search', models: ['sonar'] },
+                    { key: 'dauns', label: 'Model Endpoint', models: ['chatgpt', 'notegpt', 'grok', 'deepai', 'nanobanana'] },
+                    { key: 'image', label: 'Image Studio', models: ['flux', 'turbo', 'nanobanana-edit'] },
+                ];
+                renderProviderList();
+            }
+        }
+
+        function renderProviderList() {
+            const wrap = $('providerList');
+            const auto = `
+                <button data-pick="auto" class="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-blue-300 dark:hover:border-white/30 transition-colors text-left">
+                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-white/5 dark:to-white/5 border border-blue-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-slate-200">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-[13.5px] font-bold">Auto Routing</div>
+                        <div class="text-[11.5px] text-slate-500 dark:text-gray-400">Pilih model paling cocok berdasarkan prompt + lampiran (rekomendasi)</div>
+                    </div>
+                </button>
+            `;
+            const list = state.providers.map((p) => `
+                <div class="rounded-xl border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="cpu" class="w-3.5 h-3.5 text-slate-500 dark:text-gray-400"></i>
+                        <span class="text-[12px] font-bold uppercase tracking-wider text-slate-600 dark:text-gray-300">${escapeHtml(p.label || p.key)}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                        ${(p.models || []).map((m) => `
+                            <button data-pick="${escapeHtml(p.key)}:${escapeHtml(m)}" class="chip hover:border-blue-300 dark:hover:border-white/30 transition-colors">${escapeHtml(m)}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            wrap.innerHTML = auto + list;
+            try { lucide.createIcons(); } catch {}
+
+            wrap.querySelectorAll('[data-pick]').forEach((el) => {
+                el.addEventListener('click', () => {
+                    const value = el.getAttribute('data-pick');
+                    if (value === 'auto') {
+                        state.model = '';
+                        state.modelLabel = DEFAULT_AUTO_LABEL;
+                        setMode('auto');
+                    } else {
+                        const [providerKey, modelName] = value.split(':');
+                        state.model = modelName || '';
+                        state.modelLabel = modelName || DEFAULT_AUTO_LABEL;
+                        if (providerKey === 'image') {
+                            setMode('image');
+                        } else if (providerKey === 'perplexity') {
+                            setMode('search');
+                        } else {
+                            setMode('auto');
+                        }
+                        $('activeModelLabel').textContent = modelName || DEFAULT_AUTO_LABEL;
+                    }
+                    localStorage.setItem(STORAGE_KEYS.model, state.model);
+                    closeModelPicker();
+                    showToast(`Model: ${state.modelLabel}`);
+                });
+            });
+        }
+
+        const modelPickerBackdrop = $('modelPickerBackdrop');
+        function openModelPicker() { modelPickerBackdrop.classList.add('visible'); }
+        function closeModelPicker() { modelPickerBackdrop.classList.remove('visible'); }
+        $('modelPickerBtn').addEventListener('click', openModelPicker);
+        $('closeModelPickerBtn').addEventListener('click', closeModelPicker);
+        modelPickerBackdrop.addEventListener('click', (e) => { if (e.target === modelPickerBackdrop) closeModelPicker(); });
+
+        const TEXT_EXTS = new Set(['txt', 'md', 'html', 'htm', 'json', 'csv', 'log', 'xml', 'yaml', 'yml', 'css', 'js', 'ts', 'tsv', 'ini', 'env']);
+        const MAX_TEXT_BYTES = 200 * 1024;
+        const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const r = new FileReader();
+                r.onload = () => resolve(String(r.result || ''));
+                r.onerror = () => reject(new Error('Gagal membaca file teks.'));
+                r.readAsText(file);
+            });
+        }
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const r = new FileReader();
+                r.onload = () => resolve(String(r.result || ''));
+                r.onerror = () => reject(new Error('Gagal membaca file gambar.'));
+                r.readAsDataURL(file);
+            });
+        }
+
+        async function handleAttachmentSelected(file, kindHint) {
+            if (!file) return;
+            const isImage = (kindHint === 'image') || (file.type && file.type.startsWith('image/'));
+            if (isImage) {
+                if (file.size > MAX_IMAGE_BYTES) {
+                    showToast('Gambar terlalu besar (max 5MB).');
+                    return;
+                }
+                const dataUrl = await readFileAsDataUrl(file);
+                state.attachment = {
+                    kind: 'image',
+                    name: file.name || 'gambar.png',
+                    mime: file.type || 'image/png',
+                    dataUrl,
+                };
+                showAttachmentPreview();
+                showToast('Gambar dilampirkan. Tulis instruksi edit atau analisa.');
+                return;
+            }
+
+            const ext = (file.name || '').split('.').pop().toLowerCase();
+            if (file.size > MAX_TEXT_BYTES) {
+                showToast('Dokumen terlalu besar (max 200KB).');
+                return;
+            }
+            if (!TEXT_EXTS.has(ext) && !(file.type || '').startsWith('text/')) {
+                showToast('Format file belum didukung. Gunakan teks/dokumen plain.');
+                return;
+            }
+            const text = await readFileAsText(file);
+            state.attachment = {
+                kind: 'text',
+                name: file.name || 'dokumen.txt',
+                mime: file.type || 'text/plain',
+                text: text.slice(0, MAX_TEXT_BYTES),
+            };
+            showAttachmentPreview();
+            showToast('Dokumen siap dianalisa.');
+        }
+
+        function showAttachmentPreview() {
+            const previewEl = $('attachmentPreview');
+            const iconEl = $('attachmentIcon');
+            if (!state.attachment) {
+                previewEl.classList.add('hidden');
+                return;
+            }
+            const a = state.attachment;
+            $('attachmentName').textContent = a.name || (a.kind === 'image' ? 'Gambar' : 'Dokumen');
+            $('attachmentMeta').textContent = a.kind === 'image'
+                ? 'Akan dirutekan ke vision/edit otomatis'
+                : 'Teks akan disisipkan ke konteks prompt';
+            iconEl.innerHTML = a.kind === 'image'
+                ? '<i data-lucide="image" class="w-4 h-4"></i>'
+                : '<i data-lucide="file-text" class="w-4 h-4"></i>';
+            previewEl.classList.remove('hidden');
+            try { lucide.createIcons(); } catch {}
+        }
+
+        $('removeAttachmentBtn').addEventListener('click', () => {
+            state.attachment = null;
+            showAttachmentPreview();
+        });
+
+        const hiddenImageInput = $('hiddenImageInput');
+        const hiddenFileInput = $('hiddenFileInput');
+        $('attachImageBtn').addEventListener('click', () => hiddenImageInput.click());
+        $('attachFileBtn').addEventListener('click', () => hiddenFileInput.click());
+        hiddenImageInput.addEventListener('change', async (e) => {
+            const f = e.target.files && e.target.files[0];
+            if (f) await handleAttachmentSelected(f, 'image');
+            e.target.value = '';
+        });
+        hiddenFileInput.addEventListener('change', async (e) => {
+            const f = e.target.files && e.target.files[0];
+            if (f) await handleAttachmentSelected(f, 'doc');
+            e.target.value = '';
+        });
+
+        document.querySelectorAll('[data-suggest]').forEach((card) => {
+            card.addEventListener('click', () => {
+                chatInput.value = card.getAttribute('data-suggest') || '';
+                autoResize();
+                chatInput.focus();
+            });
+        });
+
+        $('newChatBtn').addEventListener('click', resetSession);
+        $('newChatHeaderBtn').addEventListener('click', resetSession);
+        function resetSession() {
+            state.sessionId = uid();
+            state.history = [];
+            localStorage.setItem(STORAGE_KEYS.session, state.sessionId);
+            persistHistory();
+            clearChatView();
+            chatInput.value = '';
+            state.attachment = null;
+            showAttachmentPreview();
+            closeSidebar();
+        }
+
+        function setSendButtonState(busy) {
+            sendBtn.dataset.busy = busy ? '1' : '0';
+            sendBtn.innerHTML = busy
+                ? '<span class="w-3 h-3 bg-white/95 rounded-sm block"></span>'
+                : '<i data-lucide="arrow-up" class="w-4 h-4"></i>';
+            try { lucide.createIcons(); } catch {}
+        }
+
+        function detectIntent(prompt, hasImage) {
+            const lower = String(prompt || '').toLowerCase();
+            const editPattern = /(edit|ubah|ganti|tambahkan|hapus|hilangkan|jadikan|tukar|kasih|kasi)\b/;
+            const generatePattern = /(buat|generate|create|bikin|gambar(kan)?|render|draw|ilustrasi(kan)?|poster|wallpaper|design(kan)?)\b/;
+            const searchPattern = /(cari|search|berita|terbaru|harga|update|news|kapan|siapa|dimana|when|who|where)\b/;
+            if (hasImage && editPattern.test(lower)) return 'image-edit';
+            if (!hasImage && generatePattern.test(lower)) return 'image-generate';
+            if (!hasImage && searchPattern.test(lower)) return 'search';
+            return 'chat';
+        }
+
+        function buildBackendBody({ prompt, attachment, intent }) {
+            const body = {
+                prompt,
+                model: state.model || undefined,
+                sessionId: state.sessionId,
+                history: state.history.slice(-12),
+            };
+            if (attachment?.kind === 'image' && attachment.dataUrl) {
+                body.image_url = attachment.dataUrl;
+            }
+            if (intent === 'image-generate' || intent === 'image-edit' || state.mode === 'image') {
+                body.ratio = state.ratio || '1:1';
+            }
+            return body;
+        }
+
+        function pickPath(intent) {
+            if (state.mode === 'image') {
+                return state.attachment?.kind === 'image' ? '/v1/image-edit' : '/v1/image-generate';
+            }
+            if (state.mode === 'search') return '/v1/perplexity';
+            if (state.mode === 'auto') {
+                if (intent === 'image-edit') return '/v1/image-edit';
+                if (intent === 'image-generate') return '/v1/image-generate';
+                if (intent === 'search') return '/v1/perplexity';
+                return '/v1/auto';
+            }
+            return '/v1/auto';
+        }
+
+        async function callBackend({ path, body, signal }) {
+            const res = await fetch(api.backend, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ path, method: 'POST', body }),
+                signal,
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const msg = data?.error || `HTTP ${res.status}`;
+                throw new Error(msg);
+            }
+            return data;
+        }
+
+        function buildPromptWithDocument(prompt, attachment) {
+            if (attachment?.kind !== 'text' || !attachment.text) return prompt;
+            const truncated = attachment.text.length > 12000 ? attachment.text.slice(0, 12000) + '\n[...dipotong...]' : attachment.text;
+            const header = `Berikut isi dokumen "${attachment.name}":\n\n\`\`\`\n${truncated}\n\`\`\`\n\n`;
+            return header + (prompt || 'Tolong ringkas / analisa dokumen di atas.');
         }
 
         async function handleSend() {
-            const text = chatInput.value.trim();
-            if (isGenerating) {
-                cancelActiveGeneration();
+            if (state.isGenerating) {
+                if (state.controller) state.controller.abort();
                 return;
             }
-            if (!text && !attachedFile) return;
 
-            const now = Date.now();
-            if (now - lastRequestAt < 1200) {
-                return;
-            }
-            lastRequestAt = now;
+            const prompt = chatInput.value.trim();
+            const attachment = state.attachment;
+            if (!prompt && !attachment) return;
 
-            const currentFile = attachedFile;
-            const currentBase64 = base64Image;
-            const currentMime = attachedFile ? attachedFile.type : null;
-            
-            // Simpan log terakhir untuk fitur regenerate
-            lastPrompt = text;
-            lastImageBase64 = currentBase64;
-            lastMimeType = currentMime;
-            
+            const userVisible = prompt || (attachment?.kind === 'image' ? 'Analisa gambar ini' : 'Analisa dokumen ini');
+            appendUserMessage(userVisible, attachment);
+            pushHistoryListEntry(userVisible);
+
             chatInput.value = '';
-            chatInput.style.height = ''; 
-            
-            filePreviewContainer.classList.add('hidden');
-            attachedFile = null;
-            base64Image = null;
-            fileInput.value = '';
+            autoResize();
+            const sentAttachment = attachment;
+            state.attachment = null;
+            showAttachmentPreview();
 
-            // Dinamis mengisi histori di Sidebar
-            addHistoryItem(text || "Analisis Gambar/Dokumen");
-
-            appendUserMessage(text, currentFile);
-
-            isGenerating = true;
-            activeRequestController = new AbortController();
+            state.isGenerating = true;
+            state.controller = new AbortController();
             setSendButtonState(true);
 
-            const aiShell = createAIMessageShell();
-            if (isLikelyImagePrompt(text) || activeModes.isImageGenerationMode) {
-                renderImageGenerationPlaceholder(aiShell);
-            } else {
-                renderTextLoadingState(aiShell);
+            const shell = appendAssistantShell();
+
+            const intent = detectIntent(prompt, sentAttachment?.kind === 'image');
+            const path = pickPath(intent);
+            const promptForBackend = buildPromptWithDocument(prompt, sentAttachment);
+            const body = buildBackendBody({ prompt: promptForBackend, attachment: sentAttachment, intent });
+
+            try {
+                const data = await callBackend({ path, body, signal: state.controller.signal });
+                const reply = String(data.reply || data.answer || data.result || '').trim();
+                const imageUrl = String(data.imageUrl || data.image || '').trim();
+                const provider = data.provider ? `\n\n_via ${data.provider}_` : '';
+
+                if (!reply && !imageUrl) {
+                    await streamText(shell.content, 'Balasan model kosong. Coba ulangi prompt dengan lebih spesifik.');
+                } else if (!reply && imageUrl) {
+                    await streamText(shell.content, `Hasil gambar siap di bawah ini.${provider}`);
+                    appendImage(shell.extras, imageUrl);
+                } else {
+                    await streamText(shell.content, `${reply}${provider}`);
+                    if (imageUrl) appendImage(shell.extras, imageUrl);
+                }
+
+                state.history.push({ role: 'user', text: userVisible, images: sentAttachment?.kind === 'image' && sentAttachment.dataUrl ? [sentAttachment.dataUrl] : [] });
+                state.history.push({ role: 'assistant', text: reply || (imageUrl ? '[gambar]' : ''), images: imageUrl ? [imageUrl] : [] });
+                state.history = state.history.slice(-32);
+                persistHistory();
+            } catch (err) {
+                const message = err?.name === 'AbortError'
+                    ? 'Permintaan dihentikan manual.'
+                    : `Maaf, terjadi kesalahan: ${err?.message || err}`;
+                await streamText(shell.content, message);
+            } finally {
+                state.controller = null;
+                state.isGenerating = false;
+                setSendButtonState(false);
             }
-            const responsePayload = await fetchAIResponse(text, currentBase64, currentMime, activeRequestController.signal);
-            const responseText = typeof responsePayload === 'string' ? responsePayload : responsePayload.text;
-            
-            await appendAIMessageSmoothToShell(aiShell, responseText);
-            if (responsePayload?.imageUrl) appendGeneratedImage(aiShell, responsePayload.imageUrl);
-            conversationHistory.push({ role: 'user', text: text || 'Analisa lampiran', images: currentBase64 ? [`data:${currentMime || 'image/jpeg'};base64,${currentBase64}`] : [] });
-            conversationHistory.push({ role: 'assistant', text: responseText, images: [] });
-            renderedMessages.push({ role: 'user', text: text || 'Analisa lampiran' });
-            renderedMessages.push({ role: 'assistant', text: responseText });
-            saveChatState();
-            activeRequestController = null;
-            isGenerating = false;
-            setSendButtonState(false);
         }
 
         sendBtn.addEventListener('click', handleSend);
-
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault(); 
+                e.preventDefault();
                 handleSend();
             }
         });
 
-        setSendButtonState(false);
-        renderHistoryList();
-        restoreChatFromState();
+        const params = new URLSearchParams(window.location.search);
+        const initialMode = params.get('mode');
+        const validModes = new Set(['auto', 'search', 'image']);
 
-    </script>
-
-    <script>
-        (function syncAppHeight() {
-            const root = document.documentElement;
-            const setHeight = () => {
-                const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-                root.style.setProperty('--app-height', `${viewportHeight}px`);
-            };
-
-            setHeight();
-            window.addEventListener('resize', setHeight);
-            window.addEventListener('orientationchange', setHeight);
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', setHeight);
-                window.visualViewport.addEventListener('scroll', setHeight);
+        function init() {
+            initTheme();
+            syncAppHeight();
+            loadState();
+            if (state.model) state.modelLabel = state.model;
+            if (validModes.has(initialMode)) {
+                state.mode = initialMode;
+                localStorage.setItem(STORAGE_KEYS.mode, initialMode);
             }
-        })();
-    </script>
+            setMode(state.mode || 'auto');
+            if (state.model) $('activeModelLabel').textContent = state.model;
+            setRatio(state.ratio || '1:1');
+            renderHistoryList();
+            loadProviders();
 
+            if (state.history.length) {
+                clearChatView();
+                emptyState.classList.add('hidden');
+                for (const entry of state.history) {
+                    if (entry.role === 'user') {
+                        appendUserMessage(entry.text, entry.images?.length ? { kind: 'image', name: 'gambar.png' } : null);
+                    } else {
+                        const shell = appendAssistantShell();
+                        shell.content.innerHTML = renderMarkdown(entry.text || '');
+                        if (entry.images && entry.images.length) {
+                            entry.images.forEach((url) => appendImage(shell.extras, url));
+                        }
+                    }
+                }
+            } else {
+                clearChatView();
+            }
+
+            try { lucide.createIcons(); } catch {}
+            chatInput.focus();
+        }
+
+        init();
+    </script>
 </body>
 </html>
