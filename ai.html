@@ -1111,14 +1111,16 @@
 
         const params = new URLSearchParams(window.location.search);
         const initialMode = params.get('mode');
-        if (initialMode === 'image' || initialMode === 'search' || initialMode === 'auto') {
-            state.mode ||= initialMode;
-        }
+        const validModes = new Set(['auto', 'search', 'image']);
 
         function init() {
             initTheme();
             syncAppHeight();
             loadState();
+            if (validModes.has(initialMode)) {
+                state.mode = initialMode;
+                localStorage.setItem(STORAGE_KEYS.mode, initialMode);
+            }
             setMode(state.mode || 'auto');
             setRatio(state.ratio || '1:1');
             renderHistoryList();
