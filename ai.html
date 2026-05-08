@@ -1117,11 +1117,13 @@
             initTheme();
             syncAppHeight();
             loadState();
+            if (state.model) state.modelLabel = state.model;
             if (validModes.has(initialMode)) {
                 state.mode = initialMode;
                 localStorage.setItem(STORAGE_KEYS.mode, initialMode);
             }
             setMode(state.mode || 'auto');
+            if (state.model) $('activeModelLabel').textContent = state.model;
             setRatio(state.ratio || '1:1');
             renderHistoryList();
             loadProviders();
