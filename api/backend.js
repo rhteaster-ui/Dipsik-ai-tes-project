@@ -119,6 +119,21 @@ function buildSelfUrl(req, suffix) {
   return `${proto}://${host}${suffix}`;
 }
 
+/**
+ * Forward auth-related headers on internal self-fetches so the inner lambda
+ * isn't blocked by Vercel Deployment Protection (preview SSO). Harmless in
+ * production where these headers are absent.
+ */
+function buildInternalHeaders(req, extra = {}) {
+  const headers = { 'Content-Type': 'application/json', ...extra };
+  if (req?.headers?.cookie) headers.cookie = req.headers.cookie;
+  if (req?.headers?.['x-vercel-protection-bypass']) {
+    headers['x-vercel-protection-bypass'] = req.headers['x-vercel-protection-bypass'];
+  }
+  if (req?.headers?.authorization) headers.authorization = req.headers.authorization;
+  return headers;
+}
+
 async function callDaunsModel(model, body) {
   const targetPath = resolveDaunsPath(model);
   const payload = { prompt: String(body?.prompt || '').trim() };
@@ -154,7 +169,7 @@ async function chatViaGemini(req, body) {
   try {
     const response = await fetchWithTimeout(buildSelfUrl(req, '/api/chat'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildInternalHeaders(req),
       body: JSON.stringify({
         prompt: body.prompt,
         question: body.prompt,
@@ -182,7 +197,7 @@ async function chatViaPerplexity(req, body) {
   try {
     const response = await fetchWithTimeout(buildSelfUrl(req, '/api/perplexity'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildInternalHeaders(req),
       body: JSON.stringify({
         question: body.prompt,
         model: body.model || 'sonar',
@@ -206,7 +221,7 @@ async function chatViaImageGen(req, body, mode) {
   try {
     const response = await fetchWithTimeout(buildSelfUrl(req, '/api/imagegen'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildInternalHeaders(req),
       body: JSON.stringify({
         prompt: body.prompt,
         ratio: body.ratio || '1:1',
