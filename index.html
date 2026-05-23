@@ -3,8 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explore Lab | AI Tools Workspace</title>
-    <meta name="description" content="Explore Lab — workspace AI all-in-one: chat multi-model, web search, image studio, dengan upload dokumen & gambar.">
+    <title>Explore Lab — ExploreAi Chat & ExploreAi Studio</title>
+    <meta name="description" content="Explore Lab — hub dua produk AI: ExploreAi Chat (chat multi-model dengan memori, file upload, web search) dan ExploreAi Studio (image generation & edit). Tanpa login, ramah perangkat low-end.">
+    <meta name="theme-color" content="#0B0F19" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Explore Lab" />
+    <meta property="og:title" content="Explore Lab — Workspace AI multi-model" />
+    <meta property="og:description" content="ExploreAi Chat untuk percakapan & analisis. ExploreAi Studio untuk image generation & edit. Tanpa login." />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:url" content="https://dipsik-ai-tes-project.vercel.app/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Explore Lab — ExploreAi Chat & Studio" />
+    <meta name="twitter:description" content="Workspace AI all-in-one. Tanpa login, tanpa API key." />
+    <meta name="twitter:image" content="/og-image.png" />
+    <link rel="canonical" href="https://dipsik-ai-tes-project.vercel.app/" />
     
     <!-- Google Fonts: Inter for a clean, minimal, and premium look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -181,8 +193,72 @@
         .delay-100 { animation-delay: 100ms; }
         .delay-200 { animation-delay: 200ms; }
         .delay-300 { animation-delay: 300ms; }
+
+        /* Honour user motion preference — penting untuk perangkat low-end & user a11y. */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
     </style>
-    <link rel="icon" href="https://l.top4top.io/p_3774ypjwm0.png" type="image/png">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="/favicon.png">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Explore Lab",
+      "alternateName": ["ExploreAi Chat", "ExploreAi Studio"],
+      "url": "https://dipsik-ai-tes-project.vercel.app/",
+      "image": "/og-image.png",
+      "inLanguage": "id",
+      "description": "Explore Lab — hub dua produk AI: ExploreAi Chat (chat multi-model dengan memori) dan ExploreAi Studio (image generation & edit).",
+      "publisher": {
+        "@type": "Person",
+        "name": "R_hmt ofc",
+        "alternateName": "Rhmt",
+        "url": "https://dipsik-ai-tes-project.vercel.app/about.html",
+        "image": "https://j.top4top.io/p_376952pby0.png",
+        "jobTitle": "Self-taught Web App Developer",
+        "address": { "@type": "PostalAddress", "addressCountry": "ID" },
+        "sameAs": [
+          "https://github.com/rhteaster-ui",
+          "https://whatsapp.com/channel/0029Vb6kATR2P59hJ7uwQF45",
+          "https://www.instagram.com/r_hmt.ofc",
+          "https://www.tiktok.com/@r_hmt.ofc"
+        ]
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": "ExploreAi Chat",
+          "applicationCategory": "CommunicationApplication",
+          "operatingSystem": "Web Browser",
+          "url": "https://dipsik-ai-tes-project.vercel.app/ai.html",
+          "image": "/og-image.png",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "ExploreAi Studio",
+          "applicationCategory": "DesignApplication",
+          "operatingSystem": "Web Browser",
+          "url": "https://dipsik-ai-tes-project.vercel.app/studio.html",
+          "image": "/og-image.png",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+        }
+      ]
+    }
+    </script>
 </head>
 <body class="text-slate-900 dark:text-gray-100 antialiased overflow-x-hidden selection:bg-blue-200 selection:text-blue-900 dark:selection:bg-white/20 dark:selection:text-white">
 
@@ -264,10 +340,8 @@
     <nav class="fixed w-full top-0 z-40 glass-nav transition-all duration-300">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <!-- Brand -->
-            <a href="#" class="text-xl font-bold tracking-tight flex items-center gap-3 group">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-white/5 dark:to-white/5 border border-blue-200 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-gray-300 group-hover:scale-105 transition-all duration-300 shadow-sm">
-                    <i data-lucide="layers" class="w-4 h-4"></i>
-                </div>
+            <a href="#" class="text-xl font-bold tracking-tight flex items-center gap-3 group" aria-label="Explore Lab">
+                <img src="/favicon.png" alt="" width="36" height="36" class="w-9 h-9 rounded-lg shadow-sm group-hover:scale-105 transition-transform" />
                 <span>Explore<span class="font-normal text-slate-500 dark:text-gray-500">Lab</span></span>
             </a>
             
@@ -337,23 +411,27 @@
                 </div>
 
                 <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6 opacity-0 animate-fade-in-up delay-100">
-                    Eksplorasi Tanpa Batas di <br class="hidden md:block"/>
-                    <span class="gradient-text drop-shadow-sm">Explore Lab</span>
+                    Dua produk. Satu <br class="hidden md:block"/>
+                    <span class="gradient-text drop-shadow-sm">Explore Lab</span>.
                 </h1>
             </div>
             
             <p class="text-lg md:text-xl text-slate-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed opacity-0 animate-fade-in-up delay-200">
-                Workspace AI terpadu: chat multi-model dengan auto-routing pintar, web search, image generation & editing, plus upload dokumen — semuanya dalam satu interface ringan dan tanpa login.
+                <strong class="text-slate-800 dark:text-white">ExploreAi Chat</strong> untuk percakapan, analisis dokumen, kode, dan web search. <strong class="text-slate-800 dark:text-white">ExploreAi Studio</strong> untuk image generation & edit dengan beberapa model. Tanpa login, tanpa API key, ramah perangkat low-end.
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center opacity-0 animate-fade-in-up delay-300">
                 <!-- Tombol Utama -->
                 <a href="ai.html" class="px-8 py-4 rounded-xl bg-blue-600 dark:bg-white text-white dark:text-slate-900 font-bold hover:bg-blue-700 dark:hover:bg-slate-200 transition-all shadow-lg shadow-blue-500/30 dark:shadow-white/10 flex items-center justify-center gap-2 hover:-translate-y-1">
-                    Mulai Eksplorasi <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                    ExploreAi Chat
                 </a>
-                <!-- Tombol Sekunder -->
-                <a href="#tech" class="px-8 py-4 rounded-xl bg-white dark:bg-darkcard border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 font-semibold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-sm flex items-center justify-center gap-2">
-                    Lihat Teknologi
+                <a href="studio.html" class="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-500 dark:from-purple-500 dark:to-fuchsia-400 text-white font-bold hover:brightness-110 transition-all shadow-lg shadow-purple-500/30 dark:shadow-purple-500/30 flex items-center justify-center gap-2 hover:-translate-y-1">
+                    <i data-lucide="image-plus" class="w-4 h-4"></i>
+                    ExploreAi Studio
+                </a>
+                <a href="#tools" class="px-8 py-4 rounded-xl bg-white dark:bg-darkcard border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 font-semibold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-sm flex items-center justify-center gap-2">
+                    Pelajari
                 </a>
             </div>
         </div>
@@ -369,41 +447,41 @@
             </div>
 
             <div class="grid md:grid-cols-3 gap-6">
-                <!-- Card 1 -->
-                <div class="glass-card rounded-3xl p-8 opacity-0 animate-fade-in-up delay-100 group">
+                <!-- Card 1: ExploreAi Chat -->
+                <a href="ai.html" class="glass-card rounded-3xl p-8 opacity-0 animate-fade-in-up delay-100 group block hover:-translate-y-1 transition-transform">
                     <div class="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-white/5 border border-blue-100 dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-slate-300 mb-6 group-hover:scale-110 transition-transform animate-float">
-                        <i data-lucide="terminal-square" class="w-6 h-6"></i>
+                        <i data-lucide="message-circle" class="w-6 h-6"></i>
                     </div>
-                    <h4 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Workspace Chat</h4>
-                    <p class="text-sm text-slate-600 dark:text-gray-400 mb-8 leading-relaxed">Asisten cerdas multi-model: Gemini 2.5, ChatGPT, Grok, NoteGPT, DeepAI — dengan auto-routing, dukungan upload dokumen & gambar, serta histori sesi otomatis.</p>
-                    <a href="ai.html" class="inline-flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-slate-300 group-hover:gap-3 transition-all">
-                        Buka Workspace <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </a>
-                </div>
+                    <h4 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">ExploreAi Chat</h4>
+                    <p class="text-sm text-slate-600 dark:text-gray-400 mb-8 leading-relaxed">Chat multi-model: Gemini 2.5 (Flash/Pro), ChatGPT, Grok, NoteGPT, DeepAI — auto-routing pintar, memori percakapan, upload dokumen/gambar, code block, dan web search dengan sumber.</p>
+                    <span class="inline-flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-slate-300 group-hover:gap-3 transition-all">
+                        Buka Chat <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </span>
+                </a>
 
-                <!-- Card 2 -->
-                <div class="glass-card rounded-3xl p-8 opacity-0 animate-fade-in-up delay-200 group">
-                    <div class="w-14 h-14 rounded-2xl bg-cyan-50 dark:bg-white/5 border border-cyan-100 dark:border-white/10 flex items-center justify-center text-cyan-600 dark:text-slate-300 mb-6 group-hover:scale-110 transition-transform animate-float" style="animation-delay: 1s;">
-                        <i data-lucide="image" class="w-6 h-6"></i>
+                <!-- Card 2: ExploreAi Studio -->
+                <a href="studio.html" class="glass-card rounded-3xl p-8 opacity-0 animate-fade-in-up delay-200 group block hover:-translate-y-1 transition-transform">
+                    <div class="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-400/5 border border-purple-100 dark:border-purple-400/15 flex items-center justify-center text-purple-600 dark:text-purple-300 mb-6 group-hover:scale-110 transition-transform animate-float" style="animation-delay: 1s;">
+                        <i data-lucide="image-plus" class="w-6 h-6"></i>
                     </div>
-                    <h4 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Image Studio</h4>
-                    <p class="text-sm text-slate-600 dark:text-gray-400 mb-8 leading-relaxed">Generate gambar dari prompt teks (Pollinations.ai) dan edit gambar berbasis instruksi (Nanobanana). Tinggal lampirkan gambar + tulis instruksi edit.</p>
-                    <a href="ai.html?mode=image" class="inline-flex items-center gap-2 text-sm font-bold text-cyan-600 dark:text-slate-300 group-hover:gap-3 transition-all">
-                        Render Visual <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </a>
-                </div>
+                    <h4 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">ExploreAi Studio</h4>
+                    <p class="text-sm text-slate-600 dark:text-gray-400 mb-8 leading-relaxed">Halaman khusus image generation & edit. Tiga model: Pollinations Flux/Turbo (cepat), Deep Image (model baru), dan Nanobanana untuk edit. Riwayat gambar tersimpan per sesi.</p>
+                    <span class="inline-flex items-center gap-2 text-sm font-bold text-purple-600 dark:text-purple-300 group-hover:gap-3 transition-all">
+                        Buka Studio <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </span>
+                </a>
 
-                <!-- Card 3 -->
-                <div class="glass-card rounded-3xl p-8 opacity-0 animate-fade-in-up delay-300 group">
+                <!-- Card 3: Web Search -->
+                <a href="ai.html?mode=search" class="glass-card rounded-3xl p-8 opacity-0 animate-fade-in-up delay-300 group block hover:-translate-y-1 transition-transform">
                     <div class="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-white/5 border border-indigo-100 dark:border-white/10 flex items-center justify-center text-indigo-600 dark:text-slate-300 mb-6 group-hover:scale-110 transition-transform animate-float" style="animation-delay: 2s;">
                         <i data-lucide="radar" class="w-6 h-6"></i>
                     </div>
                     <h4 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Web Search</h4>
-                    <p class="text-sm text-slate-600 dark:text-gray-400 mb-8 leading-relaxed">Mode pencarian berbasis web (TurboSeek/Perplexity Sonar) untuk jawaban faktual real-time lengkap dengan sumber. Cocok untuk berita, harga, atau update terbaru.</p>
-                    <a href="ai.html?mode=search" class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 dark:text-slate-300 group-hover:gap-3 transition-all">
+                    <p class="text-sm text-slate-600 dark:text-gray-400 mb-8 leading-relaxed">Mode pencarian web (TurboSeek/Perplexity Sonar) untuk jawaban faktual real-time lengkap dengan kutipan sumber. Cocok untuk berita, harga, atau update terbaru.</p>
+                    <span class="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 dark:text-slate-300 group-hover:gap-3 transition-all">
                         Mulai Pelacakan <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </a>
-                </div>
+                    </span>
+                </a>
             </div>
         </div>
     </section>

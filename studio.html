@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="ExploreAi Studio — image generation & edit dengan beberapa model (Pollinations Flux/Turbo, Deep Image, Nanobanana). Bagian dari Explore Lab, tanpa login, ramah perangkat low-end." />
+    <meta name="theme-color" content="#0B0F19" />
+    <title>ExploreAi Studio — Image Generation & Edit</title>
+
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Explore Lab" />
+    <meta property="og:title" content="ExploreAi Studio — Image Generation & Edit" />
+    <meta property="og:description" content="Generate gambar dengan Pollinations Flux/Turbo, Deep Image, atau edit gambar dengan Nanobanana. Tanpa login, multi-model." />
+    <meta property="og:image" content="/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ExploreAi Studio" />
+    <meta name="twitter:description" content="Image generation & edit, multi-model, tanpa login." />
+    <meta name="twitter:image" content="/og-image.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Inter"', 'sans-serif'] },
+                    colors: {
+                        darkbg: '#0a0712',
+                        darkcard: '#13101c',
+                        darkborder: 'rgba(255, 255, 255, 0.08)',
+                        accent: '#a855f7',
+                        accent2: '#f59e0b',
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-soft': 'pulseSoft 1.6s ease-in-out infinite',
+                        'spin-slow': 'spin 3s linear infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(8px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        pulseSoft: {
+                            '0%, 100%': { opacity: '0.55' },
+                            '50%': { opacity: '1' },
+                        },
+                    },
+                },
+            },
+        };
+    </script>
+
+    <style>
+        :root { --app-height: 100dvh; --accent: #a855f7; --accent2: #f59e0b; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.25s ease, color 0.25s ease;
+            min-height: 100dvh;
+            height: var(--app-height, 100dvh);
+            overflow: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark ::-webkit-scrollbar-thumb { background: #3b2e54; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #54416f; }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .dark .glass-panel {
+            background: rgba(19, 16, 28, 0.82);
+        }
+
+        .studio-gradient {
+            background: linear-gradient(135deg, #a855f7 0%, #f472b6 50%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .dark .studio-gradient {
+            background: linear-gradient(135deg, #c084fc 0%, #f0abfc 50%, #fbbf24 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .accent-btn {
+            background: linear-gradient(135deg, #a855f7, #d946ef);
+            color: white;
+            box-shadow: 0 6px 20px -8px rgba(168,85,247,0.6);
+        }
+        .accent-btn:hover { filter: brightness(1.05); }
+        .accent-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .accent-ring {
+            box-shadow: 0 0 0 1px rgba(168,85,247,0.25), 0 8px 24px -12px rgba(168,85,247,0.45);
+        }
+        .dark .accent-ring {
+            box-shadow: 0 0 0 1px rgba(192,132,252,0.3), 0 8px 24px -12px rgba(192,132,252,0.45);
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            font-size: 11.5px;
+            font-weight: 600;
+            border-radius: 999px;
+            border: 1px solid rgba(168,85,247,0.25);
+            color: #7c3aed;
+            background: rgba(168,85,247,0.06);
+        }
+        .dark .chip {
+            border-color: rgba(192,132,252,0.3);
+            color: #d8b4fe;
+            background: rgba(168,85,247,0.08);
+        }
+        .chip[data-active="true"] {
+            background: #a855f7;
+            color: white;
+            border-color: transparent;
+        }
+        .dark .chip[data-active="true"] {
+            background: #c084fc;
+            color: #1a0f2e;
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 14px;
+            transition: transform 200ms cubic-bezier(0.2, 0, 0.2, 1);
+        }
+        .gallery-item:hover { transform: translateY(-2px); }
+
+        .gallery-item img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-meta {
+            position: absolute;
+            inset: auto 0 0 0;
+            padding: 8px 10px;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            color: #fff;
+            font-size: 11px;
+            line-height: 1.3;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .gallery-item:hover .gallery-meta { opacity: 1; }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            top: 24px;
+            transform: translateX(-50%) translateY(-12px);
+            background: rgba(168,85,247,0.96);
+            color: white;
+            font-size: 13px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            box-shadow: 0 8px 24px -8px rgba(168,85,247,0.6);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 60;
+            white-space: nowrap;
+            max-width: calc(100% - 32px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+
+        .modal-backdrop {
+            transition: opacity 0.18s ease, visibility 0.18s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .modal-backdrop.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loader-dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 999px;
+            background: currentColor;
+            margin-right: 6px;
+            animation: pulseSoft 1.2s ease-in-out infinite;
+        }
+        .loader-dot:nth-child(2) { animation-delay: 0.15s; }
+        .loader-dot:nth-child(3) { animation-delay: 0.3s; }
+
+        /* Honour user motion preference. */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkbg text-slate-900 dark:text-gray-100 antialiased">
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <div id="app" class="flex flex-col h-full w-full">
+
+        <header class="flex-shrink-0 border-b border-slate-200 dark:border-white/5 glass-panel z-30">
+            <div class="flex items-center gap-2 md:gap-3 px-3 md:px-6 h-14 min-w-0">
+                <a href="index.html" class="flex items-center gap-2.5 group flex-shrink-0" aria-label="Kembali ke landing">
+                    <img src="/favicon.png" alt="" width="32" height="32" class="w-8 h-8 rounded-lg shadow-sm" />
+                    <span class="hidden sm:inline font-bold text-[15px] tracking-tight">Explore<span class="font-normal text-slate-500 dark:text-gray-500">Ai</span> <span class="studio-gradient">Studio</span></span>
+                </a>
+
+                <span class="hidden md:inline-flex items-center gap-1.5 ml-3 px-2.5 py-1 rounded-full text-[11px] font-semibold border border-purple-200 dark:border-purple-400/20 bg-purple-50 dark:bg-purple-400/5 text-purple-700 dark:text-purple-300">
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                    Studio Online
+                </span>
+
+                <div class="flex-1 min-w-0"></div>
+
+                <a href="ai.html" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[12px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors shadow-sm">
+                    <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                    ExploreAi Chat
+                </a>
+
+                <button id="settingsBtn" class="flex-shrink-0 p-2 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-gray-300 transition-colors shadow-sm" aria-label="Pengaturan Studio" title="Pengaturan Studio">
+                    <i data-lucide="settings-2" class="w-4 h-4"></i>
+                </button>
+
+                <button id="themeToggle" class="flex-shrink-0 p-2 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-gray-300 transition-colors shadow-sm" aria-label="Toggle Theme">
+                    <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
+                    <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-yellow-400"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 min-h-0 overflow-y-auto">
+            <div class="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-10 space-y-6 md:space-y-8">
+
+                <section class="text-center pt-2 pb-2 animate-fade-in-up">
+                    <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight mb-3">
+                        Generate <span class="studio-gradient">visual</span> dari teks.
+                    </h1>
+                    <p class="text-sm md:text-base text-slate-500 dark:text-gray-400 max-w-xl mx-auto leading-relaxed">
+                        Tiga model untuk generate, satu model untuk edit. Pilih aspek rasio, tulis prompt, dan biarkan ExploreAi Studio mengerjakannya.
+                    </p>
+                </section>
+
+                <section class="rounded-3xl border border-slate-200 dark:border-white/5 bg-white dark:bg-darkcard p-4 md:p-6 shadow-sm accent-ring animate-fade-in-up" style="animation-delay: 60ms">
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="promptArea" class="block text-[12px] font-bold tracking-wide text-slate-600 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                                <i data-lucide="wand-2" class="w-3.5 h-3.5 text-purple-500"></i>
+                                Prompt
+                            </label>
+                            <textarea id="promptArea" rows="3" maxlength="2000"
+                                placeholder="cyberpunk Jakarta saat hujan malam, neon biru, sinematik, semi-realistic..."
+                                class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-3 text-[14px] outline-none focus:border-purple-300 dark:focus:border-purple-400/40 resize-y"></textarea>
+                            <div class="flex items-center justify-between mt-1.5 text-[11px] text-slate-400 dark:text-gray-500">
+                                <span id="promptHint">Maks 2000 karakter. Tulis dalam Bahasa Indonesia atau Inggris.</span>
+                                <span id="promptCount">0 / 2000</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="text-[12px] font-bold tracking-wide text-slate-600 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                                <i data-lucide="cpu" class="w-3.5 h-3.5 text-purple-500"></i>
+                                Model
+                            </div>
+                            <div id="modelChips" class="flex flex-wrap gap-2"></div>
+                        </div>
+
+                        <div>
+                            <div class="text-[12px] font-bold tracking-wide text-slate-600 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                                <i data-lucide="image-plus" class="w-3.5 h-3.5 text-purple-500"></i>
+                                Aspek rasio
+                            </div>
+                            <div id="ratioChips" class="flex flex-wrap gap-2"></div>
+                        </div>
+
+                        <div id="editSection" class="hidden">
+                            <div class="text-[12px] font-bold tracking-wide text-slate-600 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                                <i data-lucide="layers" class="w-3.5 h-3.5 text-purple-500"></i>
+                                Gambar input untuk diedit
+                            </div>
+                            <div id="dropZone" class="rounded-xl border border-dashed border-slate-300 dark:border-white/15 bg-slate-50 dark:bg-white/5 p-4 flex flex-col items-center gap-2 text-center cursor-pointer">
+                                <i data-lucide="upload-cloud" class="w-6 h-6 text-purple-500"></i>
+                                <div class="text-[13px] font-semibold">Klik atau drop gambar ke sini</div>
+                                <div class="text-[11px] text-slate-500 dark:text-gray-400">PNG/JPG/WEBP, maks 5 MB</div>
+                                <input id="editImageInput" type="file" accept="image/*" class="hidden" />
+                            </div>
+                            <div id="editPreview" class="hidden mt-3 flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                                <img id="editPreviewImg" alt="preview" class="w-14 h-14 rounded-lg object-cover" />
+                                <div class="flex-1 min-w-0">
+                                    <div id="editPreviewName" class="text-[12px] font-semibold truncate">file.png</div>
+                                    <div id="editPreviewMeta" class="text-[11px] text-slate-500 dark:text-gray-400">0 KB</div>
+                                </div>
+                                <button id="editPreviewRemove" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5" aria-label="Hapus gambar">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
+                            <button id="generateBtn" class="accent-btn inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-[13.5px] font-bold transition-all">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                <span id="generateBtnLabel">Generate gambar</span>
+                            </button>
+
+                            <div class="flex items-center gap-2 text-[11.5px] text-slate-500 dark:text-gray-400">
+                                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                                <span>Burst 3x lalu cooldown 2 menit · rate-limit 30/menit</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="resultSection" class="hidden rounded-3xl border border-slate-200 dark:border-white/5 bg-white dark:bg-darkcard p-4 md:p-6 shadow-sm animate-fade-in-up">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-[12px] font-bold tracking-wide text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                            <i data-lucide="image" class="w-3.5 h-3.5 text-purple-500"></i>
+                            Hasil terbaru
+                        </div>
+                        <div id="resultMeta" class="text-[11px] text-slate-400 dark:text-gray-500"></div>
+                    </div>
+                    <div id="resultBody" class="flex flex-col items-center gap-3">
+                        <!-- diisi via JS -->
+                    </div>
+                </section>
+
+                <section class="rounded-3xl border border-slate-200 dark:border-white/5 bg-white dark:bg-darkcard p-4 md:p-6 shadow-sm animate-fade-in-up" style="animation-delay:120ms">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-[12px] font-bold tracking-wide text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                            <i data-lucide="layers-3" class="w-3.5 h-3.5 text-purple-500"></i>
+                            Riwayat sesi ini
+                        </div>
+                        <button id="clearGalleryBtn" class="text-[11px] font-semibold text-slate-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">Bersihkan</button>
+                    </div>
+                    <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <!-- diisi via JS -->
+                    </div>
+                    <p id="galleryEmpty" class="text-[12.5px] text-slate-400 dark:text-gray-500 italic">Belum ada gambar di sesi ini. Coba generate yang pertama.</p>
+                </section>
+
+                <section class="text-center text-[11px] text-slate-400 dark:text-gray-500 pb-4">
+                    &copy; 2026 Explore Lab // ExploreAi Studio · <a href="about.html" class="hover:text-purple-500 dark:hover:text-purple-300">Tentang</a>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="settingsBackdrop" class="modal-backdrop fixed inset-0 z-50 bg-black/40 flex items-end md:items-center justify-center p-0 md:p-6">
+        <div class="w-full md:max-w-md bg-white dark:bg-darkcard rounded-t-3xl md:rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl p-5 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <div class="text-[10.5px] font-bold tracking-[0.18em] uppercase text-slate-400 dark:text-gray-500">Pengaturan Studio</div>
+                    <h3 class="text-base font-bold mt-0.5">Preferensi & Riwayat</h3>
+                </div>
+                <button id="closeSettingsBtn" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5" aria-label="Tutup">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[12px] font-bold text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                        <i data-lucide="image-plus" class="w-3.5 h-3.5"></i>
+                        Aspek rasio default
+                    </label>
+                    <div id="settingDefaultRatio" class="mt-2 flex flex-wrap gap-1.5"></div>
+                </div>
+
+                <div>
+                    <label class="text-[12px] font-bold text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                        <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                        Model default
+                    </label>
+                    <select id="settingDefaultModel" class="mt-2 w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-[13px] outline-none focus:border-purple-300 dark:focus:border-purple-400/40">
+                        <option value="pollinations-flux">Pollinations · Flux (rekomendasi)</option>
+                        <option value="pollinations-turbo">Pollinations · Turbo (cepat)</option>
+                        <option value="deep-image">Deep Image · Free</option>
+                        <option value="nanobanana-edit">Nanobanana · Edit</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-[12px] font-bold text-slate-600 dark:text-gray-300 flex items-center gap-1.5">
+                        <i data-lucide="zap-off" class="w-3.5 h-3.5"></i>
+                        Animasi
+                    </label>
+                    <p class="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5 mb-2">Matikan animasi untuk perangkat low-end / hemat baterai.</p>
+                    <div class="flex items-center gap-2">
+                        <button id="motionToggle" data-state="full" class="px-3 py-1.5 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[12px] font-semibold">Penuh</button>
+                        <span class="text-[11px] text-slate-400 dark:text-gray-500">prefers-reduced-motion juga selalu dihormati</span>
+                    </div>
+                </div>
+
+                <div class="rounded-xl bg-purple-50 dark:bg-purple-400/5 border border-purple-100 dark:border-purple-400/15 p-3">
+                    <div class="text-[12px] font-bold text-purple-700 dark:text-purple-300 mb-1 flex items-center gap-1.5">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                        Proteksi anti-spam
+                    </div>
+                    <p class="text-[11.5px] text-slate-600 dark:text-gray-300 leading-relaxed">
+                        Rate-limit 30 req/menit per IP plus cooldown 2 menit setelah 3 generate berturut-turut. Header <code>X-ImageGen-Burst-Remaining</code> dan <code>Retry-After</code> dipakai untuk feedback di UI.
+                    </p>
+                </div>
+
+                <div class="flex gap-2 pt-1">
+                    <button id="saveSettingsBtn" class="flex-1 accent-btn px-3 py-2 rounded-xl text-[13px] font-bold">Simpan</button>
+                    <button id="resetSettingsBtn" class="px-3 py-2 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[12px] font-semibold">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "ExploreAi Studio",
+      "applicationCategory": "DesignApplication",
+      "operatingSystem": "Web Browser",
+      "url": "https://dipsik-ai-tes-project.vercel.app/studio.html",
+      "image": "/og-image.png",
+      "description": "Image generation & edit dengan beberapa model (Pollinations Flux/Turbo, Deep Image, Nanobanana). Bagian dari Explore Lab.",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Explore Lab",
+        "url": "https://dipsik-ai-tes-project.vercel.app/"
+      },
+      "creator": {
+        "@type": "Person",
+        "name": "R_hmt ofc"
+      },
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
+
+    <script>
+        // ===== State =====
+        const STORAGE_KEYS = {
+            theme: 'theme',
+            gallery: 'exploreStudio.gallery',
+            settings: 'exploreStudio.settings',
+            motion: 'exploreStudio.motion',
+        };
+
+        const RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4', '21:9', '4:5'];
+        const MODELS = [
+            { key: 'pollinations-flux',  label: 'Flux',     hint: 'Detail tajam',     mode: 'generate' },
+            { key: 'pollinations-turbo', label: 'Turbo',    hint: 'Cepat & ringan',   mode: 'generate' },
+            { key: 'deep-image',         label: 'Deep Image', hint: 'Model baru',     mode: 'generate' },
+            { key: 'nanobanana-edit',    label: 'Edit',     hint: 'Modifikasi gambar', mode: 'edit'    },
+        ];
+
+        const DEFAULT_SETTINGS = {
+            defaultModel: 'pollinations-flux',
+            defaultRatio: '1:1',
+        };
+
+        const state = {
+            prompt: '',
+            model: DEFAULT_SETTINGS.defaultModel,
+            ratio: DEFAULT_SETTINGS.defaultRatio,
+            editImage: null,        // dataURL
+            editImageName: '',
+            editImageSize: 0,
+            settings: { ...DEFAULT_SETTINGS },
+            gallery: [],            // [{ id, prompt, imageUrl, model, ratio, ts }]
+            busy: false,
+        };
+
+        const $ = (id) => document.getElementById(id);
+        const html = document.documentElement;
+
+        function showToast(message) {
+            const toast = $('toast');
+            toast.textContent = message;
+            toast.classList.add('visible');
+            clearTimeout(showToast.__timer);
+            showToast.__timer = setTimeout(() => toast.classList.remove('visible'), 2200);
+        }
+
+        function loadSettings() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.settings);
+                state.settings = raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : { ...DEFAULT_SETTINGS };
+            } catch {
+                state.settings = { ...DEFAULT_SETTINGS };
+            }
+            state.model = state.settings.defaultModel;
+            state.ratio = state.settings.defaultRatio;
+        }
+
+        function saveSettings() {
+            try { localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(state.settings)); } catch {}
+        }
+
+        function loadGallery() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.gallery);
+                state.gallery = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(state.gallery)) state.gallery = [];
+            } catch {
+                state.gallery = [];
+            }
+        }
+
+        function saveGallery() {
+            try { localStorage.setItem(STORAGE_KEYS.gallery, JSON.stringify(state.gallery.slice(0, 60))); } catch {}
+        }
+
+        function loadTheme() {
+            const t = localStorage.getItem(STORAGE_KEYS.theme);
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                html.classList.add('dark');
+            } else {
+                html.classList.remove('dark');
+            }
+        }
+
+        function setTheme(next) {
+            if (next === 'dark') html.classList.add('dark');
+            else html.classList.remove('dark');
+            try { localStorage.setItem(STORAGE_KEYS.theme, next); } catch {}
+        }
+
+        function setModel(key) {
+            const found = MODELS.find((m) => m.key === key);
+            if (!found) return;
+            state.model = found.key;
+            renderModelChips();
+            const isEdit = found.mode === 'edit';
+            $('editSection').classList.toggle('hidden', !isEdit);
+            $('generateBtnLabel').textContent = isEdit ? 'Edit gambar' : 'Generate gambar';
+        }
+
+        function setRatio(value) {
+            if (!RATIOS.includes(value)) return;
+            state.ratio = value;
+            renderRatioChips();
+        }
+
+        function renderModelChips() {
+            const wrap = $('modelChips');
+            wrap.innerHTML = '';
+            for (const m of MODELS) {
+                const el = document.createElement('button');
+                el.type = 'button';
+                el.className = 'chip';
+                el.dataset.active = String(m.key === state.model);
+                el.innerHTML = `<i data-lucide="${m.mode === 'edit' ? 'wand-sparkles' : 'image-plus'}" class="w-3 h-3"></i>${m.label}<span class="text-[10px] opacity-70 ml-1">· ${m.hint}</span>`;
+                el.addEventListener('click', () => setModel(m.key));
+                wrap.appendChild(el);
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderRatioChips() {
+            const wrap = $('ratioChips');
+            wrap.innerHTML = '';
+            for (const r of RATIOS) {
+                const el = document.createElement('button');
+                el.type = 'button';
+                el.className = 'chip';
+                el.dataset.active = String(r === state.ratio);
+                el.textContent = r;
+                el.addEventListener('click', () => setRatio(r));
+                wrap.appendChild(el);
+            }
+        }
+
+        function renderGallery() {
+            const wrap = $('gallery');
+            const empty = $('galleryEmpty');
+            wrap.innerHTML = '';
+            if (!state.gallery.length) {
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            for (const item of state.gallery) {
+                const a = document.createElement('a');
+                a.className = 'gallery-item block aspect-square bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10';
+                a.href = item.imageUrl;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.title = item.prompt;
+                const img = document.createElement('img');
+                img.src = item.imageUrl;
+                img.alt = item.prompt;
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                const meta = document.createElement('div');
+                meta.className = 'gallery-meta';
+                meta.textContent = `${item.model || ''} · ${item.ratio || ''}`;
+                a.appendChild(img);
+                a.appendChild(meta);
+                wrap.appendChild(a);
+            }
+        }
+
+        function renderResult(item) {
+            const section = $('resultSection');
+            section.classList.remove('hidden');
+            const meta = $('resultMeta');
+            const body = $('resultBody');
+            meta.textContent = `${item.model || ''} · ${item.ratio || ''} · ${new Date(item.ts).toLocaleTimeString()}`;
+
+            body.innerHTML = '';
+            const fig = document.createElement('figure');
+            fig.className = 'w-full flex flex-col items-center gap-2';
+
+            const img = document.createElement('img');
+            img.src = item.imageUrl;
+            img.alt = item.prompt;
+            img.loading = 'eager';
+            img.decoding = 'async';
+            img.className = 'w-full max-w-2xl rounded-2xl border border-slate-200 dark:border-white/10 shadow-md';
+            fig.appendChild(img);
+
+            const cap = document.createElement('figcaption');
+            cap.className = 'text-[12px] text-slate-500 dark:text-gray-400 max-w-xl text-center';
+            cap.textContent = item.prompt;
+            fig.appendChild(cap);
+
+            const actions = document.createElement('div');
+            actions.className = 'flex flex-wrap items-center justify-center gap-2 mt-1';
+
+            const dl = document.createElement('a');
+            dl.href = item.imageUrl;
+            dl.target = '_blank';
+            dl.rel = 'noopener noreferrer';
+            dl.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[12px] font-semibold hover:border-purple-300 dark:hover:border-purple-400/40';
+            dl.innerHTML = '<i data-lucide="external-link" class="w-3.5 h-3.5"></i> Buka penuh';
+            actions.appendChild(dl);
+
+            const copy = document.createElement('button');
+            copy.type = 'button';
+            copy.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[12px] font-semibold hover:border-purple-300 dark:hover:border-purple-400/40';
+            copy.innerHTML = '<i data-lucide="link" class="w-3.5 h-3.5"></i> Salin URL';
+            copy.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(item.imageUrl);
+                    showToast('URL gambar disalin.');
+                } catch {
+                    showToast('Gagal menyalin URL.');
+                }
+            });
+            actions.appendChild(copy);
+
+            const reuse = document.createElement('button');
+            reuse.type = 'button';
+            reuse.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[12px] font-semibold hover:border-purple-300 dark:hover:border-purple-400/40';
+            reuse.innerHTML = '<i data-lucide="repeat" class="w-3.5 h-3.5"></i> Gunakan prompt';
+            reuse.addEventListener('click', () => {
+                $('promptArea').value = item.prompt;
+                updatePromptCount();
+                $('promptArea').focus();
+            });
+            actions.appendChild(reuse);
+
+            fig.appendChild(actions);
+            body.appendChild(fig);
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const r = new FileReader();
+                r.onload = () => resolve(String(r.result || ''));
+                r.onerror = () => reject(r.error || new Error('read error'));
+                r.readAsDataURL(file);
+            });
+        }
+
+        async function handleEditImageSelect(file) {
+            if (!file) return;
+            if (!/^image\//.test(file.type)) {
+                showToast('Berkas harus gambar.');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Gambar terlalu besar (max 5MB).');
+                return;
+            }
+            const dataUrl = await readFileAsDataUrl(file);
+            state.editImage = dataUrl;
+            state.editImageName = file.name || 'image';
+            state.editImageSize = file.size;
+
+            $('editPreview').classList.remove('hidden');
+            $('editPreviewImg').src = dataUrl;
+            $('editPreviewName').textContent = state.editImageName;
+            $('editPreviewMeta').textContent = `${Math.round(file.size / 1024)} KB`;
+        }
+
+        function clearEditImage() {
+            state.editImage = null;
+            state.editImageName = '';
+            state.editImageSize = 0;
+            $('editPreview').classList.add('hidden');
+            $('editImageInput').value = '';
+        }
+
+        function setBusy(flag) {
+            state.busy = flag;
+            const btn = $('generateBtn');
+            btn.disabled = flag;
+            btn.innerHTML = flag
+                ? '<span class="loader-dot"></span><span class="loader-dot"></span><span class="loader-dot"></span><span class="ml-1">Memproses…</span>'
+                : `<i data-lucide="sparkles" class="w-4 h-4"></i><span id="generateBtnLabel">${state.model === 'nanobanana-edit' ? 'Edit gambar' : 'Generate gambar'}</span>`;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function generate() {
+            if (state.busy) return;
+            const prompt = String($('promptArea').value || '').trim();
+            if (!prompt) {
+                showToast('Tulis prompt dulu.');
+                return;
+            }
+            if (state.model === 'nanobanana-edit' && !state.editImage) {
+                showToast('Mode edit butuh gambar input.');
+                return;
+            }
+
+            const body = {
+                prompt,
+                model: state.model,
+                ratio: state.ratio,
+                mode: state.model === 'nanobanana-edit' ? 'edit' : 'generate',
+            };
+            if (state.model === 'nanobanana-edit' && state.editImage) {
+                body.image_url = state.editImage;
+            }
+
+            setBusy(true);
+            try {
+                const response = await fetch('/api/studio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                const data = await response.json();
+
+                if (response.status === 429) {
+                    const retry = response.headers.get('Retry-After');
+                    const msg = data?.error?.message || `Cooldown aktif. Coba lagi dalam ${retry || '60'} detik.`;
+                    showToast(msg);
+                    return;
+                }
+
+                if (!response.ok || !data?.imageUrl) {
+                    const msg = data?.error?.message || `Gagal (HTTP ${response.status}).`;
+                    showToast(msg);
+                    return;
+                }
+
+                const item = {
+                    id: 'g_' + Date.now(),
+                    prompt,
+                    imageUrl: data.imageUrl,
+                    model: data.model || state.model,
+                    ratio: state.ratio,
+                    ts: Date.now(),
+                };
+                state.gallery.unshift(item);
+                state.gallery = state.gallery.slice(0, 60);
+                saveGallery();
+                renderGallery();
+                renderResult(item);
+                showToast(data.fallback ? 'Pakai fallback provider.' : 'Gambar siap.');
+            } catch (error) {
+                showToast(error?.message || 'Network error.');
+            } finally {
+                setBusy(false);
+            }
+        }
+
+        function clearGallery() {
+            if (!state.gallery.length) return;
+            if (!confirm('Hapus semua gambar di sesi ini?')) return;
+            state.gallery = [];
+            saveGallery();
+            renderGallery();
+            showToast('Riwayat studio dibersihkan.');
+        }
+
+        function openSettings() {
+            $('settingDefaultModel').value = state.settings.defaultModel || DEFAULT_SETTINGS.defaultModel;
+            const ratioWrap = $('settingDefaultRatio');
+            ratioWrap.innerHTML = '';
+            for (const r of RATIOS) {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'chip';
+                b.dataset.active = String(r === (state.settings.defaultRatio || '1:1'));
+                b.textContent = r;
+                b.addEventListener('click', () => {
+                    state.settings.defaultRatio = r;
+                    for (const sib of ratioWrap.querySelectorAll('button')) sib.dataset.active = String(sib.textContent === r);
+                });
+                ratioWrap.appendChild(b);
+            }
+            const motionBtn = $('motionToggle');
+            const motion = localStorage.getItem(STORAGE_KEYS.motion) || 'full';
+            motionBtn.dataset.state = motion;
+            motionBtn.textContent = motion === 'reduce' ? 'Dikurangi' : 'Penuh';
+            $('settingsBackdrop').classList.add('visible');
+        }
+
+        function closeSettings() {
+            $('settingsBackdrop').classList.remove('visible');
+        }
+
+        function saveStudioSettings() {
+            state.settings.defaultModel = $('settingDefaultModel').value || DEFAULT_SETTINGS.defaultModel;
+            saveSettings();
+            setModel(state.settings.defaultModel);
+            setRatio(state.settings.defaultRatio || '1:1');
+            applyMotionPreference(localStorage.getItem(STORAGE_KEYS.motion) || 'full');
+            closeSettings();
+            showToast('Pengaturan disimpan.');
+        }
+
+        function resetStudioSettings() {
+            state.settings = { ...DEFAULT_SETTINGS };
+            saveSettings();
+            setModel(state.settings.defaultModel);
+            setRatio(state.settings.defaultRatio);
+            try { localStorage.setItem(STORAGE_KEYS.motion, 'full'); } catch {}
+            applyMotionPreference('full');
+            openSettings();
+            showToast('Pengaturan direset.');
+        }
+
+        function applyMotionPreference(value) {
+            const reduce = value === 'reduce';
+            html.style.setProperty('--reduce-motion', reduce ? '1' : '0');
+            html.dataset.motion = reduce ? 'reduce' : 'full';
+        }
+
+        function updatePromptCount() {
+            const el = $('promptArea');
+            const count = (el.value || '').length;
+            $('promptCount').textContent = `${count} / 2000`;
+        }
+
+        function updateAppHeight() {
+            document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+        }
+
+        function init() {
+            loadTheme();
+            loadSettings();
+            loadGallery();
+            applyMotionPreference(localStorage.getItem(STORAGE_KEYS.motion) || 'full');
+
+            // Auto-route from query string supports ?mode=edit
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('mode') === 'edit') setModel('nanobanana-edit');
+                else setModel(state.settings.defaultModel);
+            } catch {
+                setModel(state.settings.defaultModel);
+            }
+            setRatio(state.settings.defaultRatio);
+            renderGallery();
+            updatePromptCount();
+
+            $('promptArea').addEventListener('input', updatePromptCount);
+            $('generateBtn').addEventListener('click', generate);
+            $('clearGalleryBtn').addEventListener('click', clearGallery);
+
+            $('themeToggle').addEventListener('click', () => {
+                setTheme(html.classList.contains('dark') ? 'light' : 'dark');
+            });
+
+            $('settingsBtn').addEventListener('click', openSettings);
+            $('closeSettingsBtn').addEventListener('click', closeSettings);
+            $('settingsBackdrop').addEventListener('click', (e) => {
+                if (e.target === $('settingsBackdrop')) closeSettings();
+            });
+            $('saveSettingsBtn').addEventListener('click', saveStudioSettings);
+            $('resetSettingsBtn').addEventListener('click', resetStudioSettings);
+
+            $('motionToggle').addEventListener('click', () => {
+                const cur = $('motionToggle').dataset.state || 'full';
+                const next = cur === 'full' ? 'reduce' : 'full';
+                $('motionToggle').dataset.state = next;
+                $('motionToggle').textContent = next === 'reduce' ? 'Dikurangi' : 'Penuh';
+                try { localStorage.setItem(STORAGE_KEYS.motion, next); } catch {}
+                applyMotionPreference(next);
+            });
+
+            // edit image controls
+            $('dropZone').addEventListener('click', () => $('editImageInput').click());
+            $('dropZone').addEventListener('dragover', (e) => { e.preventDefault(); $('dropZone').classList.add('accent-ring'); });
+            $('dropZone').addEventListener('dragleave', () => $('dropZone').classList.remove('accent-ring'));
+            $('dropZone').addEventListener('drop', (e) => {
+                e.preventDefault();
+                $('dropZone').classList.remove('accent-ring');
+                const file = e.dataTransfer?.files?.[0];
+                if (file) handleEditImageSelect(file);
+            });
+            $('editImageInput').addEventListener('change', (e) => {
+                const file = e.target.files?.[0];
+                if (file) handleEditImageSelect(file);
+            });
+            $('editPreviewRemove').addEventListener('click', clearEditImage);
+
+            $('promptArea').addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    generate();
+                }
+            });
+
+            updateAppHeight();
+            window.addEventListener('resize', updateAppHeight);
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

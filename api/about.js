@@ -15,22 +15,29 @@ const CORS_ORIGIN = process.env.CORS_ALLOW_ORIGIN || '*';
 export const IDENTITY = {
   site: {
     name: 'Explore Lab',
-    tagline: 'Workspace AI all-in-one — chat multi-model, image studio, web search, dengan auto-routing pintar.',
-    description: 'Explore Lab adalah workspace AI tanpa login & tanpa biaya. Dirancang ringan untuk perangkat low-end, bekerja di balik proxy backend agar tidak butuh API key di sisi pengguna, dan mendukung dokumen teks + gambar dalam satu interface.',
-    version: 'v2.0',
+    tagline: 'Workspace AI all-in-one — ExploreAi Chat untuk percakapan & analisis, ExploreAi Studio untuk image generation & edit.',
+    description: 'Explore Lab adalah hub dua produk: (1) ExploreAi Chat — chat multi-model dengan auto-routing, memori, file upload, web search; (2) ExploreAi Studio — image generation dengan beberapa model (Pollinations Flux/Turbo, Deep Image, Nanobanana edit). Semua tanpa login, tanpa API key di sisi pengguna, ramah perangkat low-end.',
+    version: 'v3.0',
     year: '2026',
-    favicon: 'https://l.top4top.io/p_3774ypjwm0.png',
-    banner: 'https://e.top4top.io/p_37695nh3v0.png',
+    favicon: '/favicon.png',
+    banner: '/og-image.png',
     repo: 'https://github.com/rhteaster-ui/Dipsik-ai-tes-project',
+    pages: [
+      { path: '/',           name: 'Landing',        product: 'Explore Lab' },
+      { path: '/ai.html',    name: 'ExploreAi Chat', product: 'Chat' },
+      { path: '/studio.html', name: 'ExploreAi Studio', product: 'Studio' },
+      { path: '/about.html', name: 'Tentang',        product: 'About' },
+    ],
     features: [
       { name: 'Smart Auto-Routing', desc: 'Sistem deteksi niat: chat, kode/script, web search, generate gambar, edit gambar — diarahkan ke endpoint yang tepat.' },
-      { name: 'Memory Konteks', desc: 'Riwayat percakapan ikut dikirim ke model setiap turn supaya AI ingat konteks sebelumnya.' },
+      { name: 'Memory Konteks', desc: 'Riwayat percakapan ikut dikirim ke model setiap turn supaya AI ingat konteks sebelumnya. Studio juga punya history sendiri.' },
       { name: 'Thinking Mode', desc: 'Mode analisis mendalam memakai gemini-2.5-pro dengan system prompt reasoning.' },
-      { name: 'Image Studio', desc: 'Generate gambar via Pollinations.ai (Flux/Turbo) dan edit gambar via Nanobanana.' },
+      { name: 'ExploreAi Studio', desc: 'Halaman khusus image generation dengan 3 model: Pollinations Flux/Turbo, Deep Image, dan Nanobanana edit. UI aksen berbeda tapi tetap menyatu dengan brand.' },
       { name: 'Web Search', desc: 'Pencarian real-time via TurboSeek/Perplexity dengan kutipan sumber.' },
       { name: 'File Upload', desc: 'Lampirkan dokumen teks (txt, md, html, json, csv, log, dll) atau gambar; sistem akan ringkas atau analisa.' },
       { name: 'Per-Message Actions', desc: 'Salin, edit, dan generate ulang setiap pesan — bisa pilih model untuk regenerate.' },
-      { name: 'Rate Limit + Cooldown', desc: 'Proxy anti-spam: 60 req/menit per IP, plus jeda 2 menit setelah 3 generasi gambar berturut.' },
+      { name: 'Rate Limit + Cooldown', desc: 'Proxy anti-spam: 30-60 req/menit per IP per endpoint, plus jeda 2 menit setelah 3 generasi gambar berturut.' },
+      { name: 'Security headers', desc: 'HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy — dikonfigurasi via vercel.json.' },
     ],
   },
   developer: {
@@ -38,6 +45,7 @@ export const IDENTITY = {
     realName: 'Rhmt',
     role: 'Self-taught Web App Developer',
     profileImage: 'https://j.top4top.io/p_376952pby0.png',
+    siteLogo: '/favicon.png',
     location: 'Indonesia',
     bio: 'Pengembang web mandiri (otodidak) yang fokus membangun web app, PWA, dan website statis interaktif yang ringan, fungsional, dan stabil — terutama untuk perangkat low-end. Mengembangkan, debug, refactor, dan deploy semuanya full device only, dengan AI sebagai productivity tool, bukan sekadar generator kode.',
     longBio: 'Memulai perjalanan teknologi secara otodidak tanpa mentor langsung dan dengan keterbatasan perangkat. Fokus utama bukan sekadar membuat website terlihat keren, tapi memastikan web benar-benar berguna, mudah dipahami, dan stabil dipakai pengguna umum. Telah menyelesaikan 50+ proyek web (statis & web app), mengembangkan PWA, dan terbiasa bekerja dengan codebase kompleks ribuan baris.',
@@ -70,10 +78,10 @@ export const IDENTITY = {
     ],
   },
   roadmap: [
-    { milestone: 'Stabilisasi v2', status: 'in-progress', desc: 'Smart memory, auto-routing tepat, file preview, code block, per-message actions, identity DB, image cooldown.' },
+    { milestone: 'Release v3 (Chat + Studio split)', status: 'done', desc: 'Pisah halaman jadi ExploreAi Chat (ai.html) dan ExploreAi Studio (studio.html). Endpoint /api/studio + model deep-image baru. SEO + JSON-LD + security headers.' },
     { milestone: 'Sistem Login', status: 'planned', desc: 'Akun pengguna agar rate-limit tidak bertumpu pada 1 IP saja, plus sinkronisasi histori antar device.' },
     { milestone: 'Admin Log Page', status: 'planned', desc: 'Dashboard kontrol pemakaian, monitor request, dan pengaturan model default.' },
-    { milestone: 'Migrasi Framework', status: 'planned', desc: 'Upgrade backend ke FastAPI dan frontend ke Next.js untuk skala produksi.' },
+    { milestone: 'Migrasi Framework', status: 'planned', desc: 'Upgrade backend ke FastAPI dan frontend ke Next.js untuk skala produksi. Saat ini stack static-HTML + Vercel serverless sudah cukup; migrasi akan dilakukan saat kebutuhan komponen reusable / data fetching kompleks meningkat.' },
   ],
 };
 

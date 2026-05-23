@@ -1,7 +1,58 @@
 # Dokumentasi API Explore Lab
 
-Frontend hanya bicara ke **`/api/backend`** dengan method `POST`. Backend gateway
-menentukan upstream sebenarnya berdasarkan field `path`. Tidak ada API key yang
+Ada **dua entry-point** dari frontend:
+
+- **`POST /api/backend`** — dipakai oleh ExploreAi Chat (`ai.html`) untuk chat,
+  web search, dan legacy image generation. Routing pakai field `path`.
+- **`POST /api/studio`** — dipakai oleh ExploreAi Studio (`studio.html`) khusus
+  image generation & edit dengan model yang dipilih user.
+
+Tidak ada API key yang diekspos ke browser. Tiap endpoint melewati rate-limit
+sliding-window per IP plus cooldown khusus untuk image generation.
+
+## `POST /api/studio`
+
+Body:
+
+```json
+{
+  "prompt": "Astronot duduk di kafe Jakarta, gaya cinematic.",
+  "model": "pollinations-flux",
+  "ratio": "1:1",
+  "mode": "generate",
+  "image_url": "data:image/png;base64,..."
+}
+```
+
+- `model` (opsional, default `pollinations-flux`): `pollinations-flux` |
+  `pollinations-turbo` | `deep-image` | `nanobanana-edit`.
+- `ratio` (opsional, default `1:1`): salah satu dari `1:1`, `16:9`, `9:16`,
+  `4:3`, `3:4`, `21:9`, `4:5`.
+- `mode` (opsional, otomatis `edit` kalau `image_url` ada).
+- `image_url` (opsional): data URL (base64) untuk mode edit; max sekitar 5 MB.
+
+Response:
+
+```json
+{
+  "reply": "Sukses generate via pollinations-flux.",
+  "imageUrl": "https://image.pollinations.ai/prompt/...",
+  "provider": "pollinations",
+  "model": "pollinations-flux",
+  "mode": "generate",
+  "prompt": "..."
+}
+```
+
+Rate-limit khusus Studio: 30 req/menit per IP plus cooldown 3 burst → jeda 2
+menit untuk mode `generate`. Response header bawaan `X-RateLimit-*` ikut dikirim.
+
+---
+
+## `POST /api/backend`
+
+Frontend Chat (`ai.html`) bicara ke endpoint ini. Backend gateway menentukan
+upstream sebenarnya berdasarkan field `path`. Tidak ada API key yang
 diekspos ke browser.
 
 ## Format payload

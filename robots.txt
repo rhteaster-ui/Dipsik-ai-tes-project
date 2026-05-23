@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Halaman utama yang ingin diindeks Google
+# (sitemap menjadi sumber utama)
+Sitemap: https://dipsik-ai-tes-project.vercel.app/sitemap.xml
+
+# Endpoint API tidak perlu diindeks
+Disallow: /api/
+Disallow: /Studio/
+Disallow: /sampah/
