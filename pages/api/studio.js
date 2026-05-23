@@ -15,8 +15,8 @@
  *   { reply, imageUrl, provider, model, mode, prompt }
  */
 
-import { applyRateLimit, applyImageGenCooldown } from './utils/rate-limit.js';
-import { generateDeepImage } from '../Studio/explore-deep-imagen.mjs';
+import { applyRateLimit, applyImageGenCooldown } from '../../lib/rate-limit.js';
+import { generateDeepImage } from '../../Studio/explore-deep-imagen.mjs';
 
 const CORS_ORIGIN = process.env.CORS_ALLOW_ORIGIN || '*';
 const POLLINATIONS_BASE = 'https://image.pollinations.ai/prompt';

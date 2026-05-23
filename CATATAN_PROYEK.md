@@ -3,15 +3,24 @@
 Ringkasan singkat agar developer/AI yang baru membuka repo ini langsung paham
 arah, arsitektur, dan area kerja terakhir.
 
+> **v3.1 (Mei 2026)** — Repo sudah dimigrasi ke **Next.js 15** (Pages Router
+> untuk API). Halaman statis hidup di `public/`, URL bersih (`/`, `/ai`,
+> `/studio`, `/about`) di-rewrite oleh `next.config.mjs` ke file `.html`
+> yang sesuai. Tidak ada 404 di URL apa pun. API route ada di
+> `pages/api/*.js` dengan signature `(req, res)` yang identik dengan
+> Vercel serverless klasik — minim perubahan logika.
+
 ## Tujuan
 
 - Web AI hub tanpa login dengan dua produk:
-  - **ExploreAi Chat** (`/ai.html`) — chat multi-model + auto-routing + memori +
-    file upload + code block + web search.
-  - **ExploreAi Studio** (`/studio.html`) — image generation & edit dengan model
-    Pollinations (Flux/Turbo), Deep Image, dan Nanobanana edit.
-- Landing page (`/index.html`) tetap bernama **Explore Lab**.
-- Frontend statis (HTML + Tailwind CDN) + serverless function di `api/*` ala Vercel.
+  - **ExploreAi Chat** (`/ai` ≡ `/ai.html`) — chat multi-model + auto-routing
+    + memori + file upload + code block + web search.
+  - **ExploreAi Studio** (`/studio` ≡ `/studio.html`) — image generation
+    & edit dengan model Pollinations (Flux/Turbo), Deep Image, dan
+    Nanobanana edit.
+- Landing page (`/` ≡ `/index.html`) tetap bernama **Explore Lab**.
+- Stack: Next.js 15 (Pages Router untuk API) + HTML statis di `public/`
+  + serverless function di `pages/api/*` (Vercel auto-detect).
 - Tidak ada API key di browser; semua key disimpan via env vars di server.
 
 ## Arsitektur
@@ -19,10 +28,10 @@ arah, arsitektur, dan area kerja terakhir.
 ```
 Browser ai.html (Chat) → POST /api/backend
    └── /v1/auto              auto-routing (default)
-   └── /v1/chat              → api/chat.js (Gemini official + fallback universal)
-   └── /v1/perplexity        → api/perplexity.js (TurboSeek/Sonar)
+   └── /v1/chat              → pages/api/chat.js (Gemini official + fallback universal)
+   └── /v1/perplexity        → pages/api/perplexity.js (TurboSeek/Sonar)
    └── /v1/dauns             → Daunscode REST (chatgpt/notegpt/grok/deepai/nanobanana)
-   └── /v1/image-generate    → api/imagegen.js (Pollinations.ai)
+   └── /v1/image-generate    → pages/api/imagegen.js (Pollinations.ai)
    └── /v1/image-edit        → Daunscode nanobanana (image edit)
 
 Browser studio.html (Studio) → POST /api/studio
@@ -32,7 +41,7 @@ Browser studio.html (Studio) → POST /api/studio
    └── model = nanobanana-edit    → Daunscode nanobanana (edit)
 ```
 
-Setiap path POST melewati rate-limit per IP (`api/utils/rate-limit.js`,
+Setiap path POST melewati rate-limit per IP (`lib/rate-limit.js`,
 sliding window, 60 req/menit, 20 req/menit khusus image-gen).
 
 ## File penting

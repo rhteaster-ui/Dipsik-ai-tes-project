@@ -6,7 +6,7 @@
  * <img src=... />. Tidak download blob ke server (hemat bandwidth).
  */
 
-import { applyRateLimit, applyImageGenCooldown } from './utils/rate-limit.js';
+import { applyRateLimit, applyImageGenCooldown } from '../../lib/rate-limit.js';
 
 const CORS_ORIGIN = process.env.CORS_ALLOW_ORIGIN || '*';
 const POLLINATIONS_BASE = 'https://image.pollinations.ai/prompt';

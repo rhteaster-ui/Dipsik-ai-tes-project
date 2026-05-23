@@ -17,7 +17,7 @@ export const IDENTITY = {
     name: 'Explore Lab',
     tagline: 'Workspace AI all-in-one — ExploreAi Chat untuk percakapan & analisis, ExploreAi Studio untuk image generation & edit.',
     description: 'Explore Lab adalah hub dua produk: (1) ExploreAi Chat — chat multi-model dengan auto-routing, memori, file upload, web search; (2) ExploreAi Studio — image generation dengan beberapa model (Pollinations Flux/Turbo, Deep Image, Nanobanana edit). Semua tanpa login, tanpa API key di sisi pengguna, ramah perangkat low-end.',
-    version: 'v3.0',
+    version: 'v3.1',
     year: '2026',
     favicon: '/favicon.png',
     banner: '/og-image.png',
@@ -62,6 +62,7 @@ export const IDENTITY = {
       { name: 'TypeScript', icon: 'code', color: 'text-blue-600' },
       { name: 'Vue.js', icon: 'component', color: 'text-emerald-500' },
       { name: 'React', icon: 'atom', color: 'text-cyan-400' },
+      { name: 'Next.js', icon: 'triangle', color: 'text-slate-700 dark:text-white' },
       { name: 'Tailwind CSS', icon: 'wind', color: 'text-cyan-500' },
       { name: 'FastAPI', icon: 'zap', color: 'text-teal-500' },
       { name: 'Node.js', icon: 'server', color: 'text-emerald-600' },
@@ -79,9 +80,10 @@ export const IDENTITY = {
   },
   roadmap: [
     { milestone: 'Release v3 (Chat + Studio split)', status: 'done', desc: 'Pisah halaman jadi ExploreAi Chat (ai.html) dan ExploreAi Studio (studio.html). Endpoint /api/studio + model deep-image baru. SEO + JSON-LD + security headers.' },
+    { milestone: 'Migrasi Framework ke Next.js', status: 'done', desc: 'v3.1: pindah ke Next.js 15 (Pages Router untuk API). Halaman statis hidup di public/, URL bersih /ai /studio /about di-rewrite oleh next.config.mjs sehingga tidak pernah 404. Vercel auto-detect tanpa konfigurasi manual.' },
     { milestone: 'Sistem Login', status: 'planned', desc: 'Akun pengguna agar rate-limit tidak bertumpu pada 1 IP saja, plus sinkronisasi histori antar device.' },
     { milestone: 'Admin Log Page', status: 'planned', desc: 'Dashboard kontrol pemakaian, monitor request, dan pengaturan model default.' },
-    { milestone: 'Migrasi Framework', status: 'planned', desc: 'Upgrade backend ke FastAPI dan frontend ke Next.js untuk skala produksi. Saat ini stack static-HTML + Vercel serverless sudah cukup; migrasi akan dilakukan saat kebutuhan komponen reusable / data fetching kompleks meningkat.' },
+    { milestone: 'Next.js App Router + SSR', status: 'planned', desc: 'Eksplorasi App Router + Server Components untuk halaman dinamis dan caching layer lebih dalam. Dilakukan saat kebutuhan komponen reusable / data fetching kompleks meningkat.' },
   ],
 };
 
