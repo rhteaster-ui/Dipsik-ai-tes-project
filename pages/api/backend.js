@@ -17,7 +17,7 @@
  * down, user tetap dapat balasan yang bisa dipakai (bukan 500 mentah).
  */
 
-import { applyRateLimit } from './utils/rate-limit.js';
+import { applyRateLimit } from '../../lib/rate-limit.js';
 import { IDENTITY, buildIdentitySummaryText, isIdentityQuery } from './about.js';
 
 const CORS_ORIGIN = process.env.CORS_ALLOW_ORIGIN || '*';
