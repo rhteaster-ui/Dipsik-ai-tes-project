@@ -326,12 +326,14 @@ function classifyIntent({ prompt = '', hasImage = false, history = [] }) {
   if (isCode) return 'chat';
 
   const editPattern = /\b(edit|ubah|ganti|tambahkan|hapus|hilangkan|jadikan|tukar|ubahlah|kasih warna|jadikan latar)\b/;
-  const generatePattern = /\b(generate gambar|bikin gambar|buatkan gambar|buat gambar|gambarkan|render(kan)? gambar|ilustrasi(kan)?|poster|wallpaper|draw|design(kan)? gambar|buatkan ilustrasi)\b/;
-  const standaloneImageHint = /\b(gambar|image|foto)\b/.test(lower) && /\b(buat|bikin|generate|render|draw|create)\b/.test(lower);
+  // Explicit image-gen phrases only. The loose "image|gambar|foto" + "buat|create"
+  // heuristic was removed because it routed innocent prompts ("create image previewer
+  // component", "buatkan ringkasan tentang gambar AI") to image-gen by mistake.
+  const generatePattern = /\b(generate (?:gambar|image|picture|art)|bikin gambar|buatkan gambar|buat gambar|gambarkan|render(?:kan)? gambar|ilustrasi(?:kan)?|poster|wallpaper|draw (?:me|a|the)|design(?:kan)? gambar|buatkan ilustrasi|create (?:image|wallpaper|poster|illustration))\b/;
   const searchPattern = /\b(cari|search|berita|terbaru|harga sekarang|update|news|trending|kurs|saham hari)\b/;
 
   if (hasImage && editPattern.test(lower)) return 'image-edit';
-  if (!hasImage && (generatePattern.test(lower) || standaloneImageHint)) return 'image-generate';
+  if (!hasImage && generatePattern.test(lower)) return 'image-generate';
   if (!hasImage && searchPattern.test(combined)) return 'search';
 
   return 'chat';
