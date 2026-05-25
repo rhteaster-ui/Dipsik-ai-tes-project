@@ -54,12 +54,8 @@ const MODEL_CATALOG = {
       models: ['chatgpt', 'notegpt', 'grok', 'deepai', 'nanobanana'],
       capabilities: ['chat', 'vision'],
     },
-    {
-      key: 'image',
-      label: 'Image Studio',
-      models: ['flux', 'turbo', 'nanobanana-edit'],
-      capabilities: ['image-generate', 'image-edit'],
-    },
+    // Image providers tidak ditampilkan di chat picker — hanya ada di /studio.
+    // Auto-routing tetap aktif kalau prompt eksplisit minta gambar.
   ],
   defaultProvider: 'gemini',
   defaultModel: 'gemini-2.5-flash',
