@@ -17,6 +17,7 @@
 
 import { applyRateLimit, applyImageGenCooldown } from '../../lib/rate-limit.js';
 import { generateDeepImage } from '../../Studio/explore-deep-imagen.mjs';
+import raphael from '../../Studio/text-to-image.mjs';
 
 const CORS_ORIGIN = process.env.CORS_ALLOW_ORIGIN || '*';
 const POLLINATIONS_BASE = 'https://image.pollinations.ai/prompt';
@@ -100,6 +101,34 @@ async function runPollinations({ prompt, ratio, model }) {
   };
 }
 
+async function runRaphael({ prompt, ratio }) {
+  try {
+    const result = await raphael(prompt, {
+      aspect: String(ratio || '1:1'),
+      number_of_images: 4,
+      highQuality: false,
+      fastMode: true,
+      isSafeContent: true,
+      autoTranslate: true,
+    });
+    if (!result || !result.status || !Array.isArray(result.results) || result.results.length === 0) {
+      return { ok: false, error: result?.error || 'Raphael tidak mengembalikan gambar.' };
+    }
+    const primary = result.results.find((r) => r.url && r.url.startsWith('http')) || result.results[0];
+    if (!primary?.url) return { ok: false, error: 'Raphael URL kosong.' };
+    return {
+      ok: true,
+      imageUrl: primary.url,
+      gallery: result.results.map((r) => r.url).filter(Boolean),
+      provider: 'raphael',
+      model: 'raphael',
+      total: result.total || result.results.length,
+    };
+  } catch (error) {
+    return { ok: false, error: error?.message || 'Raphael upstream error.' };
+  }
+}
+
 async function runNanobananaEdit({ prompt, imageUrl }) {
   try {
     const response = await fetch(`${DAUNS_BASE}/v1/ai/nanobanana`, {
@@ -147,6 +176,7 @@ export default async function handler(req, res) {
         { key: 'pollinations-flux',  label: 'Pollinations · Flux',  mode: 'generate' },
         { key: 'pollinations-turbo', label: 'Pollinations · Turbo', mode: 'generate' },
         { key: 'deep-image',         label: 'Deep Image · Free',    mode: 'generate' },
+        { key: 'raphael',            label: 'Raphael · 4-up',       mode: 'generate' },
         { key: 'nanobanana-edit',    label: 'Nanobanana · Edit',    mode: 'edit'     },
       ],
       defaultModel: 'pollinations-flux',
@@ -213,6 +243,35 @@ export default async function handler(req, res) {
     }
 
     // mode === 'generate'
+    if (requestedModel === 'raphael') {
+      const result = await runRaphael({ prompt, ratio });
+      if (result.ok) {
+        return jsonOk(res, {
+          reply: `Raphael membuat ${result.total} variasi gambar dari prompt: "${prompt}".`,
+          imageUrl: result.imageUrl,
+          gallery: result.gallery,
+          provider: result.provider,
+          model: result.model,
+          mode,
+          prompt,
+        });
+      }
+      // Fallback ke pollinations supaya UX tidak gagal total kalau raphael down
+      const fallback = await runPollinations({ prompt, ratio, model: 'flux' });
+      if (fallback.ok) {
+        return jsonOk(res, {
+          reply: `Raphael upstream gagal (${result.error}). Fallback ke Pollinations Flux.`,
+          imageUrl: fallback.imageUrl,
+          provider: 'pollinations',
+          model: 'flux',
+          mode,
+          prompt,
+          fallback: true,
+        });
+      }
+      return jsonErr(res, 502, 'GENERATE_FAILED', result.error || 'Raphael gagal & fallback ikut gagal.');
+    }
+
     if (requestedModel === 'deep-image') {
       const result = await generateDeepImage({ prompt, ratio });
       if (result.ok) {
