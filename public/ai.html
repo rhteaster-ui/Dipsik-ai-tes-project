@@ -1707,12 +1707,15 @@
             if (isCode) return 'chat';
 
             const editPattern = /\b(edit|ubah|ganti|tambahkan|hapus|hilangkan|jadikan|tukar|ubahlah|kasih warna|jadikan latar)\b/;
-            const generatePattern = /\b(generate gambar|bikin gambar|buatkan gambar|buat gambar|gambarkan|render(kan)? gambar|ilustrasi(kan)?|poster|wallpaper|draw|design(kan)? gambar|buatkan ilustrasi)\b/;
-            const standaloneImageHint = /\b(gambar|image|foto)\b/.test(lower) && /\b(buat|bikin|generate|render|draw|create)\b/.test(lower);
+            // Explicit image-gen phrases only. The loose "image|gambar|foto"
+            // + "buat|create" heuristic was removed because it false-fired on
+            // prompts like "create image previewer component" or "buatkan
+            // ringkasan tentang gambar AI" — routing innocent chat to studio.
+            const generatePattern = /\b(generate (?:gambar|image|picture|art)|bikin gambar|buatkan gambar|buat gambar|gambarkan|render(?:kan)? gambar|ilustrasi(?:kan)?|poster|wallpaper|draw (?:me|a|the)|design(?:kan)? gambar|buatkan ilustrasi|create (?:image|wallpaper|poster|illustration))\b/;
             const searchPattern = /\b(cari|search|berita|terbaru|harga sekarang|update|news|trending|kurs|saham hari)\b/;
 
             if (hasImage && editPattern.test(lower)) return 'image-edit';
-            if (!hasImage && (generatePattern.test(lower) || standaloneImageHint)) return 'image-generate';
+            if (!hasImage && generatePattern.test(lower)) return 'image-generate';
             if (!hasImage && searchPattern.test(`${recentText} ${lower}`)) return 'search';
 
             return 'chat';
