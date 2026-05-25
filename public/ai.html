@@ -535,7 +535,7 @@
                             Halo, mau eksplorasi <span class="gradient-text">apa hari ini?</span>
                         </h1>
                         <p class="text-sm md:text-base text-slate-500 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
-                            Tanya apa saja, lampirkan dokumen atau gambar, atau buat ilustrasi langsung dari prompt teks. Sistem akan memilih model terbaik secara otomatis.
+                            Tanya apa saja, lampirkan dokumen, atau minta bantuan coding &amp; analisis. Sistem akan memilih model terbaik secara otomatis.
                         </p>
 
                         <div class="mt-8 grid sm:grid-cols-2 gap-3 text-left">
@@ -1518,10 +1518,9 @@
                         const [providerKey, modelName] = value.split(':');
                         state.model = modelName || '';
                         state.modelLabel = modelName || DEFAULT_AUTO_LABEL;
-                        if (providerKey === 'image') {
-                            window.location.href = 'studio.html';
-                            return;
-                        } else if (providerKey === 'perplexity') {
+                        // Image providers tidak ada di chat picker (sudah dipindah ke /studio).
+                        // Tidak ada lagi auto-redirect dari picker chat → studio.
+                        if (providerKey === 'perplexity') {
                             setMode('search');
                         } else {
                             setMode('auto');
